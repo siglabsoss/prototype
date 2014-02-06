@@ -200,7 +200,7 @@ int main
 
     if (table)
     { if (gen_file!=0)
-      { printf("%6d %7d %7d\n",n,chkerr,srcerr);
+      { printf("%d,%d,%d\n",n,chkerr,srcerr);
       }
       else
       { printf("%6d %7d\n",n,chkerr);
