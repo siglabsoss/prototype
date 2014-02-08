@@ -8,52 +8,61 @@
     <div id="viz"></div>
     <script type="text/javascript">
 
-    var bitY = 50;
+    // Globals, go cry about it
+
+    var bitY = 75; // vertical spacing between nodes
     var bitX = 50;
-    var checkY = 50;
-    var checkX = 200;
+    var checkY = 100; // vertical spacing between nodes
+    var checkX = 250;
 
-    function newBitNode(sampleSVG)
+    var bitNodes = 7;
+    var checkNodes = 3;
+
+    function getBitCoords(index)
     {
-        // var sampleSVG = d3.select("#viz");
+        return [bitX, bitY + index*bitY];
+    }
 
+    function getCheckCoords(index)
+    {
+        var offset = checkNodes * checkY/2;
+        return [checkX, offset + index*checkY];
+    }
+
+    function newBitNode(sampleSVG, index)
+    {
+        
+        var pos = getBitCoords(index);
+        var x = pos[0];
+        var y = pos[1];
         
 
         sampleSVG.append("circle")
         .style("stroke", "gray")
         .style("fill", "white")
         .attr("r", 25)
-        .attr("cx", bitX)
-        .attr("cy", bitY)
+        .attr("cx", x)
+        .attr("cy", y);
         // .on("mouseover", function(){d3.select(this).style("fill", "aliceblue");})
         // .on("mouseout", function(){d3.select(this).style("fill", "white");});
 
-        bitY += 75;
+        // bitY += 75;
     }
 
-    function newCheckNode(sampleSVG)
+    function newCheckNode(sampleSVG, index)
     {
-        // var sampleSVG = d3.select("#viz");
+        var pos = getCheckCoords(index);
+        var x = pos[0];
+        var y = pos[1];
 
         sampleSVG.append("rect")
-         .attr("x", checkX)
-         .attr("y", checkY)
+         .attr("x", x)
+         .attr("y", y)
         .attr("width", 45)
         .attr("height", 45)
         .style("stroke", "gray")
         .style("fill", "gray");
-        
 
-        // sampleSVG.append("rectangle")
-        // .style("stroke", "gray")
-        // .style("fill", "white")
-        // .attr("r", 25)
-        // .attr("cx", 50)
-        // .attr("cy", bitY)
-        // .on("mouseover", function(){d3.select(this).style("fill", "aliceblue");})
-        // .on("mouseout", function(){d3.select(this).style("fill", "white");});
-
-        checkY += 75;
     }
 
     function parseMatrix()
@@ -69,6 +78,8 @@
         console.log("Ldpc notation is (" + n + ", " + k + ")");
         console.log("Matrix k is " + k);
 
+        bitNodes = n;
+        checkNodes = m;
 
 
         $.each(mat, function( rowIndex, row ) {
@@ -80,29 +91,35 @@
         });
 
         console.log(m);
+
+        drawGraph(m,n,k);
     }
 
-    var sampleSVG = d3.select("#viz")
+    function drawGraph(m,n,k)
+    {
+        $('#viz').html('');
+        var sampleSVG = d3.select("#viz")
         .append("svg")
         .attr("width", 400)
-        .attr("height", 300);    
+        .attr("height", Math.max(bitNodes,checkNodes)*100);    
+
+        for( i = 0; i < bitNodes; i++ )
+        {
+            newBitNode(sampleSVG, i);        
+        }
+
+        for( i = 0; i < checkNodes; i++ )
+        {
+            newCheckNode(sampleSVG, i);        
+        }
 
 
-    //     var ress = d3.select("#viz").append("svg");
+    }
 
-    // ress.append("circle")
-    //     .style("stroke", "gray")
-    //     .style("fill", "white")
-    //     .attr("r", 40)
-    //     .attr("cx", 50)
-    //     .attr("cy", 50)
-    //     .on("mouseover", function(){d3.select(this).style("fill", "aliceblue");})
-    //     .on("mouseout", function(){d3.select(this).style("fill", "white");});
-    
-    newBitNode(sampleSVG);
-    newBitNode(sampleSVG);
-    newCheckNode(sampleSVG);
-    newCheckNode(sampleSVG);
+    drawGraph();
+
+
+
 
     </script>
     <textarea id="matrixtext" rows="4" cols="40">
