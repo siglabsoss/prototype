@@ -43,10 +43,7 @@
         .attr("r", 25)
         .attr("cx", x)
         .attr("cy", y);
-        // .on("mouseover", function(){d3.select(this).style("fill", "aliceblue");})
-        // .on("mouseout", function(){d3.select(this).style("fill", "white");});
 
-        // bitY += 75;
     }
 
     function newCheckNode(sampleSVG, index)
@@ -55,14 +52,25 @@
         var x = pos[0];
         var y = pos[1];
 
+        var widthHeight = 45;
+
         sampleSVG.append("rect")
-         .attr("x", x)
-         .attr("y", y)
-        .attr("width", 45)
-        .attr("height", 45)
+         .attr("x", x - widthHeight/2)
+         .attr("y", y - widthHeight/2)
+        .attr("width", widthHeight)
+        .attr("height", widthHeight)
         .style("stroke", "gray")
         .style("fill", "gray");
+    }
 
+    function drawLine(svg, p1, p2)
+    {
+        svg.append("svg:line")
+        .attr("x1", p1[0])
+        .attr("y1", p1[1])
+        .attr("x2", p2[0])
+        .attr("y2", p2[1])
+        .style("stroke", "rgb(6,120,155)");
     }
 
     function parseMatrix()
@@ -87,15 +95,12 @@
             if( row.length != n )
                 alert("matrix row " + rowIndex + " has length " + row.length + " which doesn't match " + n);
 
-            
         });
 
-        console.log(m);
-
-        drawGraph(m,n,k);
+        drawGraph(mat, m,n,k);
     }
 
-    function drawGraph(m,n,k)
+    function drawGraph(mat, m,n,k)
     {
         $('#viz').html('');
         var sampleSVG = d3.select("#viz")
@@ -113,10 +118,26 @@
             newCheckNode(sampleSVG, i);        
         }
 
+        $.each(mat, function( rowIndex, row ) {
+            $.each(row, function( colIndex, colVal ) {
+
+                if( colVal === 1 )
+                {
+                    var p1 = getBitCoords(colIndex);
+                    var p2 = getCheckCoords(rowIndex);
+                    drawLine(sampleSVG, p1, p2);
+                }
+            });
+
+        });
 
     }
 
-    drawGraph();
+
+    // start whole chain
+    $( document ).ready(function() {
+        parseMatrix();
+    });
 
 
 
