@@ -77,10 +77,47 @@
         .style("stroke", "rgb(6,120,155)");
     }
 
-    function parseMatrix()
+    function lineHasNothing(str) {
+        var v1 = str.indexOf("0");
+        var v2 = str.indexOf("1");
+
+        return (v1 === -1 && v2 === -1);
+    }
+
+    function parseMatrix(isSpace)
     {
         var $textarea = $('#matrixtext');
-        var mat = JSON.parse($textarea.val());
+        var textval = $textarea.val();
+        var mat;
+        if( isSpace ) {
+            // init matrix
+            mat = [];
+
+            // explode on newlines
+            var textlines = textval.split(/[\r\n]/);
+
+            $.each(textlines, function( notUsed, line ) {
+                if( lineHasNothing(line) ) {
+                    return; // this is a 'continue' in jQuery each parlance
+                }
+
+                // init this row of the matrix
+                var matrixLine = [];
+
+                // explode on spaces
+                var values = line.split(' ');
+                $.each(values, function( notUsed2, zeroOrOne ) {
+                    if( zeroOrOne === "0" )
+                        matrixLine.push(0);
+                    if( zeroOrOne === "1" )
+                        matrixLine.push(1);
+                });
+
+                mat.push(matrixLine);
+            });
+        } else {
+            mat = JSON.parse(textval);
+        }
 
         var m = mat.length;
         var n = mat[0].length;
@@ -140,18 +177,18 @@
 
     // start whole chain
     $( document ).ready(function() {
-        parseMatrix();
+        parseMatrix(0);
     });
 
 
 
 
     </script>
-    <textarea id="matrixtext" rows="4" cols="40">
+    <textarea id="matrixtext" rows="10" cols="100">
 [[1,0,0,0,1,1,1],
 [0,1,0,1,0,1,1],
 [0,0,1,1,1,0,1]]
     </textarea>
-    <br><button onClick="parseMatrix()" type="button">go</button>
+    <br><button onClick="parseMatrix(0)" type="button">go (json)</button><button onClick="parseMatrix(1)" type="button">go (space)</button>
 </body>
 </html>
