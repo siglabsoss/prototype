@@ -12,7 +12,7 @@
 
     var bitY = 75; // vertical spacing between nodes
     var bitX = 50;
-    var checkY = 100; // vertical spacing between nodes
+    var checkY = 75; // vertical spacing between nodes
     var checkX = 250;
 
     var bitNodes = 7;
@@ -25,7 +25,11 @@
 
     function getCheckCoords(index)
     {
-        var offset = checkNodes * checkY/2;
+        // calculate total left size, minus total right size
+        var offset = (bitNodes * bitY) - (checkNodes * checkY);
+        // over 2, plus checkY will center the right nodes correctly
+        offset /= 2;
+        offset += checkY;
         return [checkX, offset + index*checkY];
     }
 
