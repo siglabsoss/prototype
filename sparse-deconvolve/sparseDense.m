@@ -8,12 +8,12 @@ sparseComb = [0, 84480, 168960, 253440, 337920, 422400, 506880, 591360, 675840, 
 denseComb = toDense(sparseComb);
 %denseComb = [1,-1,1,1,-1,-1,-1,-1,-1];
 
-dense = toDense(sparseData);
-denseSize = size(dense,2);
+denseData = toDense(sparseData);
+denseSize = size(denseData,2);
 
 % shorter vector is 0 padded to make it the same size as larger
 % result is 2N - 1 samples
-c = xcorr(dense, denseComb);
+c = xcorr(denseData, denseComb);
 
 [maxVal, maxIndex] = max(c);
 [minVal, minIndex] = min(c);
