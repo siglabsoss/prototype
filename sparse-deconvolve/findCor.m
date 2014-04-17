@@ -1,5 +1,5 @@
 %maxLen = 3548160;
-maxLen = 100000;
+maxLen = 1000;
 
 
 test = [];
