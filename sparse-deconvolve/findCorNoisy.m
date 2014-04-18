@@ -3,6 +3,10 @@
 %nc = toSparse(dcNoisy)
 
 
+% another way to do this
+% a = randperm(2000)
+% b = a(1:500)
+% c = sort(b)
 
 %maxLen = 3548160;
 maxLen = 2000;
@@ -18,7 +22,7 @@ snr = 0;
 oversample = 2;
 
 % how many noise iterations to try
-testIterations = 3
+testIterations = 5
 
 pMin = 0.000000001;
 pMax = 0.05;
@@ -41,16 +45,24 @@ while 1
 	% if we have at least one edge
 	if size(test,2) > 1
 
-		% now we have a dense, noisy test comb that is oversampled
-		testNoisyDense = transmitNoise(toDense(test), snr, oversample);
-
-		
-		testNoisySparse = toSparse(testNoisyDense);
-
 		% oversample original comb to match and avoid rounding issues
 		test  = test .* oversample;
 
-		score = crossCor(test, testNoisySparse, 0);
+		score = 0;
+
+		% run test a few times to make sure freak accident noise doesnt give us a really good score
+		for j = 1:testIterations
+			% now we have a dense, noisy test comb that is oversampled
+			testNoisyDense = transmitNoise(toDense(test), snr, oversample);
+
+			testNoisySparse = toSparse(testNoisyDense);
+
+			% xcor original comb against noisy one
+			score = score + crossCor(test, testNoisySparse, 0);
+		end
+
+		% average score
+		score = score / testIterations;
 
 		if score < bestScore
 			disp(sprintf('Best Score: %f', score));
