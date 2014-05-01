@@ -1,12 +1,12 @@
 function dense = toDense(sparse)
 
-[rows,A]=size(sparse);
+[~,A]=size(sparse);
 B = sparse(A)-sparse(1);
 dense = zeros(1,B);
 sig = -1;
 j = 1;
 
-for i = sparse(1):sparse(A)
+for i = sparse(1):sparse(A)-1
 
 	if i == sparse(j)
    		sig = sig * -1;
