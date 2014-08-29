@@ -100,8 +100,8 @@ c5 = r2 * c4;
 sc_z = c5*SC;
 
 % 3rd rotate
-r3deg = atan(sc_z(2)/sc_z(3));
-r3 = rotationmat3D(r3deg,[1 0 0]);
+r3deg = atan(sc_z(3)/sc_z(2));
+r3 = rotationmat3D(-r3deg,[1 0 0]);
 c6 = r3 * c5;
 
 
