@@ -24,7 +24,12 @@ c0 = SC(1);
 c1 = SC(2);
 c2 = SC(3);
 
+% Change of basis translation
+CBT = -SA;
 
+SA = CBT + SA;
+SB = CBT + SB;
+SC = CBT + SC;
 
 
 % don't care values
@@ -59,15 +64,45 @@ c2 = SC(3);
 
 
 
-
-
-
-CB = [[c00 c01 c02];[c10 c11 c12];[c20 c21 c22]]
+%CB = [[c00 c01 c02];[c10 c11 c12];[c20 c21 c22]]
 
 
 %cb = [[1 0 0];[0 1 0];[0 0 1]];
-c1 = [[57 0 0];[0 35 0];[0 0 38]];
+%c1 = [[57 0 0];[0 35 0];[0 0 38]];
 %c2 = inv(c1);
+
 % great, c3*SA = 0,0,0
-c3 = [[1 (-57/35) 0];[ (-73/57) 1  1];[0 (-38/35) 1]];
+% c3 = [[1 (-57/35) 0];[ (-73/57) 1  1];[0 (-38/35) 1]];
+c3 = eye(3);
+
+% check where SB lands
+sb_xy = c3*SB;
+
+% first rotate
+r1deg = atan(sb_xy(2)/sb_xy(1));
+
+% rotate about z so that the y component of SB will be 0
+r1 = rotationmat3D(-r1deg,[0 0 1]);
+c4 = r1 * c3;
+
+% check where SB lands again
+sb_xz = c4*SB;
+
+% second rotate
+r2deg = atan(sb_xz(3)/sb_xz(1));
+% (sb was ending up negative, so this fixes)
+r2deg = r2deg + pi;
+
+r2 = rotationmat3D(r2deg,[0 1 0]);
+c5 = r2 * c4;
+
+% check where SC lands
+sc_z = c5*SC;
+
+% 3rd rotate
+r3deg = atan(sc_z(2)/sc_z(3));
+r3 = rotationmat3D(r3deg,[1 0 0]);
+c6 = r3 * c5;
+
+
 

@@ -3,7 +3,7 @@ function R = translatemat3D( M, vec )
 %   See: http://en.wikipedia.org/wiki/Translation_(geometry)
 
     % tranlation matrix
-    t = [eye(3) vec'; 0 0 0 1];
+    t = [eye(3) vec; 0 0 0 1];
 
     % break cols out
     col1 = [M(1:3,1)' 1]';
