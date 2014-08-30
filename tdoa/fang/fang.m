@@ -5,26 +5,16 @@
 % b9 -2700305.5929534282, -4288650.7464387724, 3859553.6845385805
 % b10 -2700386.426912501, -4288613.4509271001, 3859542.929867378
 
-% for smaller numbers
-% b7   57, 35, 38
-% b9   05, 50, 53
-% b10  86, 13, 42
 
-% BS positions
-% SA = [05;50;53];
-% SB = [57;35;38];
-% SC = [86;13;42];
-
-%
-SA = [-2700305.5929534282;-4288650.7464387724;3859553.6845385805];  %b9
-SB = [-2700357.8812868893;-4288635.0159764756;3859538.9663173491];  %b7
-SC = [-2700386.426912501;-4288613.4509271001;3859542.929867378];    %b10
+SA = [-2705216.474;	-4281760.682;	3863804.555];
+SB = [-2705502.503;	-4287673.412;	3857086.831];
+SC = [-2696110.367;	-4292939.451;	3857734.778];
 
 
 % BS arrival times
-Ta = 6188 / 48000000; %b9
-Tb = 5742 / 48000000; %b7
-Tc = 6082 / 48000000; %b10
+Ta = 0.00003143379717;
+Tb = 0.00001928027545;
+Tc = 0.000021089254;
 
 % Change of basis translation
 CBT = -SA;
@@ -113,24 +103,41 @@ f = (Rab^2/4) * (1-(b/Rab)^2)^2 - h^2;
 % use (20) to calculate coefficients for quartic
 
 % altitude above station plane
-altitude = 10; % best guess (meters)
+altitude = 0; % best guess (meters)
 
 z = altitude;
 
-
+% calculate x from (9a)
 x1 = -(sqrt(4*d*z^2-4*d*f+e^2)+e)/(2*d);
 x2 = (sqrt(4*d*z^2-4*d*f+e^2)-e)/(2*d);
 
-% choice
+% choose either x1 or x2
 x = x2;
 
 y = g * x + h;
-z1 = sqrt(d*x^2+e*x+f);
-z2 = -z1;
 
-% choice
-z = z1;
+% we already picked z earler
+% z1 = sqrt(d*x^2+e*x+f);
+% z2 = -z1;
 
+
+
+% checks, if invalid choose the other x
+
+check1 = sqrt(x^2+y^2+z^2)-sqrt((x-b)^2+y^2+z^2);
+check2 = sqrt(x^2+y^2+z^2)-sqrt((x-cx)^2+(y-cy)^2+z^2);
+
+disp(sprintf('check1 is: %g == %g', Rab, check1));
+disp(sprintf('check2 is: %g == %g', Rac, check2));
+
+
+% build R with respect to the basis CB
+R = [x; y; z];
+
+% get out of CB
+Rreal = (inv(CB)*R) - CBT;
+
+% Rreal is final answer!
 
 
 
