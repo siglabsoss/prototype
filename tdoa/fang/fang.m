@@ -11,14 +11,20 @@
 % b10  86, 13, 42
 
 % BS positions
-SA = [57;35;38];
-SB = [05;50;53];
-SC = [86;13;42];
+% SA = [05;50;53];
+% SB = [57;35;38];
+% SC = [86;13;42];
+
+%
+SA = [-2700305.5929534282;-4288650.7464387724;3859553.6845385805];  %b9
+SB = [-2700357.8812868893;-4288635.0159764756;3859538.9663173491];  %b7
+SC = [-2700386.426912501;-4288613.4509271001;3859542.929867378];    %b10
+
 
 % BS arrival times
-Ta = 5742;
-Tb = 6188;
-Tc = 6082;
+Ta = 6188 / 48000000; %b9
+Tb = 5742 / 48000000; %b7
+Tc = 6082 / 48000000; %b10
 
 % Change of basis translation
 CBT = -SA;
@@ -28,7 +34,8 @@ SA = CBT + SA;
 SB = CBT + SB;
 SC = CBT + SC;
 
-%%%%  Calculate rotation matrix, also known as a change of basis matrix
+% Calculate rotation matrix, also known as a change of basis matrix,
+%  starting with identiy
 c3 = eye(3);
 
 % check where SB lands
@@ -67,6 +74,12 @@ SA = CB*SA;
 SB = CB*SB;
 SC = CB*SC;
 
+% force
+SB(2) = 0;
+SB(3) = 0;
+SC(3) = 0;
+
+
 
 % constants
 % speedo light
@@ -92,7 +105,46 @@ Rac = V * Tac;
 
 g = (Rac * (b / Rab) - cx) / cy;
 h = (c^2 - Rac^2 + Rac*Rab*(1-(b/Rab)^2))/(2*cy);
+d = -(1-(b/Rab)^2+g^2) ;
+e = b*(1-(b/Rab)^2)-2*g*h;
+f = (Rab^2/4) * (1-(b/Rab)^2)^2 - h^2;
 
+
+% use (20) to calculate coefficients for quartic
+
+% altitude above station plane
+altitude = 10; % best guess (meters)
+
+z = altitude;
+
+
+x1 = -(sqrt(4*d*z^2-4*d*f+e^2)+e)/(2*d);
+x2 = (sqrt(4*d*z^2-4*d*f+e^2)-e)/(2*d);
+
+% choice
+x = x2;
+
+y = g * x + h;
+z1 = sqrt(d*x^2+e*x+f);
+z2 = -z1;
+
+% choice
+z = z1;
+
+
+
+
+
+
+
+
+% wgs84
+
+% meters
+wa = 6378137.0;
+wb = 6356752.3142451794975639665996337;
+% focal length
+wf = sqrt(wa^2-wb^2);
 
 
 
