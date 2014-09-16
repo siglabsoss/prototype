@@ -62,14 +62,3 @@ a
 x'
 
 
-
-
-
-
-disp('Gauss elimination methoci:');
-a
-
-
-
-
-
