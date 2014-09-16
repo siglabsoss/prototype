@@ -31,7 +31,7 @@ end
 % the result is the largest peak, minus half (due to properties of xcor), plus the first value of the sparseData vector (because we subtracted this when we built the dense vector)
 result = result - denseSize + sparseData(1);
 
-disp(sprintf('Result %d at %d', result, resultVal));
+disp(sprintf('Result %9.15d at %d', result, resultVal));
 
 
 
