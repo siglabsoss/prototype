@@ -5,8 +5,8 @@ function [ G ] = ldpcpar2gen( H )
 % The generator matrix for a code with parity-check matrix H
 % can be found by performing Gauss-Jordan elimination on H to obtain
 % it in the form
-% H = [A, I(n?k)],
-% where A is a (n ? k) * k binary matrix and I(n?k) is the size n ? k identity
+% H = [A, I(n-k)],
+% where A is a (n-k) * k binary matrix and I(n-k) is the size n - k identity
 % matrix. The generator matrix is then
 % G = [I(k),A^T].
 
