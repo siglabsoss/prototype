@@ -13,9 +13,19 @@ function [ G ] = ldpcpar2gen( H )
 % why not m,n?
 [k,n] = size(H);
 
+% swap left and right
+Hl = H(:,[1:n/2]);
+Hr = H(:,[n/2+1:n]);
+
+Hrl = [Hr,Hl];
+
+Hrr = g2rref(Hrl);
+
+% disp(mat2str(Hrr));
+
 
 % The parity-check matrix is put into reduced row-echelon form
-Hrr = mod(rref(H),2);
+%Hrr = mod(rref(H),2);
 
 % The generator matrix is then G = [I(k),A^T]
 A = Hrr(:,[n-k+1:n]);
