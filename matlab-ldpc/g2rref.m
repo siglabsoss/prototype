@@ -1,28 +1,14 @@
 % This is a modified version of matlab's building rref which calculates
 % row-reduced echelon form in gf(2).  Useful for linear codes.
 % Tolerance was removed because yolo, and because all values
-% should only be 0 or 1
+% should only be 0 or 1.  @benathon
 
-function [A,jb] = g2rref(A)
+function [A] = g2rref(A)
 %G2RREF   Reduced row echelon form in gf(2).
-%   R = RREF(A) produces the reduced row echelon form of A.
-%
-%   [R,jb] = RREF(A) also returns a vector, jb, so that:
-%       r = length(jb) is this algorithm's idea of the rank of A,
-%       x(jb) are the bound variables in a linear system, Ax = b,
-%       A(:,jb) is a basis for the range of A,
-%       R(1:r,jb) is the r-by-r identity matrix.
-%
-%   [R,jb] = RREF(A,TOL) uses the given tolerance in the rank tests.
-%
-%   Roundoff errors may cause this algorithm to compute a different
-%   value for the rank than RANK, ORTH and NULL.
+%   R = RREF(A) produces the reduced row echelon form of A in gf(2).
 %
 %   Class support for input A:
-%      float: double, single
-%
-%   See also RANK, ORTH, NULL, QR, SVD.
-
+%      float: with values 0 or 1
 %   Copyright 1984-2005 The MathWorks, Inc. 
 %   $Revision: 5.9.4.3 $  $Date: 2006/01/18 21:58:54 $
 
@@ -31,13 +17,11 @@ function [A,jb] = g2rref(A)
 % Loop over the entire matrix.
 i = 1;
 j = 1;
-jb = [];
+
 while (i <= m) && (j <= n)
    % Find value and index of largest element in the remainder of column j.
    [~,k] = max(abs(A(i:m,j))); k = k+i-1;
 
-   % Remember column index
-   jb = [jb j];
    % Swap i-th and k-th rows.
    A([i k],j:n) = A([k i],j:n);
    % Divide the pivot row by the pivot element.
