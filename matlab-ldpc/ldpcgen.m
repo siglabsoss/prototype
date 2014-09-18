@@ -2,7 +2,7 @@ function [ H ] = ldpcgen( n, k )
 %LDPCGEN Summary of this function goes here
 %   Detailed explanation goes here
 
-rndstate = [4112460542 4144164702 676943031 2084672537];
+rndstate = [4112460541 4144164702 676943031 2084672537];
 
 width = n;
 height = n-k;
@@ -10,14 +10,14 @@ elements = width*height;
 
 H = zeros(height, width);
 
-onerows = 2;
-onecols = 2;
+onerows = 6;
+onecols = 6;
 
 totalones = onerows*width + onecols*height;
 
 %totalones = 22;
 
-maxretry = 300;
+maxretry = 35;
 
 retry = 0;
 i = 1;
@@ -33,7 +33,11 @@ while i <= totalones
     
     %     disp(sprintf('r: %d x: %d y: %d',r,x, y));
     
-    
+    if( retry > maxretry )
+        disp('Error: too many retries');
+        i = totalones+1;
+        continue;
+    end
     
     if(sum(H(:,x)) >= onecols)
         retry = retry + 1;
@@ -41,17 +45,16 @@ while i <= totalones
         continue;
     end
     
-    if( retry > maxretry )
-        disp('Error: too many retries');
-        i = totalones+1;
-    end
-    
-    % if there are too many ones on this row, try again
+            % if there are too many ones on this row, try again
     if(sum(H(y,:)) >= onerows)
         retry = retry + 1;
         disp(sprintf('bump by row (%d)', i));
         continue;
     end
+    
+
+    
+
     
     
     
@@ -61,23 +64,19 @@ while i <= totalones
 end
 
 % checks
-
-Hrr = g2rref(H);
-
-Hl = Hrr(:,[1:height]);
-
-if( sum(sum(Hl ~= eye(height))) )
-    disp('Parity matrix H cannot be rrefd correctly');
-end
-
-
-G = ldpcpar2gen(H);
-
-gok = mod(G*H',2);
-
-if( sum(gok) ~= 0 )
-    disp('Parity matrix H does not have valid generator G');
-end
+% 
+% Hrr = g2rref(H);
+% Hl = Hrr(:,[1:height]);
+% if( sum(sum(Hl ~= eye(height))) )
+%     disp('Parity matrix H cannot be rrefd correctly');
+% end
+% 
+% 
+% G = ldpcpar2gen(H);
+% gok = mod(G*H',2);
+% if( sum(gok) ~= 0 )
+%     disp('Parity matrix H does not have valid generator G');
+% end
 
 
 
