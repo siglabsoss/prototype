@@ -10,12 +10,18 @@ function [ G ] = ldpcpar2gen( H )
 % matrix. The generator matrix is then
 % G = [I(k),A^T].
 
-% why not m,n?
-[k,n] = size(H);
+% (m,n) size of the matrix
+[height,width] = size(H);
+
+% n is code word bits, k is message bits
+n = width;
+k = n - height;
+
+
 
 % swap left and right
-Hl = H(:,[1:n/2]);
-Hr = H(:,[n/2+1:n]);
+Hl = H(:,[1:n-height]);
+Hr = H(:,[n-height+1:n]);
 
 Hrl = [Hr,Hl];
 
