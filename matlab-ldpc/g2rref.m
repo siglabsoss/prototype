@@ -25,16 +25,22 @@ while (i <= m) && (j <= n)
    % Swap i-th and k-th rows.
    A([i k],j:n) = A([k i],j:n);
    
-   % Save Pivot row
+   % Save the right hand side of the Pivot row
    aijn = A(i,j:n);
+
+   range = [];
    
-   % Subtract multiples of the pivot row from all the other rows.
-   for k = [1:i-1 i+1:m]
-       % Quit early
-       if( ~A(k,j) )
-           continue;
-       end
+   % Column we're looking at
+   col = A(1:m,j);
+   
+   % Never run the 'k' loop on the pivot row
+   col(i) = 0;
+   
+   % Find the remaining 1's in this column
+   range = find(col)';
        
+   % Subtract multiples of the pivot row from all the other rows.
+   for k = range       
        A(k,j:n) = mod(A(k,j:n) - aijn,2);
    end
    
