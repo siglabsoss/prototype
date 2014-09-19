@@ -25,25 +25,21 @@ while (i <= m) && (j <= n)
    % Swap i-th and k-th rows.
    A([i k],j:n) = A([k i],j:n);
    
-   % Save the right hand side of the Pivot row
+   % Save the right hand side of the pivot row
    aijn = A(i,j:n);
-
-   range = [];
    
    % Column we're looking at
    col = A(1:m,j);
    
-   % Never run the 'k' loop on the pivot row
+   % Never Xor the pivot row against itself
    col(i) = 0;
    
-   % Find the remaining 1's in this column
-   range = find(col)';
-       
-   % Subtract multiples of the pivot row from all the other rows.
-   for k = range       
-       A(k,j:n) = mod(A(k,j:n) - aijn,2);
-   end
+   % This builds an matrix of bits to flip
+   flip = col*aijn;
    
+   % Xor the right hand side of the pivot row with all the other rows
+   A(1:m,j:n) = xor( A(1:m,j:n), flip );
+
    i = i + 1;
    j = j + 1;
 end
