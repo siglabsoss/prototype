@@ -12,18 +12,19 @@ height = k;
 
 A = zeros(height, width);
 
-onecols = 100;
+maxonecols = 3;
+minonecols = 2;
 
 i = 1;
 while i <= width
     
     
-    [rndstate,col] = onesrow(2, onecols, i, height, rndstate);
+    [rndstate,col] = onesvector(minonecols, maxonecols, i, height, rndstate);
     
     j = 1;
     [~,onespercol] = size(col);
     while j <= onespercol
-        A(col(j),i) = 1;
+        A((col(j)+1),i) = 1;
         j = j + 1;
     end
 
@@ -57,15 +58,12 @@ end
 
 
 
-function [ state, outputrow ] = onesrow( onerowmin, onesrowmax, row, width, state )
+function [ state, outputrow ] = onesvector( onerowmin, onesrowmax, row, width, state )
 i = 0;
-% use the row index to affect the rng by burning variables
-while i < (mod(row,4)+1)
-    [burn,state] = xor128(state);
-    i = i + 1;
-end
 
-onespercol = mod(burn,onesrowmax-onerowmin) + onerowmin;
+[burn,state] = xor128(state);
+
+onespercol = mod(burn,(onesrowmax-onerowmin+1)) + onerowmin;
 
 %      disp('row')
 
@@ -73,7 +71,7 @@ outputrow = [];
 i = 0;
 while i < onespercol
     [col,state] = xor128(state);
-    col = mod(col, width)+1;
+    col = mod(col, width);
     
     outputrow(end+1)=col;
     %     disp(col);s
