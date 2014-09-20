@@ -69,18 +69,36 @@
 
 
         drawScope(mat);
+        bindMouse();
+    }
+
+    function bindMouse()
+    {
+        $mouse = $('#mouse');
+        sampleSVG.on("mousemove", function () {
+            // wtf sets event object!?
+            var x = event.x - sampleSVG[0][0].offsetLeft;
+            var xcor = fromScreen(x);
+
+            $mouse.val(xcor);
+        });
     }
 
     function toScreen(x)
     {
-        return (x-screenStart) / screenDivider;
+        return parseFloat(x-screenStart) / parseFloat(screenDivider);
+    }
+
+    function fromScreen(x)
+    {
+        return parseFloat(x*screenDivider) + parseFloat(screenStart);
     }
 
 
     function drawScope(mat)
     {
         $('#viz').html('');
-        var sampleSVG = d3.select("#viz")
+        sampleSVG = d3.select("#viz")
                 .append("svg")
                 .attr("width", 8000)
                 .attr("height", 200);
@@ -125,40 +143,6 @@
 
     }
 
-    function drawGraph(mat, m,n,k)
-    {
-        $('#viz').html('');
-        var sampleSVG = d3.select("#viz")
-        .append("svg")
-        .attr("width", 400)
-        .attr("height", Math.max(bitNodes,checkNodes)*100);    
-
-        for( i = 0; i < bitNodes; i++ )
-        {
-            newBitNode(sampleSVG, i);        
-        }
-
-        for( i = 0; i < checkNodes; i++ )
-        {
-            newCheckNode(sampleSVG, i);        
-        }
-
-        $.each(mat, function( rowIndex, row ) {
-            $.each(row, function( colIndex, colVal ) {
-
-                if( colVal === 1 )
-                {
-                    var p1 = getBitCoords(colIndex);
-                    var p2 = getCheckCoords(rowIndex);
-                    drawLine(sampleSVG, p1, p2);
-                }
-            });
-
-        });
-
-    }
-
-
     // start whole chain
     $( document ).ready(function() {
         parseMatrix();
@@ -170,9 +154,11 @@
     </script>
     <!--[0, 1, 2, 7, 8, 13, 21]-->
     <textarea id="matrixtext" rows="10" cols="100">
-    [0, 10, 50]
+[0, 10, 50]
     </textarea><br>
     <input type="text" size="10" id="start"><input type="text" size="5" id="divider" value="10000">
-    <br><button onClick="parseMatrix()" type="button">go (json)</button>
+    <br><button onClick="parseMatrix()" type="button">go (json)</button><br>
+    <br>
+    <input type="text" size="10" id="mouse"> -- mouse
 </body>
 </html>
