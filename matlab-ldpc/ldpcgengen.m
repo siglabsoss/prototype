@@ -1,9 +1,12 @@
 
-function [ G, H ] = ldpcgengen( n, k )
+function [ G, H, valid ] = ldpcgengen( n, k, minonecols, maxonecols, rndstate, silent )
 %LDPCGEN Summary of this function goes here
 %   Detailed explanation goes here
 
-rndstate = [4113462644 4144164702 676943035 2064672539];
+% display(nargin);
+if( nargin < 6 )
+    silent = 0;
+end
 
 % width and height of A, the random area of generator matrix
 width = n-k;
@@ -12,8 +15,6 @@ height = k;
 
 A = zeros(height, width);
 
-maxonecols = 3;
-minonecols = 2;
 
 i = 1;
 while i <= width
@@ -46,17 +47,46 @@ H = [];
 
 H = gen2par(G);
 
+valid = 1;
+
 gok = mod(G*H',2);
 if( sum(sum(gok)) ~= 0 )
-    disp('Parity matrix H does not have valid generator G');
+    if( ~silent )
+        disp('Parity matrix H does not have valid generator G');
+    end
+    valid = 0;
+    return
 end
 
 
 zerocol = sum(G,1);
 
 if( min(zerocol) == 0 )
-    disp('Some columns have no ones');
-    sum(G,1)
+    if( ~silent )
+        disp('Some columns have no ones');
+    end
+    valid = 0;
+    return
+%     sum(G,1)
+end
+
+return
+
+disp('ldpccycle4check');
+
+t = cputime();
+
+cycle4s = ldpccycle4check(H);
+
+e = cputime() - t
+
+if( cycle4s )
+%     if( ~silent )
+        disp('4-cycles were found');
+        cycle4s
+%     end
+%     valid = 0;
+    return
 end
 
 
@@ -67,7 +97,6 @@ end
 
 
 function [ state, outputrow ] = onesvector( onerowmin, onesrowmax, row, width, state )
-i = 0;
 
 [burn,state] = xor128(state);
 
