@@ -15,6 +15,13 @@ height = k;
 
 A = spalloc(height, width, maxonecols*width);
 
+preallocate = maxonecols*width;
+
+buildcol = zeros(1, preallocate);
+buildrow = zeros(1, preallocate);
+
+totalones = 0;
+
 
 i = 1;
 while i <= width
@@ -54,17 +61,33 @@ while i <= width
         j = j + 1;
     end
     
+    buildrow(totalones+1:onespercol+totalones) = col; % confusing but I think its right
+    buildcol(totalones+1:onespercol+totalones) = (ones(1,onespercol)*i);
+    
+    totalones = totalones + onespercol;
+    
     % allocate vertical vector
-    column = spalloc(height, 1, onespercol);
+%     column = spalloc(height, 1, onespercol);
     
     % using the sparce indices stored in col, set those entries to 1
-    column(col) = 1;
+%     column(col) = 1;
     
     % replace A with the column
-    A(:,i) = column;
+%     A(:,i) = column;
 
     i = i + 1;
 end
+
+% trim off extra preallocated zeros
+if( totalones < preallocate )
+    buildrow(totalones+1:preallocate) = [];
+    buildcol(totalones+1:preallocate) = [];
+end
+
+
+% build sparse matrix the correct way
+% http://www.mathworks.com/help/matlab/ref/sparse.html
+A = sparse(buildrow,buildcol,1,height,width);
 
 G = [speye(k) A];
 
