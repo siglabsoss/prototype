@@ -9,7 +9,7 @@ function [ w, state ] = xor128( state )
   w = state(4);
   
   % t1 = (x << 11)
-  t1 = bitand(bitshift(x,11),hex2dec('ffffffff'));
+  t1 = bitand(bitshift(x,11),4294967295);
   
   % t = x ^ (x << 11)
   t = bitxor(x,t1);
