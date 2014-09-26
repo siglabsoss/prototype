@@ -3,7 +3,7 @@ function [ G, H ] = ldpcgengen( n, k )
 %LDPCGEN Summary of this function goes here
 %   Detailed explanation goes here
 
-rndstate = [4113460544 4144164702 676943031 2084672537];
+rndstate = [4113462644 4144164702 676943035 2064672539];
 
 % width and height of A, the random area of generator matrix
 width = n-k;
@@ -24,7 +24,7 @@ while i <= width
     j = 1;
     [~,onespercol] = size(col);
     while j <= onespercol
-        A((col(j)+1),i) = 1;
+        A((col(j)+1),i) = xor(  A((col(j)+1),i), 1);  % returned indices don't force a 1, they xor
         j = j + 1;
     end
 
@@ -49,6 +49,14 @@ H = gen2par(G);
 gok = mod(G*H',2);
 if( sum(sum(gok)) ~= 0 )
     disp('Parity matrix H does not have valid generator G');
+end
+
+
+zerocol = sum(G,1);
+
+if( min(zerocol) == 0 )
+    disp('Some columns have no ones');
+    sum(G,1)
 end
 
 

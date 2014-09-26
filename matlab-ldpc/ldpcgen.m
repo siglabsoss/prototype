@@ -3,7 +3,7 @@ function [ H, G ] = ldpcgen( n, k )
 %LDPCGEN Summary of this function goes here
 %   Detailed explanation goes here
 
-rndstate = [4112460544 4144164702 676943031 2084672537];
+rndstate = [4113460544 4144164702 676943031 2084672537];
 
 width = n;
 height = n-k;
@@ -11,7 +11,7 @@ height = n-k;
 
 H = zeros(height, width);
 
-onerows = 200;
+onerows = 100;
 
 i = 1;
 while i <= height
@@ -33,18 +33,18 @@ G = [];
 
 % checks
 % 
-Hrr = g2rref(H);
-Hl = Hrr(:,[1:height]);
-if( sum(sum(Hl ~= eye(height))) )
-    disp('Parity matrix H cannot be rrefd correctly');
-end
-
-
-G = ldpcpar2gen(H);
-gok = mod(G*H',2);
-if( sum(sum(gok)) ~= 0 )
-    disp('Parity matrix H does not have valid generator G');
-end
+% Hrr = g2rref(H);
+% Hl = Hrr(:,[1:height]);
+% if( sum(sum(Hl ~= eye(height))) )
+%     disp('Parity matrix H cannot be rrefd correctly');
+% end
+% 
+% 
+% G = ldpcpar2gen(H);
+% gok = mod(G*H',2);
+% if( sum(sum(gok)) ~= 0 )
+%     disp('Parity matrix H does not have valid generator G');
+% end
 
 
 
