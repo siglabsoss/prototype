@@ -18,21 +18,21 @@ cycles4 = 0;
 for i = mm-1:-1:0
     
     ind1 = mm-i-1 + 1;
-    r1 = H(ind1,:);
+%     r1 = H(ind1,:);
+    
+    [~, r1ones] = find(H(ind1,:));
     
     for j = 0:i-1
         ind2 = j  + mm-i + 1;
         
-        rowsum = and(r1, H(ind2,:));
         
-        % a vector where any 3's in 'sum' are now a 1.
-        %     threes = (ones(1,nn)*3 == rowsum);
+        rowthrees = nnz(H(ind2,r1ones));
         
-        rowthrees = sum(rowsum);
+        if( rowthrees > 1 )
+            cycles4 = cycles4 + (rowthrees*(rowthrees-1)/2);
+        end
         
-        cycles4 = cycles4 + (rowthrees*(rowthrees-1)/2);
-        
-        if( mod(ri,1000000) == 0 )
+        if( mod(ri,100000) == 0 )
             disp(iterations - ri)
         end
         
