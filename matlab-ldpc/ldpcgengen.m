@@ -12,9 +12,6 @@ end
 width = n-k;
 height = k;
 
-
-A = spalloc(height, width, maxonecols*width);
-
 preallocate = maxonecols*width;
 
 buildcol = zeros(1, preallocate);
@@ -66,15 +63,6 @@ while i <= width
     
     totalones = totalones + onespercol;
     
-    % allocate vertical vector
-%     column = spalloc(height, 1, onespercol);
-    
-    % using the sparce indices stored in col, set those entries to 1
-%     column(col) = 1;
-    
-    % replace A with the column
-%     A(:,i) = column;
-
     i = i + 1;
 end
 
@@ -104,11 +92,13 @@ H = [];
 valid = 1;
 
 
-zerocol = sum(G,1);
+zerocol = sum(A,1);
 
 if( min(zerocol) == 0 )
     if( ~silent )
+        [~,nonzero] = size(find(not(zerocol)));
         disp('Some columns have no ones');
+		nonzero
     end
     valid = 0;
     return

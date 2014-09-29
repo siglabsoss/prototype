@@ -33,7 +33,7 @@ for i = mm-1:-1:0
         end
         
         if( mod(ri,100000) == 0 )
-            disp(iterations - ri)
+            disp(sprintf('%d (%d left)', cycles4, iterations - ri));
         end
         
         
