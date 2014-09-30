@@ -1,24 +1,6 @@
 function [  ] = findCorNoisyPrn( )
 
 
-
-
-
-
-
-%dc = toDense(bestComb);
-%dcNoisy = transmitNoise(dc, 5)
-%nc = toSparse(dcNoisy)
-
-
-% another way to do this
-% a = randperm(2000)
-% b = a(1:500)
-% c = sort(b)
-
-%maxLen = 3548160;
-
-
 timerClock = 48000000;
 baudRate = 18181.8181818;
 countsPerBit = round(timerClock/baudRate);
@@ -35,11 +17,11 @@ oversample = 2;
 % how many noise iterations to try
 testIterations = 5;
 
-pMin = 0.000000001;
-pMax = 0.05;
-
 longestEdge = 6;
 maxLen = 200;
+
+iterations = 0;
+
 
 
 while 1
@@ -47,14 +29,10 @@ while 1
 	% reset array
 	test = [0];
 
-% 	% choose new probability required
-% 	p = (pMax-pMin).*rand(1)+pMin;
-%     
-%     % use int math
-%     p = p * 1000000000;
-    
-    % pick a state
+    % dig a state
     rndstate = randi(4294967295, 1, 4);  % uint32_t max in a 1 by 4 vector
+    
+    rndstateStart = rndstate;
     
     edge = 0;
     
@@ -67,6 +45,9 @@ while 1
         
         test(size(test,2)+1) = edge;
     end
+    
+  
+    score = 0;
 
 
 	% if we have at least one edge
@@ -92,9 +73,10 @@ while 1
 		score = score / testIterations;
 
 		if score < bestScore
+            dispstat('','timestamp');
+            
 			disp(sprintf('Best Score: %f', score));
-% 			disp(sprintf('P used was: %f', p));
-            disp(sprintf('rndstate [%d %d %d %d])', rndstate));
+            disp(sprintf('rndstate %s)', mat2str(rndstateStart)));
 			disp('With values:');
 			disp(mat2str(test));
 			bestScore = score;
@@ -102,8 +84,19 @@ while 1
 
 			% display it
 			%crossCor(test, testNoisySparse, 1);
+            
+            dispstat('','init'); % One time only initialization
+
 		end
-	end
+    end
+    
+    if( mod(iterations,100) == 0 )
+           dispstat(sprintf('Iteration %d score:%f',iterations, score),'timestamp');
+    end
+    
+ 
+    
+    iterations = iterations + 1;
 
 end
 
