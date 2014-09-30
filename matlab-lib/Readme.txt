@@ -1,0 +1,1 @@
+Add this to your matlab path: run "pathtool" matlab command, add this folder.  Click save, click close. run "rehash" command
