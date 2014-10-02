@@ -159,15 +159,21 @@ onespercol = mod(burn,(onesrowmax-onerowmin+1)) + onerowmin;
 
 %      disp('row')
 
+prev = width+1; % impossible value so first pick will never match
+
 outputrow = zeros(1,onespercol);
 i = 0;
 while i < onespercol
     [col,state] = xor128(state);
     col = mod(col, width);
     
-    outputrow(i+1)=col;
-    %     disp(col);s
-    i = i + 1;
+	% ignore sequential picks that are the same
+    if( col ~= prev )
+        outputrow(i+1)=col;
+        i = i + 1;
+    end
+    
+    prev = col;
     
 end
 
