@@ -177,7 +177,8 @@ while i < onespercol
     
 end
 
-% disp(sprintf('ones for row(%d): %d', row, r));
+% disp(sprintf('ones for row(%d):\r\n', row));
+% disp(mat2str(outputrow));
 
 
 
