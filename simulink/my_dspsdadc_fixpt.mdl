@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.104"
+    ComputedModelVersion    "1.112"
     NumModelReferences	    0
     NumTestPointedSignals   13
     TestPointedSignal {
@@ -118,9 +118,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Ben"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Thu Oct 23 21:22:47 2014"
+  LastModifiedDate	  "Thu Oct 23 22:10:36 2014"
   RTWModifiedTimeStamp	  335912450
-  ModelVersionFormat	  "1.%<AutoIncrement:104>"
+  ModelVersionFormat	  "1.%<AutoIncrement:112>"
   ConfigurationManager	  "none"
   SampleTimeColors	  on
   SampleTimeAnnotations	  off
@@ -716,13 +716,6 @@ Model {
       OutPortSampleTime	      "-1"
     }
     Block {
-      BlockType		      "S-Function"
-      FunctionName	      "system"
-      SFunctionModules	      "''"
-      PortCounts	      "[]"
-      SFunctionDeploymentMode off
-    }
-    Block {
       BlockType		      Scope
       ModelBased	      off
       TickLabels	      "OneTimeTick"
@@ -801,7 +794,7 @@ Model {
   }
   System {
     Name		    "my_dspsdadc_fixpt"
-    Location		    [-480, 146, 2226, 942]
+    Location		    [160, 106, 2620, 902]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    212
@@ -815,7 +808,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    52
+    SIDHighWatermark	    188
     Block {
       BlockType		      Signum
       Name		      "1-Bit\nquantizer"
@@ -828,58 +821,6 @@ Model {
 	DataLogging		on
 	DataLoggingNameMode	"SignalName"
       }
-    }
-    Block {
-      BlockType		      Sum
-      Name		      "Add"
-      SID		      31
-      Ports		      [2, 1]
-      Position		      [1205, 322, 1235, 353]
-      InputSameDT	      off
-      OutDataTypeMode	      "Inherit via internal rule"
-      OutDataType	      "fixdt(1, 16)"
-      OutScaling	      "2^-10"
-      OutDataTypeStr	      "Inherit: Inherit via internal rule"
-      SaturateOnIntegerOverflow	off
-    }
-    Block {
-      BlockType		      Sum
-      Name		      "Add1"
-      SID		      33
-      Ports		      [2, 1]
-      Position		      [1465, 332, 1495, 363]
-      InputSameDT	      off
-      OutDataTypeMode	      "Inherit via internal rule"
-      OutDataType	      "fixdt(1, 16)"
-      OutScaling	      "2^-10"
-      OutDataTypeStr	      "Inherit: Inherit via internal rule"
-      SaturateOnIntegerOverflow	off
-    }
-    Block {
-      BlockType		      Sum
-      Name		      "Add2"
-      SID		      37
-      Ports		      [2, 1]
-      Position		      [1705, 342, 1735, 373]
-      InputSameDT	      off
-      OutDataTypeMode	      "Inherit via internal rule"
-      OutDataType	      "fixdt(1, 16)"
-      OutScaling	      "2^-10"
-      OutDataTypeStr	      "Inherit: Inherit via internal rule"
-      SaturateOnIntegerOverflow	off
-    }
-    Block {
-      BlockType		      Sum
-      Name		      "Add3"
-      SID		      42
-      Ports		      [2, 1]
-      Position		      [1965, 357, 1995, 388]
-      InputSameDT	      off
-      OutDataTypeMode	      "Inherit via internal rule"
-      OutDataType	      "fixdt(1, 16)"
-      OutScaling	      "2^-10"
-      OutDataTypeStr	      "Inherit: Inherit via internal rule"
-      SaturateOnIntegerOverflow	off
     }
     Block {
       BlockType		      Reference
@@ -906,21 +847,276 @@ Model {
       }
     }
     Block {
-      BlockType		      Reference
-      Name		      "Analog\nButterworth\nLP Filter1"
-      SID		      46
+      BlockType		      SubSystem
+      Name		      "CIC"
+      SID		      59
       Ports		      [1, 1]
-      Position		      [890, 365, 935, 415]
-      LibraryVersion	      "1.288"
-      SourceBlock	      "dsparch4/Analog\nFilter Design"
-      SourceType	      "Analog Filter Design"
-      method		      "Butterworth"
-      filttype		      "Lowpass"
-      N			      "5"
-      Wlo		      "2*pi*400"
-      Whi		      "80"
-      Rp		      "2"
-      Rs		      "40"
+      Position		      [1240, 695, 1280, 755]
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      RTWSystemCode	      "Auto"
+      FunctionWithSeparateData off
+      Opaque		      off
+      RequestExecContextInheritance off
+      MaskHideContents	      off
+      System {
+	Name			"CIC"
+	Location		[209, 343, 1516, 608]
+	Open			on
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  SID			  60
+	  Position		  [25, 38, 55, 52]
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference"
+	  SID			  57
+	  Ports			  [1, 1]
+	  Position		  [665, 142, 725, 178]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Downsample"
+	  SID			  55
+	  Ports			  [1, 1]
+	  Position		  [575, 143, 610, 177]
+	  LibraryVersion	  "1.673"
+	  SourceBlock		  "dspsigops/Downsample"
+	  SourceType		  "Downsample"
+	  N			  "4"
+	  phase			  "0"
+	  ic			  "0"
+	  smode			  "Allow multirate"
+	  fmode			  "Maintain input frame size"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  SID			  89
+	  Position		  [790, 126, 830, 164]
+	  ShowName		  off
+	  Gain			  "1/4"
+	  ParameterDataType	  "sfix(16)"
+	  ParameterScaling	  "2^0"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay1"
+	  SID			  53
+	  Ports			  [1, 1]
+	  Position		  [275, 28, 310, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay2"
+	  SID			  54
+	  Ports			  [1, 1]
+	  Position		  [410, 138, 445, 172]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay3"
+	  SID			  58
+	  Ports			  [1, 1]
+	  Position		  [345, 28, 380, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay4"
+	  SID			  50
+	  Ports			  [1, 1]
+	  Position		  [90, 28, 125, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay5"
+	  SID			  52
+	  Ports			  [1, 1]
+	  Position		  [175, 28, 210, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  51
+	  Ports			  [5, 1]
+	  Position		  [340, 105, 380, 145]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "++++||+"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  SID			  61
+	  Position		  [920, 153, 950, 167]
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  SrcBlock		  "Integer Delay4"
+	  SrcPort		  1
+	  Points		  [10, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay5"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 80]
+	    DstBlock		    "Sum1"
+	    DstPort		    4
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay5"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 63]
+	    DstBlock		    "Sum1"
+	    DstPort		    3
+	  }
+	}
+	Line {
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  Points		  [0, 10]
+	  Branch {
+	    Points		    [0, -10; 175, 0]
+	    DstBlock		    "Downsample"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 20]
+	    DstBlock		    "Integer Delay2"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Downsample"
+	  SrcPort		  1
+	  DstBlock		  "Difference"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Integer Delay2"
+	  SrcPort		  1
+	  Points		  [0, 85; -90, 0]
+	  DstBlock		  "Sum1"
+	  DstPort		  5
+	}
+	Line {
+	  SrcBlock		  "Integer Delay1"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay3"
+	    DstPort		    1
+	  }
+	  Branch {
+	    DstBlock		    "Sum1"
+	    DstPort		    2
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay3"
+	  SrcPort		  1
+	  Points		  [40, 0; 0, 45]
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "Integer Delay4"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, -15]
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  Points		  [35, 0; 0, 15]
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+      }
     }
     Block {
       BlockType		      Reference
@@ -957,6 +1153,550 @@ Model {
       }
     }
     Block {
+      BlockType		      SubSystem
+      Name		      "CIC1"
+      SID		      155
+      Ports		      [1, 1]
+      Position		      [1310, 720, 1350, 780]
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      RTWSystemCode	      "Auto"
+      FunctionWithSeparateData off
+      Opaque		      off
+      RequestExecContextInheritance off
+      MaskHideContents	      off
+      System {
+	Name			"CIC1"
+	Location		[209, 343, 1516, 608]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  SID			  156
+	  Position		  [25, 38, 55, 52]
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference"
+	  SID			  157
+	  Ports			  [1, 1]
+	  Position		  [665, 142, 725, 178]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Downsample"
+	  SID			  158
+	  Ports			  [1, 1]
+	  Position		  [575, 143, 610, 177]
+	  LibraryVersion	  "1.673"
+	  SourceBlock		  "dspsigops/Downsample"
+	  SourceType		  "Downsample"
+	  N			  "4"
+	  phase			  "0"
+	  ic			  "0"
+	  smode			  "Allow multirate"
+	  fmode			  "Maintain input frame size"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  SID			  159
+	  Position		  [790, 126, 830, 164]
+	  ShowName		  off
+	  Gain			  "1/4"
+	  ParameterDataType	  "sfix(16)"
+	  ParameterScaling	  "2^0"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay1"
+	  SID			  160
+	  Ports			  [1, 1]
+	  Position		  [275, 28, 310, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay2"
+	  SID			  161
+	  Ports			  [1, 1]
+	  Position		  [410, 138, 445, 172]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay3"
+	  SID			  162
+	  Ports			  [1, 1]
+	  Position		  [345, 28, 380, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay4"
+	  SID			  163
+	  Ports			  [1, 1]
+	  Position		  [90, 28, 125, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay5"
+	  SID			  164
+	  Ports			  [1, 1]
+	  Position		  [175, 28, 210, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  165
+	  Ports			  [5, 1]
+	  Position		  [340, 105, 380, 145]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "++++||+"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  SID			  166
+	  Position		  [920, 153, 950, 167]
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  SrcBlock		  "Integer Delay4"
+	  SrcPort		  1
+	  Points		  [10, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay5"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 80]
+	    DstBlock		    "Sum1"
+	    DstPort		    4
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay5"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 63]
+	    DstBlock		    "Sum1"
+	    DstPort		    3
+	  }
+	}
+	Line {
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  Points		  [0, 10]
+	  Branch {
+	    Points		    [0, -10; 175, 0]
+	    DstBlock		    "Downsample"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 20]
+	    DstBlock		    "Integer Delay2"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Downsample"
+	  SrcPort		  1
+	  DstBlock		  "Difference"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Integer Delay2"
+	  SrcPort		  1
+	  Points		  [0, 85; -90, 0]
+	  DstBlock		  "Sum1"
+	  DstPort		  5
+	}
+	Line {
+	  SrcBlock		  "Integer Delay1"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay3"
+	    DstPort		    1
+	  }
+	  Branch {
+	    DstBlock		    "Sum1"
+	    DstPort		    2
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay3"
+	  SrcPort		  1
+	  Points		  [40, 0; 0, 45]
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "Integer Delay4"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, -15]
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  Points		  [35, 0; 0, 15]
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "CIC2"
+      SID		      167
+      Ports		      [1, 1]
+      Position		      [1415, 710, 1455, 770]
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      RTWSystemCode	      "Auto"
+      FunctionWithSeparateData off
+      Opaque		      off
+      RequestExecContextInheritance off
+      MaskHideContents	      off
+      System {
+	Name			"CIC2"
+	Location		[209, 343, 1516, 608]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  SID			  168
+	  Position		  [25, 38, 55, 52]
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference"
+	  SID			  169
+	  Ports			  [1, 1]
+	  Position		  [665, 142, 725, 178]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Downsample"
+	  SID			  170
+	  Ports			  [1, 1]
+	  Position		  [575, 143, 610, 177]
+	  LibraryVersion	  "1.673"
+	  SourceBlock		  "dspsigops/Downsample"
+	  SourceType		  "Downsample"
+	  N			  "4"
+	  phase			  "0"
+	  ic			  "0"
+	  smode			  "Allow multirate"
+	  fmode			  "Maintain input frame size"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "Gain"
+	  SID			  171
+	  Position		  [790, 126, 830, 164]
+	  ShowName		  off
+	  Gain			  "1/4"
+	  ParameterDataType	  "sfix(16)"
+	  ParameterScaling	  "2^0"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay1"
+	  SID			  172
+	  Ports			  [1, 1]
+	  Position		  [275, 28, 310, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay2"
+	  SID			  173
+	  Ports			  [1, 1]
+	  Position		  [410, 138, 445, 172]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay3"
+	  SID			  174
+	  Ports			  [1, 1]
+	  Position		  [345, 28, 380, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay4"
+	  SID			  175
+	  Ports			  [1, 1]
+	  Position		  [90, 28, 125, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay5"
+	  SID			  176
+	  Ports			  [1, 1]
+	  Position		  [175, 28, 210, 62]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  177
+	  Ports			  [5, 1]
+	  Position		  [340, 105, 380, 145]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "++++||+"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  SID			  178
+	  Position		  [920, 153, 950, 167]
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  SrcBlock		  "Integer Delay4"
+	  SrcPort		  1
+	  Points		  [10, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay5"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 80]
+	    DstBlock		    "Sum1"
+	    DstPort		    4
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay5"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 63]
+	    DstBlock		    "Sum1"
+	    DstPort		    3
+	  }
+	}
+	Line {
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  Points		  [0, 10]
+	  Branch {
+	    Points		    [0, -10; 175, 0]
+	    DstBlock		    "Downsample"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 20]
+	    DstBlock		    "Integer Delay2"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Downsample"
+	  SrcPort		  1
+	  DstBlock		  "Difference"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Integer Delay2"
+	  SrcPort		  1
+	  Points		  [0, 85; -90, 0]
+	  DstBlock		  "Sum1"
+	  DstPort		  5
+	}
+	Line {
+	  SrcBlock		  "Integer Delay1"
+	  SrcPort		  1
+	  Points		  [5, 0]
+	  Branch {
+	    DstBlock		    "Integer Delay3"
+	    DstPort		    1
+	  }
+	  Branch {
+	    DstBlock		    "Sum1"
+	    DstPort		    2
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay3"
+	  SrcPort		  1
+	  Points		  [40, 0; 0, 45]
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "Integer Delay4"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, -15]
+	  DstBlock		  "Gain"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Gain"
+	  SrcPort		  1
+	  Points		  [35, 0; 0, 15]
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
       BlockType		      DataTypeConversion
       Name		      "Data Type Conversion"
       SID		      4
@@ -974,87 +1714,6 @@ Model {
 	DataLogging		on
 	DataLoggingNameMode	"SignalName"
       }
-    }
-    Block {
-      BlockType		      "S-Function"
-      Name		      "Downsample"
-      SID		      32
-      Ports		      [1, 1]
-      Position		      [1275, 323, 1310, 357]
-      AncestorBlock	      "dspsigops/Downsample"
-      LibraryVersion	      "1.673"
-      FunctionName	      "sdspdsamp2"
-      Parameters	      "N,phase,ic,smode,fmode"
-      EnableBusSupport	      off
-      MaskType		      "Downsample"
-      MaskDescription	      "Downsample by an integer  factor.  Optional sample offset must be an integer value in ran"
-      "ge (0, K-1)."
-      MaskHelp		      "eval('blocksethelp');"
-      MaskPromptString	      "Downsample factor, K:|Sample offset (0 to K-1):|Initial condition:|Sample-based mode:|Fr"
-      "ame-based mode:"
-      MaskStyleString	      "edit,edit,edit,popup(Allow multirate|Force single rate),popup(Maintain input frame size|M"
-      "aintain input frame rate)"
-      MaskTunableValueString  "off,off,off,off,off"
-      MaskCallbackString      "||||"
-      MaskEnableString	      "on,on,on,on,on"
-      MaskVisibilityString    "on,on,on,on,on"
-      MaskToolTipString	      "on,on,on,on,on"
-      MaskVariables	      "N=@1;phase=@2;ic=@3;smode=@4;fmode=@5;"
-      MaskInitialization      "NValue = get_param(gcbh, 'N');\n[s,x,y] = dspblkdsamp2('icon',N, NValue);"
-      MaskDisplay	      "plot(x,y);\ntext(.6,.4,s);"
-      MaskSelfModifiable      on
-      MaskIconFrame	      on
-      MaskIconOpaque	      on
-      MaskIconRotate	      "none"
-      MaskPortRotate	      "default"
-      MaskIconUnits	      "autoscale"
-      MaskValueString	      "2|0|0|Allow multirate|Maintain input frame size"
-      MaskCapabilities	      "dspmaskedcaps(gcbh)"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Downsample1"
-      SID		      36
-      Ports		      [1, 1]
-      Position		      [1530, 333, 1565, 367]
-      LibraryVersion	      "1.673"
-      SourceBlock	      "dspsigops/Downsample"
-      SourceType	      "Downsample"
-      N			      "2"
-      phase		      "0"
-      ic		      "0"
-      smode		      "Allow multirate"
-      fmode		      "Maintain input frame size"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Downsample2"
-      SID		      38
-      Ports		      [1, 1]
-      Position		      [1775, 343, 1810, 377]
-      LibraryVersion	      "1.673"
-      SourceBlock	      "dspsigops/Downsample"
-      SourceType	      "Downsample"
-      N			      "2"
-      phase		      "0"
-      ic		      "0"
-      smode		      "Allow multirate"
-      fmode		      "Maintain input frame size"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Downsample3"
-      SID		      43
-      Ports		      [1, 1]
-      Position		      [2035, 358, 2070, 392]
-      LibraryVersion	      "1.673"
-      SourceBlock	      "dspsigops/Downsample"
-      SourceType	      "Downsample"
-      N			      "2"
-      phase		      "0"
-      ic		      "0"
-      smode		      "Allow multirate"
-      fmode		      "Maintain input frame size"
     }
     Block {
       BlockType		      Gain
@@ -1079,46 +1738,10 @@ Model {
     Block {
       BlockType		      Gain
       Name		      "Gain1"
-      SID		      29
-      Position		      [1090, 311, 1130, 349]
+      SID		      179
+      Position		      [1630, 456, 1670, 494]
       ShowName		      off
-      Gain		      "1/2"
-      ParameterDataType	      "sfix(16)"
-      ParameterScaling	      "2^0"
-      OutDataType	      "sfix(16)"
-      OutScaling	      "2^0"
-    }
-    Block {
-      BlockType		      Gain
-      Name		      "Gain2"
-      SID		      34
-      Position		      [1350, 321, 1390, 359]
-      ShowName		      off
-      Gain		      "1/2"
-      ParameterDataType	      "sfix(16)"
-      ParameterScaling	      "2^0"
-      OutDataType	      "sfix(16)"
-      OutScaling	      "2^0"
-    }
-    Block {
-      BlockType		      Gain
-      Name		      "Gain3"
-      SID		      39
-      Position		      [1590, 331, 1630, 369]
-      ShowName		      off
-      Gain		      "1/2"
-      ParameterDataType	      "sfix(16)"
-      ParameterScaling	      "2^0"
-      OutDataType	      "sfix(16)"
-      OutScaling	      "2^0"
-    }
-    Block {
-      BlockType		      Gain
-      Name		      "Gain4"
-      SID		      44
-      Position		      [1850, 346, 1890, 384]
-      ShowName		      off
-      Gain		      "1/2"
+      Gain		      "1/(64*4096)"
       ParameterDataType	      "sfix(16)"
       ParameterScaling	      "2^0"
       OutDataType	      "sfix(16)"
@@ -1142,84 +1765,6 @@ Model {
       RTWMemSecDataConstants  "Inherit from model"
       RTWMemSecDataInternal   "Inherit from model"
       RTWMemSecDataParameters "Inherit from model"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Integer Delay"
-      SID		      30
-      Ports		      [1, 1]
-      Position		      [1125, 373, 1160, 407]
-      LibraryVersion	      "1.216"
-      SourceBlock	      "simulink/Discrete/Integer Delay"
-      SourceType	      "Integer Delay"
-      vinit		      "0.0"
-      samptime		      "-1"
-      NumDelays		      "1"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Integer Delay1"
-      SID		      35
-      Ports		      [1, 1]
-      Position		      [1385, 383, 1420, 417]
-      LibraryVersion	      "1.216"
-      SourceBlock	      "simulink/Discrete/Integer Delay"
-      SourceType	      "Integer Delay"
-      vinit		      "0.0"
-      samptime		      "-1"
-      NumDelays		      "1"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Integer Delay2"
-      SID		      40
-      Ports		      [1, 1]
-      Position		      [1625, 393, 1660, 427]
-      LibraryVersion	      "1.216"
-      SourceBlock	      "simulink/Discrete/Integer Delay"
-      SourceType	      "Integer Delay"
-      vinit		      "0.0"
-      samptime		      "-1"
-      NumDelays		      "1"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Integer Delay3"
-      SID		      45
-      Ports		      [1, 1]
-      Position		      [1885, 408, 1920, 442]
-      LibraryVersion	      "1.216"
-      SourceBlock	      "simulink/Discrete/Integer Delay"
-      SourceType	      "Integer Delay"
-      vinit		      "0.0"
-      samptime		      "-1"
-      NumDelays		      "1"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Integer Delay4"
-      SID		      50
-      Ports		      [1, 1]
-      Position		      [985, 573, 1020, 607]
-      LibraryVersion	      "1.216"
-      SourceBlock	      "simulink/Discrete/Integer Delay"
-      SourceType	      "Integer Delay"
-      vinit		      "0.0"
-      samptime		      "-1"
-      NumDelays		      "1"
-    }
-    Block {
-      BlockType		      Reference
-      Name		      "Integer Delay5"
-      SID		      52
-      Ports		      [1, 1]
-      Position		      [1070, 573, 1105, 607]
-      LibraryVersion	      "1.216"
-      SourceBlock	      "simulink/Discrete/Integer Delay"
-      SourceType	      "Integer Delay"
-      vinit		      "0.0"
-      samptime		      "-1"
-      NumDelays		      "1"
     }
     Block {
       BlockType		      Integrator
@@ -1251,6 +1796,13 @@ Model {
       }
     }
     Block {
+      BlockType		      TransportDelay
+      Name		      "Multistage CIC\nProcessing Delay1"
+      SID		      181
+      Position		      [1910, 425, 1940, 455]
+      DelayTime		      "1/10100"
+    }
+    Block {
       BlockType		      RateTransition
       Name		      "Rate Transition"
       SID		      28
@@ -1266,13 +1818,37 @@ Model {
     }
     Block {
       BlockType		      Scope
+      Name		      "Scope"
+      SID		      118
+      Ports		      [3]
+      Position		      [2045, 588, 2075, 622]
+      Floating		      off
+      Location		      [2832, 226, 3617, 804]
+      Open		      on
+      NumInputPorts	      "3"
+      ZoomMode		      "xonly"
+      List {
+	ListType		AxesTitles
+	axes1			"%<SignalLabel>"
+	axes2			"%<SignalLabel>"
+	axes3			"%<SignalLabel>"
+      }
+      YMin		      "-5~-5~-5"
+      YMax		      "5~5~5"
+      SaveName		      "ScopeData1"
+      DataFormat	      "StructureWithTime"
+      LimitDataPoints	      off
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      Scope
       Name		      "Scope1"
       SID		      9
       Ports		      [3]
       Position		      [1240, 118, 1275, 222]
       Floating		      off
-      Location		      [656, 196, 1520, 614]
-      Open		      on
+      Location		      [606, 443, 1470, 861]
+      Open		      off
       NumInputPorts	      "3"
       ZoomMode		      "xonly"
       List {
@@ -1296,7 +1872,7 @@ Model {
       Ports		      [3]
       Position		      [800, 448, 830, 482]
       Floating		      off
-      Location		      [134, 153, 1816, 891]
+      Location		      [1573, 311, 3255, 1049]
       Open		      off
       NumInputPorts	      "3"
       ZoomMode		      "xonly"
@@ -1327,6 +1903,518 @@ Model {
       Samples		      "10000"
       Offset		      "0"
       SampleTime	      "1/(512*1024)"
+    }
+    Block {
+      BlockType		      Reference
+      Name		      "Spectrum\nScope1"
+      SID		      188
+      Ports		      [1]
+      Position		      [2225, 530, 2260, 580]
+      LibraryVersion	      "1.458"
+      DialogController	      "dspdialog.SpectrumScope"
+      DialogControllerArgs    "DataTag1"
+      SourceBlock	      "dspsnks4/Spectrum\nScope"
+      SourceType	      "Spectrum Scope"
+      ShowPortLabels	      "none"
+      SystemSampleTime	      "-1"
+      FunctionWithSeparateData off
+      RTWMemSecFuncInitTerm   "Inherit from model"
+      RTWMemSecFuncExecute    "Inherit from model"
+      RTWMemSecDataConstants  "Inherit from model"
+      RTWMemSecDataInternal   "Inherit from model"
+      RTWMemSecDataParameters "Inherit from model"
+      ScopeProperties	      on
+      Domain		      "Frequency"
+      HorizSpan		      "1"
+      UseBuffer		      on
+      BufferSize	      "128"
+      Overlap		      "64"
+      inpFftLenInherit	      off
+      FFTlength		      "4096"
+      numAvg		      "2"
+      DisplayProperties	      off
+      AxisGrid		      on
+      Memory		      off
+      FrameNumber	      on
+      AxisLegend	      off
+      AxisZoom		      off
+      OpenScopeAtSimStart     on
+      OpenScopeImmediately    off
+      FigPos		      "get(0,'defaultfigureposition')"
+      AxisProperties	      off
+      XUnits		      "Hertz"
+      XRange		      "Two-sided ((-Fs/2...Fs/2])"
+      XDisplay		      "0"
+      InheritXIncr	      on
+      XIncr		      "1.0"
+      XLabel		      "Samples"
+      XLimit		      "Auto"
+      YUnits		      "dBW/Hertz"
+      XMax		      "1"
+      XMin		      "0"
+      YMin		      "-100"
+      YMax		      "100"
+      YLabel		      "Magnitude-squared, dB"
+      LineProperties	      off
+      wintypeSpecScope	      "Hann"
+      RsSpecScope	      "50"
+      betaSpecScope	      "5"
+      winsampSpecScope	      "Periodic"
+      XAxisParamsVer	      "6.9"
+    }
+    Block {
+      BlockType		      Reference
+      Name		      "Spectrum\nScope2"
+      SID		      185
+      Ports		      [1]
+      Position		      [2140, 405, 2175, 455]
+      LibraryVersion	      "1.458"
+      DialogController	      "dspdialog.SpectrumScope"
+      DialogControllerArgs    "DataTag2"
+      SourceBlock	      "dspsnks4/Spectrum\nScope"
+      SourceType	      "Spectrum Scope"
+      ShowPortLabels	      "none"
+      SystemSampleTime	      "-1"
+      FunctionWithSeparateData off
+      RTWMemSecFuncInitTerm   "Inherit from model"
+      RTWMemSecFuncExecute    "Inherit from model"
+      RTWMemSecDataConstants  "Inherit from model"
+      RTWMemSecDataInternal   "Inherit from model"
+      RTWMemSecDataParameters "Inherit from model"
+      ScopeProperties	      on
+      Domain		      "Frequency"
+      HorizSpan		      "1"
+      UseBuffer		      on
+      BufferSize	      "128"
+      Overlap		      "64"
+      inpFftLenInherit	      off
+      FFTlength		      "4096"
+      numAvg		      "2"
+      DisplayProperties	      off
+      AxisGrid		      on
+      Memory		      off
+      FrameNumber	      on
+      AxisLegend	      off
+      AxisZoom		      off
+      OpenScopeAtSimStart     on
+      OpenScopeImmediately    off
+      FigPos		      "get(0,'defaultfigureposition')"
+      AxisProperties	      off
+      XUnits		      "Hertz"
+      XRange		      "Two-sided ((-Fs/2...Fs/2])"
+      XDisplay		      "0"
+      InheritXIncr	      on
+      XIncr		      "1.0"
+      XLabel		      "Samples"
+      XLimit		      "Auto"
+      YUnits		      "dBW/Hertz"
+      XMax		      "1"
+      XMin		      "0"
+      YMin		      "-100"
+      YMax		      "100"
+      YLabel		      "Magnitude-squared, dB"
+      LineProperties	      off
+      wintypeSpecScope	      "Hann"
+      RsSpecScope	      "50"
+      betaSpecScope	      "5"
+      winsampSpecScope	      "Periodic"
+      XAxisParamsVer	      "6.9"
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Subsystem"
+      SID		      120
+      Ports		      [1, 1]
+      Position		      [1310, 535, 1350, 595]
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      RTWSystemCode	      "Auto"
+      FunctionWithSeparateData off
+      Opaque		      off
+      RequestExecContextInheritance off
+      MaskHideContents	      off
+      System {
+	Name			"Subsystem"
+	Location		[344, 340, 1714, 550]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  SID			  121
+	  Position		  [25, 88, 55, 102]
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference"
+	  SID			  114
+	  Ports			  [1, 1]
+	  Position		  [895, 82, 955, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference1"
+	  SID			  115
+	  Ports			  [1, 1]
+	  Position		  [1005, 82, 1065, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference2"
+	  SID			  116
+	  Ports			  [1, 1]
+	  Position		  [1120, 82, 1180, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference3"
+	  SID			  117
+	  Ports			  [1, 1]
+	  Position		  [1230, 82, 1290, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Downsample"
+	  SID			  119
+	  Ports			  [1, 1]
+	  Position		  [795, 28, 830, 62]
+	  LibraryVersion	  "1.673"
+	  SourceBlock		  "dspsigops/Downsample"
+	  SourceType		  "Downsample"
+	  N			  "4"
+	  phase			  "0"
+	  ic			  "0"
+	  smode			  "Allow multirate"
+	  fmode			  "Maintain input frame size"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay1"
+	  SID			  108
+	  Ports			  [1, 1]
+	  Position		  [325, 108, 360, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay2"
+	  SID			  103
+	  Ports			  [1, 1]
+	  Position		  [160, 108, 195, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay3"
+	  SID			  110
+	  Ports			  [1, 1]
+	  Position		  [720, 108, 755, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay4"
+	  SID			  111
+	  Ports			  [1, 1]
+	  Position		  [555, 108, 590, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  107
+	  Ports			  [2, 1]
+	  Position		  [90, 75, 130, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum3"
+	  SID			  109
+	  Ports			  [2, 1]
+	  Position		  [255, 75, 295, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum4"
+	  SID			  112
+	  Ports			  [2, 1]
+	  Position		  [485, 75, 525, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum5"
+	  SID			  113
+	  Ports			  [2, 1]
+	  Position		  [650, 75, 690, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  SID			  122
+	  Position		  [1315, 93, 1345, 107]
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  Points		  [0, 20]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Integer Delay2"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -20]
+	    DstBlock		    "Sum3"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay2"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum1"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum3"
+	  SrcPort		  1
+	  Points		  [0, 15]
+	  Branch {
+	    Points		    [0, 15]
+	    DstBlock		    "Integer Delay1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -15]
+	    DstBlock		    "Sum4"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay1"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum3"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum4"
+	  SrcPort		  1
+	  Points		  [0, 20]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Integer Delay4"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -20]
+	    DstBlock		    "Sum5"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay4"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum4"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum5"
+	  SrcPort		  1
+	  Points		  [0, 5]
+	  Branch {
+	    Points		    [0, 25]
+	    DstBlock		    "Integer Delay3"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -55]
+	    DstBlock		    "Downsample"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay3"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum5"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Difference"
+	  SrcPort		  1
+	  DstBlock		  "Difference1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference1"
+	  SrcPort		  1
+	  DstBlock		  "Difference2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference2"
+	  SrcPort		  1
+	  DstBlock		  "Difference3"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Downsample"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 55]
+	  DstBlock		  "Difference"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference3"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+      }
     }
     Block {
       BlockType		      SubSystem
@@ -1459,6 +2547,798 @@ Model {
       }
     }
     Block {
+      BlockType		      SubSystem
+      Name		      "Subsystem2"
+      SID		      123
+      Ports		      [1, 1]
+      Position		      [1385, 570, 1425, 630]
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      RTWSystemCode	      "Auto"
+      FunctionWithSeparateData off
+      Opaque		      off
+      RequestExecContextInheritance off
+      MaskHideContents	      off
+      System {
+	Name			"Subsystem2"
+	Location		[734, 617, 2104, 827]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  SID			  124
+	  Position		  [25, 88, 55, 102]
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference"
+	  SID			  125
+	  Ports			  [1, 1]
+	  Position		  [895, 82, 955, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference1"
+	  SID			  126
+	  Ports			  [1, 1]
+	  Position		  [1005, 82, 1065, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference2"
+	  SID			  127
+	  Ports			  [1, 1]
+	  Position		  [1120, 82, 1180, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference3"
+	  SID			  128
+	  Ports			  [1, 1]
+	  Position		  [1230, 82, 1290, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Downsample"
+	  SID			  129
+	  Ports			  [1, 1]
+	  Position		  [795, 28, 830, 62]
+	  LibraryVersion	  "1.673"
+	  SourceBlock		  "dspsigops/Downsample"
+	  SourceType		  "Downsample"
+	  N			  "4"
+	  phase			  "0"
+	  ic			  "0"
+	  smode			  "Allow multirate"
+	  fmode			  "Maintain input frame size"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay1"
+	  SID			  130
+	  Ports			  [1, 1]
+	  Position		  [325, 108, 360, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay2"
+	  SID			  131
+	  Ports			  [1, 1]
+	  Position		  [160, 108, 195, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay3"
+	  SID			  132
+	  Ports			  [1, 1]
+	  Position		  [720, 108, 755, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay4"
+	  SID			  133
+	  Ports			  [1, 1]
+	  Position		  [555, 108, 590, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  134
+	  Ports			  [2, 1]
+	  Position		  [90, 75, 130, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum3"
+	  SID			  135
+	  Ports			  [2, 1]
+	  Position		  [255, 75, 295, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum4"
+	  SID			  136
+	  Ports			  [2, 1]
+	  Position		  [485, 75, 525, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum5"
+	  SID			  137
+	  Ports			  [2, 1]
+	  Position		  [650, 75, 690, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  SID			  138
+	  Position		  [1315, 93, 1345, 107]
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  Points		  [0, 20]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Integer Delay2"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -20]
+	    DstBlock		    "Sum3"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay2"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum1"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum3"
+	  SrcPort		  1
+	  Points		  [0, 15]
+	  Branch {
+	    Points		    [0, 15]
+	    DstBlock		    "Integer Delay1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -15]
+	    DstBlock		    "Sum4"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay1"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum3"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum4"
+	  SrcPort		  1
+	  Points		  [0, 20]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Integer Delay4"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -20]
+	    DstBlock		    "Sum5"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay4"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum4"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum5"
+	  SrcPort		  1
+	  Points		  [0, 5]
+	  Branch {
+	    Points		    [0, 25]
+	    DstBlock		    "Integer Delay3"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -55]
+	    DstBlock		    "Downsample"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay3"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum5"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Difference"
+	  SrcPort		  1
+	  DstBlock		  "Difference1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference1"
+	  SrcPort		  1
+	  DstBlock		  "Difference2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference2"
+	  SrcPort		  1
+	  DstBlock		  "Difference3"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Downsample"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 55]
+	  DstBlock		  "Difference"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference3"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Subsystem3"
+      SID		      139
+      Ports		      [1, 1]
+      Position		      [1515, 570, 1555, 630]
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      RTWSystemCode	      "Auto"
+      FunctionWithSeparateData off
+      Opaque		      off
+      RequestExecContextInheritance off
+      MaskHideContents	      off
+      System {
+	Name			"Subsystem3"
+	Location		[734, 617, 2104, 827]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	Block {
+	  BlockType		  Inport
+	  Name			  "In1"
+	  SID			  140
+	  Position		  [25, 88, 55, 102]
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference"
+	  SID			  141
+	  Ports			  [1, 1]
+	  Position		  [895, 82, 955, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference1"
+	  SID			  142
+	  Ports			  [1, 1]
+	  Position		  [1005, 82, 1065, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference2"
+	  SID			  143
+	  Ports			  [1, 1]
+	  Position		  [1120, 82, 1180, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Difference3"
+	  SID			  144
+	  Ports			  [1, 1]
+	  Position		  [1230, 82, 1290, 118]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Difference"
+	  SourceType		  "Difference"
+	  ShowPortLabels	  "FromPortIcon"
+	  SystemSampleTime	  "-1"
+	  FunctionWithSeparateData off
+	  RTWMemSecFuncInitTerm	  "Inherit from model"
+	  RTWMemSecFuncExecute	  "Inherit from model"
+	  RTWMemSecDataConstants  "Inherit from model"
+	  RTWMemSecDataInternal	  "Inherit from model"
+	  RTWMemSecDataParameters "Inherit from model"
+	  ICPrevInput		  "0.0"
+	  OutMin		  "[]"
+	  OutMax		  "[]"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutputDataTypeScalingMode "Inherit via internal rule"
+	  OutDataType		  "fixdt(1, 16)"
+	  OutScaling		  "2^-10"
+	  LockScale		  off
+	  RndMeth		  "Floor"
+	  DoSatur		  off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Downsample"
+	  SID			  145
+	  Ports			  [1, 1]
+	  Position		  [795, 28, 830, 62]
+	  LibraryVersion	  "1.673"
+	  SourceBlock		  "dspsigops/Downsample"
+	  SourceType		  "Downsample"
+	  N			  "4"
+	  phase			  "0"
+	  ic			  "0"
+	  smode			  "Allow multirate"
+	  fmode			  "Maintain input frame size"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay1"
+	  SID			  146
+	  Ports			  [1, 1]
+	  Position		  [325, 108, 360, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay2"
+	  SID			  147
+	  Ports			  [1, 1]
+	  Position		  [160, 108, 195, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay3"
+	  SID			  148
+	  Ports			  [1, 1]
+	  Position		  [720, 108, 755, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Integer Delay4"
+	  SID			  149
+	  Ports			  [1, 1]
+	  Position		  [555, 108, 590, 142]
+	  LibraryVersion	  "1.216"
+	  SourceBlock		  "simulink/Discrete/Integer Delay"
+	  SourceType		  "Integer Delay"
+	  vinit			  "0.0"
+	  samptime		  "-1"
+	  NumDelays		  "1"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum1"
+	  SID			  150
+	  Ports			  [2, 1]
+	  Position		  [90, 75, 130, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum3"
+	  SID			  151
+	  Ports			  [2, 1]
+	  Position		  [255, 75, 295, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum4"
+	  SID			  152
+	  Ports			  [2, 1]
+	  Position		  [485, 75, 525, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Sum5"
+	  SID			  153
+	  Ports			  [2, 1]
+	  Position		  [650, 75, 690, 115]
+	  ShowName		  off
+	  IconShape		  "round"
+	  Inputs		  "|++"
+	  OutDataType		  "sfix(16)"
+	  OutScaling		  "2^0"
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "Out1"
+	  SID			  154
+	  Position		  [1315, 93, 1345, 107]
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  SrcBlock		  "Sum1"
+	  SrcPort		  1
+	  Points		  [0, 20]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Integer Delay2"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -20]
+	    DstBlock		    "Sum3"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay2"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum1"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum3"
+	  SrcPort		  1
+	  Points		  [0, 15]
+	  Branch {
+	    Points		    [0, 15]
+	    DstBlock		    "Integer Delay1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -15]
+	    DstBlock		    "Sum4"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay1"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum3"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum4"
+	  SrcPort		  1
+	  Points		  [0, 20]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Integer Delay4"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -20]
+	    DstBlock		    "Sum5"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay4"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum4"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Sum5"
+	  SrcPort		  1
+	  Points		  [0, 5]
+	  Branch {
+	    Points		    [0, 25]
+	    DstBlock		    "Integer Delay3"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, -55]
+	    DstBlock		    "Downsample"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  SrcBlock		  "Integer Delay3"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 60; -110, 0]
+	  DstBlock		  "Sum5"
+	  DstPort		  2
+	}
+	Line {
+	  SrcBlock		  "Difference"
+	  SrcPort		  1
+	  DstBlock		  "Difference1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference1"
+	  SrcPort		  1
+	  DstBlock		  "Difference2"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference2"
+	  SrcPort		  1
+	  DstBlock		  "Difference3"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Downsample"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 55]
+	  DstBlock		  "Difference"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "Sum1"
+	  DstPort		  1
+	}
+	Line {
+	  SrcBlock		  "Difference3"
+	  SrcPort		  1
+	  DstBlock		  "Out1"
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
       BlockType		      Sum
       Name		      "Sum"
       SID		      16
@@ -1480,14 +3360,18 @@ Model {
     Block {
       BlockType		      Sum
       Name		      "Sum1"
-      SID		      51
-      Ports		      [5, 1]
-      Position		      [1235, 650, 1275, 690]
+      SID		      180
+      Ports		      [2, 1]
+      Position		      [1955, 670, 1975, 690]
       ShowName		      off
       IconShape		      "round"
-      Inputs		      "++++||+"
+      Inputs		      "+-"
+      InputSameDT	      off
+      OutDataTypeMode	      "Inherit via internal rule"
       OutDataType	      "sfix(16)"
       OutScaling	      "2^0"
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      RndMeth		      "Nearest"
     }
     Block {
       BlockType		      Sum
@@ -1553,24 +3437,9 @@ Model {
 	DstPort			2
       }
       Branch {
-	Points			[35, 0]
-	Branch {
-	  Points		  [35, 0]
-	  DstBlock		  "CIC\nDecimation"
-	  DstPort		  1
-	}
-	Branch {
-	  Points		  [0, 440]
-	  Branch {
-	    Points		    [0, 80]
-	    DstBlock		    "Sum1"
-	    DstPort		    4
-	  }
-	  Branch {
-	    DstBlock		    "Integer Delay4"
-	    DstPort		    1
-	  }
-	}
+	Points			[70, 0]
+	DstBlock		"CIC\nDecimation"
+	DstPort			1
       }
     }
     Line {
@@ -1638,9 +3507,26 @@ Model {
 	DstPort			2
       }
       Branch {
-	Points			[0, 260]
-	DstBlock		"Scope4"
-	DstPort			1
+	Points			[0, 255]
+	Branch {
+	  Points		  [0, 5]
+	  DstBlock		  "Scope4"
+	  DstPort		  1
+	}
+	Branch {
+	  Labels		  [0, 0]
+	  Points		  [0, 105]
+	  Branch {
+	    Points		    [0, 10]
+	    DstBlock		    "Subsystem"
+	    DstPort		    1
+	  }
+	  Branch {
+	    Points		    [0, 170]
+	    DstBlock		    "CIC"
+	    DstPort		    1
+	  }
+	}
       }
     }
     Line {
@@ -1664,152 +3550,102 @@ Model {
       DstPort		      1
     }
     Line {
+      SrcBlock		      "Subsystem"
+      SrcPort		      1
+      Points		      [5, 0; 0, 35]
+      DstBlock		      "Subsystem2"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Subsystem2"
+      SrcPort		      1
+      DstBlock		      "Subsystem3"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "CIC"
+      SrcPort		      1
+      Points		      [5, 0; 0, 25]
+      DstBlock		      "CIC1"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "CIC1"
+      SrcPort		      1
+      Points		      [20, 0; 0, -10]
+      DstBlock		      "CIC2"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "CIC2"
+      SrcPort		      1
+      Points		      [285, 0; 0, -135; 185, 0]
+      Branch {
+	Points			[0, 100]
+	DstBlock		"Sum1"
+	DstPort			2
+      }
+      Branch {
+	Points			[20, 0]
+	Branch {
+	  DstBlock		  "Scope"
+	  DstPort		  2
+	}
+	Branch {
+	  Points		  [0, -70; 155, 0; 0, 25; 75, 0]
+	  Branch {
+	    Points		    [10, 0]
+	  }
+	  Branch {
+	    Points		    [0, -5]
+	    DstBlock		    "Spectrum\nScope1"
+	    DstPort		    1
+	  }
+	}
+      }
+    }
+    Line {
+      SrcBlock		      "Subsystem3"
+      SrcPort		      1
+      Points		      [25, 0; 0, -125]
+      DstBlock		      "Gain1"
+      DstPort		      1
+    }
+    Line {
+      SrcBlock		      "Sum1"
+      SrcPort		      1
+      Points		      [25, 0; 0, -65]
+      DstBlock		      "Scope"
+      DstPort		      3
+    }
+    Line {
+      SrcBlock		      "Multistage CIC\nProcessing Delay1"
+      SrcPort		      1
+      Points		      [30, 0; 0, 145]
+      Branch {
+	Points			[0, 70]
+	DstBlock		"Sum1"
+	DstPort			1
+      }
+      Branch {
+	Points			[0, 10]
+	DstBlock		"Scope"
+	DstPort			1
+      }
+    }
+    Line {
       SrcBlock		      "Gain1"
       SrcPort		      1
-      Points		      [20, 0]
+      Points		      [110, 0; 0, -35; 85, 0]
       Branch {
-	DstBlock		"Add"
+	DstBlock		"Multistage CIC\nProcessing Delay1"
 	DstPort			1
       }
       Branch {
-	Points			[0, 30; -55, 0; 0, 30]
-	DstBlock		"Integer Delay"
+	Points			[0, -125; 160, 0; 0, 115]
+	DstBlock		"Spectrum\nScope2"
 	DstPort			1
       }
-    }
-    Line {
-      SrcBlock		      "Integer Delay"
-      SrcPort		      1
-      Points		      [20, 0; 0, -45]
-      DstBlock		      "Add"
-      DstPort		      2
-    }
-    Line {
-      SrcBlock		      "Gain2"
-      SrcPort		      1
-      Points		      [20, 0]
-      Branch {
-	DstBlock		"Add1"
-	DstPort			1
-      }
-      Branch {
-	Points			[0, 30; -55, 0; 0, 30]
-	DstBlock		"Integer Delay1"
-	DstPort			1
-      }
-    }
-    Line {
-      SrcBlock		      "Integer Delay1"
-      SrcPort		      1
-      Points		      [20, 0; 0, -45]
-      DstBlock		      "Add1"
-      DstPort		      2
-    }
-    Line {
-      SrcBlock		      "Gain3"
-      SrcPort		      1
-      Points		      [20, 0]
-      Branch {
-	DstBlock		"Add2"
-	DstPort			1
-      }
-      Branch {
-	Points			[0, 30; -55, 0; 0, 30]
-	DstBlock		"Integer Delay2"
-	DstPort			1
-      }
-    }
-    Line {
-      SrcBlock		      "Integer Delay2"
-      SrcPort		      1
-      Points		      [20, 0; 0, -45]
-      DstBlock		      "Add2"
-      DstPort		      2
-    }
-    Line {
-      SrcBlock		      "Downsample1"
-      SrcPort		      1
-      DstBlock		      "Gain3"
-      DstPort		      1
-    }
-    Line {
-      SrcBlock		      "Gain4"
-      SrcPort		      1
-      Points		      [20, 0]
-      Branch {
-	DstBlock		"Add3"
-	DstPort			1
-      }
-      Branch {
-	Points			[0, 30; -55, 0; 0, 30]
-	DstBlock		"Integer Delay3"
-	DstPort			1
-      }
-    }
-    Line {
-      SrcBlock		      "Integer Delay3"
-      SrcPort		      1
-      Points		      [20, 0; 0, -45]
-      DstBlock		      "Add3"
-      DstPort		      2
-    }
-    Line {
-      SrcBlock		      "Downsample2"
-      SrcPort		      1
-      Points		      [40, 0; 0, -25; -20, 0]
-      DstBlock		      "Gain4"
-      DstPort		      1
-    }
-    Line {
-      SrcBlock		      "Integer Delay4"
-      SrcPort		      1
-      Points		      [15, 0]
-      Branch {
-	Points			[0, 63]
-	DstBlock		"Sum1"
-	DstPort			3
-      }
-      Branch {
-	DstBlock		"Integer Delay5"
-	DstPort			1
-      }
-    }
-    Line {
-      SrcBlock		      "Integer Delay5"
-      SrcPort		      1
-      Points		      [18, 0; 0, 50]
-      DstBlock		      "Sum1"
-      DstPort		      2
-    }
-    Line {
-      SrcBlock		      "Add"
-      SrcPort		      1
-      DstBlock		      "Downsample"
-      DstPort		      1
-    }
-    Line {
-      SrcBlock		      "Downsample"
-      SrcPort		      1
-      DstBlock		      "Gain2"
-      DstPort		      1
-    }
-    Line {
-      SrcBlock		      "Add1"
-      SrcPort		      1
-      DstBlock		      "Downsample1"
-      DstPort		      1
-    }
-    Line {
-      SrcBlock		      "Add2"
-      SrcPort		      1
-      DstBlock		      "Downsample2"
-      DstPort		      1
-    }
-    Line {
-      SrcBlock		      "Add3"
-      SrcPort		      1
-      DstBlock		      "Downsample3"
-      DstPort		      1
     }
     Annotation {
       Name		      "Oversampled Sigma-Delta A/D Converter\nApproximation loop runs at 512 kHz.\nDecimation by 64 yields"
@@ -1841,7 +3677,15 @@ Model {
   }
 }
 MatData {
-  NumRecords		  1
+  NumRecords		  3
+  DataRecord {
+    Tag			    DataTag2
+    Data		    "  %)30     .    ,     8    (    !          %    \"                0         0          "
+  }
+  DataRecord {
+    Tag			    DataTag1
+    Data		    "  %)30     .    ,     8    (    !          %    \"                0         0          "
+  }
   DataRecord {
     Tag			    DataTag0
     Data		    "  %)30     .    @ ,   8    (     @         %    \"     $    !     0         %  0 %@    $   !\"    9FEL="
