@@ -1,7 +1,8 @@
-function [ ] = raw( samples )
+function [ output ] = raw( samples )
 
 s = serial('COM3');
-set(s,'BaudRate',115200);
+set(s,'BaudRate',1250000);
+set(s,'InputBufferSize',100000000);
 fopen(s);
 
 c = onCleanup(@()fclose(s));
@@ -9,18 +10,35 @@ c = onCleanup(@()fclose(s));
 % hold reset down and then launch this fn.  the first char is junk (oh
 % well)
 
-while(1)
-A = fread(s,4);
-number = A(4) + A(3)*255 + A(2)*65280 + A(1)*16711680;
-disp(number);
+samples = 50000;
+%samples = 1000;
 
-if( A(4) == 254 )
-    disp('ok');
+output = zeros(1,samples);
+
+charChunk = 25000;
+
+for i=1:(samples/charChunk)
+    A = fread(s,4*charChunk);
+    % only works for uint32
+    %number = A(1) + A(2)*256 + A(3)*65536 + A(4)*16777216; 
+    numbers = typecast(uint8(A),'int32');
+%     disp(number);
+
+    output(((i-1)*charChunk)+1:i*charChunk) = numbers;
+
+%     for j=1:charChunk
+%         output(i+j-1) = number(j);
+%     end
+    
+    
+
+%     if( mod(number,1000) == 0 )
+        %disp(sprintf('%d %s', numbers(1), mat2str(A(1:4))));
+%     end
+
 end
 
-end
-
-disp(A);
+% disp(A);
 % disp(count);
 
 fclose(s);
