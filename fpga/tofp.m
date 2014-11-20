@@ -1,7 +1,7 @@
 function [ bits ] = tofp( val )
 %TOFP converts to fixed point
 
-% 	inputs
+% 	fixed point paramters
     Q = uint32(15);
     N = uint32(32);
     
