@@ -77,7 +77,10 @@
         $mouse = $('#mouse');
         sampleSVG.on("mousemove", function () {
             // wtf sets event object!?
-            var x = event.x - sampleSVG[0][0].offsetLeft;
+
+            // offsetLeft should work, but it changes with page scroll
+            // sampleSVG[0][0].offsetLeft
+            var x = event.x - 8;
             var xcor = fromScreen(x);
 
             $mouse.val(xcor);
@@ -113,14 +116,14 @@
             if( rowIndex == 0 )
                 return;
 
-            if( mat[rowIndex-1] < screenStart )
-            {
-                draw = 0;
-            }
-            else
-            {
+           // if( mat[rowIndex-1] < screenStart )
+           // {
+            //    draw = 0;
+            //}
+            //else
+            //{
                 draw = 1;
-            }
+            //}
 
             if( draw ) {
                 drawLine(sampleSVG, [toScreen(mat[rowIndex - 1]), highLow], [toScreen(mat[rowIndex - 1]), lowHigh]);

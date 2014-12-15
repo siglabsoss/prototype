@@ -3,8 +3,8 @@ function [ ] = ldpcgendig()
 %   Detailed explanation goes here
 
 
-n = 17600;
-k = 176;
+n = 160;
+k = 8;
 
 % n = 17600;
 % k = 176;

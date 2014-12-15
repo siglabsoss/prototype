@@ -12,8 +12,8 @@ oversample = 1;
 % how many noise iterations to try
 testIterations = 2;
 
-longestEdge = 500; % in bits
-shortestEdge = 2; % in bits
+longestEdge = 30; % in bits
+shortestEdge = 1; % in bits
 maxLen = 800*10;  % in bits
 
 % bookkeeping variables
@@ -21,32 +21,13 @@ iterations = 0;
 startVectorSize = floor(maxLen/shortestEdge);
 while 1
 	
-	% reset array
-	test = zeros(1,startVectorSize);
-
     % dig a state
     rndstate = randi(4294967295, 1, 4);  % uint32_t max in a 1 by 4 vector
-    
     rndstateStart = rndstate;
     
-    edge = 0;
-    edgeCount = 2; % starting at 2 instead of 1 gives leading 0
-    while(edge < maxLen)
-        [r,rndstate] = xor128(rndstate);
-        
-        r = mod(r,(longestEdge-shortestEdge+1)) + shortestEdge;
-        
-        edge = edge + r;
-        
-        test(edgeCount) = edge;
-        
-        edgeCount = edgeCount + 1;
-    end
-  
-    % trim trailing zeros
-    % http://stackoverflow.com/questions/5488504/matlab-remove-leading-and-trailing-zeros-from-a-vector
-    test = test(1:find(test,1,'last'));
-  
+    % generate a comb
+    test = prnComb(maxLen, shortestEdge, longestEdge, rndstate);
+    
     score = 0;
 
 	% if we have at least one edge
@@ -77,9 +58,9 @@ while 1
             dispstat('','timestamp');
             
 			disp(sprintf('Best Score: %f', score));
-            disp(sprintf('rndstate %s)', mat2str(rndstateStart)));
-			disp('With values:');
-			disp(mat2str(test));
+            disp(sprintf('with prnComb(%d, %d, %d, %s)', maxLen, shortestEdge, longestEdge, mat2str(rndstateStart)));
+ 			disp('With values:');
+ 			disp(mat2str(test));
 			bestScore = score;
 			bestComb = test;
 

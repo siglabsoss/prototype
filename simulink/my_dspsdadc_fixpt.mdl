@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.112"
+    ComputedModelVersion    "1.117"
     NumModelReferences	    0
     NumTestPointedSignals   13
     TestPointedSignal {
@@ -118,9 +118,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Ben"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Thu Oct 23 22:10:36 2014"
-  RTWModifiedTimeStamp	  335912450
-  ModelVersionFormat	  "1.%<AutoIncrement:112>"
+  LastModifiedDate	  "Thu Nov 13 18:45:55 2014"
+  RTWModifiedTimeStamp	  337732104
+  ModelVersionFormat	  "1.%<AutoIncrement:117>"
   ConfigurationManager	  "none"
   SampleTimeColors	  on
   SampleTimeAnnotations	  off
@@ -794,7 +794,7 @@ Model {
   }
   System {
     Name		    "my_dspsdadc_fixpt"
-    Location		    [160, 106, 2620, 902]
+    Location		    [1922, 74, 3838, 1042]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    212
@@ -808,7 +808,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    188
+    SIDHighWatermark	    190
     Block {
       BlockType		      Signum
       Name		      "1-Bit\nquantizer"
@@ -862,7 +862,7 @@ Model {
       System {
 	Name			"CIC"
 	Location		[209, 343, 1516, 608]
-	Open			on
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -1741,7 +1741,7 @@ Model {
       SID		      179
       Position		      [1630, 456, 1670, 494]
       ShowName		      off
-      Gain		      "1/(64*4096)"
+      Gain		      "16.6/(64*4096)"
       ParameterDataType	      "sfix(16)"
       ParameterScaling	      "2^0"
       OutDataType	      "sfix(16)"
@@ -1800,7 +1800,7 @@ Model {
       Name		      "Multistage CIC\nProcessing Delay1"
       SID		      181
       Position		      [1910, 425, 1940, 455]
-      DelayTime		      "1/10100"
+      DelayTime		      "0.1/10000"
     }
     Block {
       BlockType		      RateTransition
@@ -1823,8 +1823,8 @@ Model {
       Ports		      [3]
       Position		      [2045, 588, 2075, 622]
       Floating		      off
-      Location		      [2832, 226, 3617, 804]
-      Open		      on
+      Location		      [75, 823, 3596, 1703]
+      Open		      off
       NumInputPorts	      "3"
       ZoomMode		      "xonly"
       List {
@@ -1863,6 +1863,32 @@ Model {
       DataFormat	      "StructureWithTime"
       LimitDataPoints	      off
       MaxDataPoints	      "15000"
+      SampleTime	      "0"
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope2"
+      SID		      190
+      Ports		      [5]
+      Position		      [580, 438, 610, 472]
+      Floating		      off
+      Location		      [233, 121, 1915, 980]
+      Open		      off
+      NumInputPorts	      "5"
+      ZoomMode		      "xonly"
+      List {
+	ListType		AxesTitles
+	axes1			"%<SignalLabel>"
+	axes2			"%<SignalLabel>"
+	axes3			"%<SignalLabel>"
+	axes4			"%<SignalLabel>"
+	axes5			"%<SignalLabel>"
+      }
+      YMin		      "-5~-5~-5~-5~-5"
+      YMax		      "5~5~5~5~5"
+      SaveName		      "ScopeData2"
+      DataFormat	      "StructureWithTime"
+      LimitDataPoints	      off
       SampleTime	      "0"
     }
     Block {
@@ -2176,7 +2202,7 @@ Model {
 	  LibraryVersion	  "1.673"
 	  SourceBlock		  "dspsigops/Downsample"
 	  SourceType		  "Downsample"
-	  N			  "4"
+	  N			  "2"
 	  phase			  "0"
 	  ic			  "0"
 	  smode			  "Allow multirate"
@@ -3400,15 +3426,30 @@ Model {
     Line {
       SrcBlock		      "1-Bit\nquantizer"
       SrcPort		      1
-      Points		      [10, 0; 0, -25]
-      DstBlock		      "Rate Transition"
-      DstPort		      1
+      Points		      [10, 0; 0, -25; 15, 0]
+      Branch {
+	DstBlock		"Rate Transition"
+	DstPort			1
+      }
+      Branch {
+	Points			[0, 335]
+	DstBlock		"Scope2"
+	DstPort			4
+      }
     }
     Line {
       SrcBlock		      "Sum"
       SrcPort		      1
-      DstBlock		      "Integrator"
-      DstPort		      1
+      Points		      [30, 0]
+      Branch {
+	DstBlock		"Integrator"
+	DstPort			1
+      }
+      Branch {
+	Points			[0, 300]
+	DstBlock		"Scope2"
+	DstPort			2
+      }
     }
     Line {
       Name		      "Analog Input"
@@ -3416,14 +3457,23 @@ Model {
       SrcPort		      1
       Points		      [20, 0]
       Branch {
-	Labels			[1, 1]
-	DstBlock		"Sum"
-	DstPort			1
-      }
-      Branch {
 	Points			[0, -80]
 	DstBlock		"Multistage CIC\nProcessing Delay"
 	DstPort			1
+      }
+      Branch {
+	Labels			[1, 1]
+	Points			[15, 0]
+	Branch {
+	  DstBlock		  "Sum"
+	  DstPort		  1
+	}
+	Branch {
+	  Labels		  [0, 0]
+	  Points		  [0, 295]
+	  DstBlock		  "Scope2"
+	  DstPort		  1
+	}
       }
     }
     Line {
@@ -3501,12 +3551,6 @@ Model {
 	DstPort			1
       }
       Branch {
-	Labels			[1, 0]
-	Points			[-355, 0]
-	DstBlock		"Sum"
-	DstPort			2
-      }
-      Branch {
 	Points			[0, 255]
 	Branch {
 	  Points		  [0, 5]
@@ -3528,6 +3572,19 @@ Model {
 	  }
 	}
       }
+      Branch {
+	Points			[-95, 0]
+	Branch {
+	  Labels		  [1, 0]
+	  Points		  [-260, 0]
+	  DstBlock		  "Sum"
+	  DstPort		  2
+	}
+	Branch {
+	  DstBlock		  "Scope2"
+	  DstPort		  5
+	}
+      }
     }
     Line {
       SrcBlock		      "Sine Wave"
@@ -3546,8 +3603,16 @@ Model {
     Line {
       SrcBlock		      "Integrator"
       SrcPort		      1
-      DstBlock		      "1-Bit\nquantizer"
-      DstPort		      1
+      Points		      [35, 0]
+      Branch {
+	DstBlock		"1-Bit\nquantizer"
+	DstPort			1
+      }
+      Branch {
+	Points			[0, 305]
+	DstBlock		"Scope2"
+	DstPort			3
+      }
     }
     Line {
       SrcBlock		      "Subsystem"
@@ -3648,13 +3713,6 @@ Model {
       }
     }
     Annotation {
-      Name		      "Oversampled Sigma-Delta A/D Converter\nApproximation loop runs at 512 kHz.\nDecimation by 64 yields"
-      " final 8 kHz A/D rate."
-      Position		      [280, 291]
-      BackgroundColor	      "cyan"
-      FontSize		      12
-    }
-    Annotation {
       Name		      "Sigma-Delta A/D Conversion"
       Position		      [578, 23]
       FontName		      "Arial"
@@ -3668,11 +3726,26 @@ Model {
       FontSize		      12
     }
     Annotation {
+      Position		      [620, 156]
+    }
+    Annotation {
+      Name		      "My crappy cic aproixmation"
+      Position		      [1282, 830]
+    }
+    Annotation {
+      Name		      "correct cic"
+      Position		      [1331, 502]
+    }
+    Annotation {
       Name		      "Copyright 2003-2009 The MathWorks, Inc."
       Position		      [266, 346]
     }
     Annotation {
-      Position		      [620, 156]
+      Name		      "Oversampled Sigma-Delta A/D Converter\nApproximation loop runs at 512 kHz.\nDecimation by 64 yields"
+      " final 8 kHz A/D rate."
+      Position		      [290, 281]
+      BackgroundColor	      "cyan"
+      FontSize		      12
     }
   }
 }

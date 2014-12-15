@@ -21,6 +21,9 @@ while(edge < maxLength)
     edgeCount = edgeCount + 1;
 end
 
+% force comb to be requested size
+combEdges(edgeCount-1) = maxLength-1;
+
 % trim trailing zeros
 % http://stackoverflow.com/questions/5488504/matlab-remove-leading-and-trailing-zeros-from-a-vector
 combEdges = combEdges(1:find(combEdges,1,'last'));

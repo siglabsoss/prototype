@@ -20,7 +20,7 @@ xnoisy = awgn(x,snr); % add channel white noise
 
 xnoisy = filter(ones(1,windowSize)/windowSize,1,xnoisy);
 
-y = mod(diff(atan2(real(xnoisy),imag(xnoisy))),2*pi) - pi; % CORDIC demodulate
+y = mod(diff(atan2(real(xnoisy),imag(xnoisy))),16*pi) - pi; % CORDIC demodulate
 
 out = sign(sign(y)+1); % normalize output
 
