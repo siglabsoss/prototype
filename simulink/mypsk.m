@@ -10,16 +10,17 @@ InitVars();
 % called for every input port
 function SetInputPortSampleTime(block, portNumber, time)
 
-global OutSamTime InSamTime SampsPerSym;
+global outSampleTime inSampleTime samplesPerSymbol;
 
 % first set our sample time to what the engine requested
 block.InputPort(1).SampleTime = time;
 
 % then set the output
-InSamTime = time(1);
-OutSamTime = InSamTime / SampsPerSym;
+inSampleTime = time(1);
+outSampleTime = inSampleTime / samplesPerSymbol;
 
-block.OutputPort(1).SampleTime = [OutSamTime 0];
+% block.OutputPort(1).SampleTime = [0.05 0.05];
+block.OutputPort(1).SampleTime = [outSampleTime 0];
 
 disp(1);
 
@@ -31,13 +32,12 @@ function SetOutputPortSampleTime(block, portNumber, time)
 
 function Setup(block)
 
-global OutSamTime InSamTime SampsPerSym;
+global outSampleTime inSampleTime samplesPerSymbol;
 
 
 % WTF is gcb?
 % this is how we get values from mask parameters
-% OutSamTime = eval(get_param(gcb,'OutSamTime'));
-SampsPerSym = eval(get_param(gcb,'SampsPerSym'));
+samplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
 
 
 % aa = block.DialogPrm(1).Data;
@@ -49,6 +49,7 @@ block.NumOutputPorts = 1;
 
 block.InputPort(1).Complexity = 'Real';
 block.InputPort(1).DataTypeID = 0; % 8 for boolean, 0 for double
+% block.InputPort(1).SampleTime = [.1 .1/2];
 block.InputPort(1).SampleTime = [-1 0];
 
 
@@ -66,10 +67,13 @@ block.RegBlockMethod('SetOutputPortSampleTime', @SetOutputPortSampleTime);
 %end
 
 function InitVars()
-    global v1 v2 MPSK OutSamTime SampsPerSym;
+    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev;
     v1 = 0;
     v2 = 42;
     MPSK = 4;
+    totalSamples = 0;
+%     outputHold = 0;
+%     outputHoldPrev = 0;
 %end
 
 
@@ -77,37 +81,52 @@ function Start(block)
 
 %end
 
-
+  
 function Outputs(block)
-global v1 v2 MPSK OutSamTime SampsPerSym;
+global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex;
 din = block.InputPort(1).Data;
+
+currentTime = block.CurrentTime;
 
 switch din
     case 0
-        dout = [0.707106781186548 + 0.707106781186548i];
+        dinMapped = [0.707106781186548 + 0.707106781186548i];
     case 1
-        dout = [-0.707106781186548 + 0.707106781186548i];
+        dinMapped = [-0.707106781186548 + 0.707106781186548i];  % first
     case 2
-        dout = [-0.707106781186548 - 0.707106781186548i];
+        dinMapped = [-0.707106781186548 - 0.707106781186548i];  % second
     case 3
-        dout = [0.707106781186547 - 0.707106781186548i];
+        dinMapped = [0.707106781186547 - 0.707106781186548i];
     otherwise
-        dout = [0.707106781186547 - 0.707106781186548i];
+        dinMapped = [0.707106781186547 - 0.707106781186548i];
+end
+
+% run once
+if totalSamples == 0
+    outputHoldPrev = dinMapped;
+    outputHold = dinMapped;
+end
+
+if sampleIndex == (samplesPerSymbol-1)
+    outputHoldPrev = outputHold;
+    outputHold = dinMapped;
 end
 
 
+sampleIndex = mod(totalSamples, samplesPerSymbol);
 
 
-% block.OutputPort(1).Data = inn * 2;
-block.OutputPort(1).Data = dout; %[0.707106781186548 + 0.707106781186548i];
+% how much of the first and second samples we are blending
+alpha = (samplesPerSymbol-sampleIndex) / (samplesPerSymbol);
+beta = 1 - alpha;
 
-% block.OutputPort(1).Data = 0;
+% blend samples
+dout = alpha * outputHoldPrev + beta * outputHold;
 
-v1 = v1 + 1;
+% write to block
+block.OutputPort(1).Data = dout;
 
 
-
-% lowMode    = block.DialogPrm(1).Data;
-
+totalSamples = totalSamples + 1;
 
 %end
