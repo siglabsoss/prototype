@@ -88,6 +88,14 @@ din = block.InputPort(1).Data;
 
 currentTime = block.CurrentTime;
 
+vec = [0.707106781186548  0.707106781186548];
+theta = 50*pi/180;
+R = [cos(theta) -1*sin(theta); sin(theta) cos(theta)];
+vecRotated = vec * R;
+vecRotated = complex(vecRotated(1),vecRotated(2));
+
+
+
 switch din
     case 0
         dinMapped = [0.707106781186548 + 0.707106781186548i];
@@ -97,6 +105,10 @@ switch din
         dinMapped = [-0.707106781186548 - 0.707106781186548i];  % second
     case 3
         dinMapped = [0.707106781186547 - 0.707106781186548i];
+    case 4
+        dinMapped = complex(vec(1),vec(2));
+    case 5
+        dinMapped = vecRotated;
     otherwise
         dinMapped = [0.707106781186547 - 0.707106781186548i];
 end
