@@ -1,5 +1,5 @@
-function [ G ] = ldpcpar2gen( H )
-%LDPCPAR2GEN Summary of this function goes here
+function [ G, Hfix ] = ldpcpar2gen( H )
+%LDPCPAR2GEN make generator matrix G from parity check H
 %   Detailed explanation goes here
 
 % The generator matrix for a code with parity-check matrix H

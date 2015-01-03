@@ -11,7 +11,7 @@ height = n-k;
 
 H = zeros(height, width);
 
-onerows = 100;
+onerows = 1;
 
 i = 1;
 while i <= height
