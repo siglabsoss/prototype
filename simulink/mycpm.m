@@ -83,14 +83,20 @@ block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
 %end
 
 function InitVars()
-    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt df;
+    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector;
     v1 = 0;
     v2 = 42;
     MPSK = 4;
     totalSamples = 0;
     dataInt = 0;
-%     outputHold = 0;
-%     outputHoldPrev = 0;
+    clockUpInt = 0;
+    clcokDownInt = 0; 
+    
+    % 0 is data, 1 is clock up, 2 is clock down
+    pv = [ones(1,300)*1 ones(1,300)*2 ones(1,400)*0 ones(1,500)*2 ones(1,500)*1];
+    
+    patternVector = [pv pv];
+
 %end
 
     df = 100;
@@ -105,70 +111,76 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt df;
+global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clcokDownInt df patternVector;
 din = block.InputPort(1).Data;
 
 currentTime = block.CurrentTime;
 
 tt = round(currentTime*10000);
 
+% gives us a ms index
+tms = floor(currentTime*10000);
+
+% 0 1 2
+modee = patternVector(mod(tms,4000)+1);
+
 % if( mod(tt, 1000) == 999 )
 %     set_param(gcs, 'SimulationCommand', 'pause');
 % end
 
+% disp(sprintf('tms %f modee %f', tms, modee));
+
 % mod(tt, 10000)
 
+% 1/rotations per bit.
+% each bit is 10 data points (when samplesPerSymbol is 10)
+% so a clock with 1000 points for rotation would be 1/100
+df = 1;
+cdf = 1/100;
 
-if( mod(tt, 10000) == 1000 )
-    df = 1;
-%     set_param(gcs, 'SimulationCommand', 'pause');
+
+switch modee
+    case 0
+        cdin = 0;
+    case 1
+        cdin = 1;
+    case 2
+        cdin = -1;
 end
 
-if( mod(tt, 10000) == 9000 )
-    df = 100;
-%     set_param(gcs, 'SimulationCommand', 'pause');
-end
+cdt = cdin / samplesPerSymbol;
+clockUpInt = clockUpInt + cdt;
+ddt = din / samplesPerSymbol;
+dataInt = dataInt + ddt;
 
-
- 
-
-ttemp = din / samplesPerSymbol;
-
-dataInt = dataInt + ttemp;
+crout = cos(cdf * 2 * pi * clockUpInt);
+ciout = sin(cdf * 2 * pi * clockUpInt);
 
 rout = cos(df * 2 * pi * dataInt);
 iout = sin(df * 2 * pi * dataInt);
 
-% rout = .5;
-% iout = 1;
+trout = crout;
+tiout = ciout;
 
-
-% run once
-if totalSamples == 0
-%     outputHoldPrev = dinMapped;
-%     outputHold = dinMapped;
-end
-
-if sampleIndex == (samplesPerSymbol-1)
-%     outputHoldPrev = outputHold;
-%     outputHold = dinMapped;
+if( modee == 0 )
+    trout = rout;
+    tiout = iout;
 end
 
 
 sampleIndex = mod(totalSamples, samplesPerSymbol);
 
-
 % how much of the first and second samples we are blending
-alpha = (samplesPerSymbol-sampleIndex) / (samplesPerSymbol);
-beta = 1 - alpha;
+% alpha = (samplesPerSymbol-sampleIndex) / (samplesPerSymbol);
+% beta = 1 - alpha;
 
 % % blend samples
 % dout = alpha * outputHoldPrev + beta * outputHold;
 
 % write to block
 block.OutputPort(1).Data = complex(rout,iout);
-block.OutputPort(2).Data = complex(rout,iout);
-block.OutputPort(3).Data = complex(rout,iout);
+block.OutputPort(2).Data = complex(crout,ciout);
+block.OutputPort(3).Data = complex(trout,tiout);
 
 
 totalSamples = totalSamples + 1;
