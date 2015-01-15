@@ -93,9 +93,13 @@ function InitVars()
     clcokDownInt = 0; 
     
     % 0 is data, 1 is clock up, 2 is clock down
-    pv = [ones(1,300)*1 ones(1,300)*2 ones(1,400)*0 ones(1,500)*2 ones(1,500)*1];
-    
-    patternVector = [pv pv];
+%     pv = [ones(1,300)*1 ones(1,300)*2 ones(1,400)*0 ones(1,500)*2 ones(1,500)*1];
+%     patternVector = [pv pv];
+
+     pv = [ones(1,200)*1 ones(1,300)*2 ones(1,500)*0];
+     patternVector = [pv pv pv pv];
+
+
 
 %end
 
@@ -116,7 +120,7 @@ din = block.InputPort(1).Data;
 
 currentTime = block.CurrentTime;
 
-tt = round(currentTime*10000);
+% tt = round(currentTime*10000);
 
 % gives us a ms index
 tms = floor(currentTime*10000);
