@@ -83,7 +83,7 @@ block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
 %end
 
 function InitVars()
-    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector;
+    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector dinFilter dinFilterLength;
     v1 = 0;
     v2 = 42;
     MPSK = 4;
@@ -93,11 +93,18 @@ function InitVars()
     clcokDownInt = 0; 
     
     % 0 is data, 1 is clock up, 2 is clock down
-%     pv = [ones(1,300)*1 ones(1,300)*2 ones(1,400)*0 ones(1,500)*2 ones(1,500)*1];
-%     patternVector = [pv pv];
+    pv = [ones(1,700)*1 ones(1,700)*2 ones(1,600)*0];
+    patternVector = [pv pv];
 
-     pv = [ones(1,200)*1 ones(1,300)*2 ones(1,500)*0];
-     patternVector = [pv pv pv pv];
+    
+    
+%      pv = [ones(1,200)*1 ones(1,300)*2 ones(1,500)*0];
+%      patternVector = [pv pv pv pv];
+     
+
+     
+     dinFilter = zeros(10,1);
+     dinFilterLength = 3;
 
 
 
@@ -115,8 +122,14 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clcokDownInt df patternVector;
-din = block.InputPort(1).Data;
+global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clcokDownInt df patternVector dinFilter dinFilterLength;
+
+din = sum(dinFilter)/dinFilterLength;
+
+filterIndex = mod(totalSamples, dinFilterLength) + 1;
+dinFilter(filterIndex) = block.InputPort(1).Data; % fill into filter
+
+
 
 currentTime = block.CurrentTime;
 
@@ -169,10 +182,21 @@ tiout = ciout;
 if( modee == 0 )
     trout = rout;
     tiout = iout;
+    
+    crout = 0;
+    ciout = 0;
+end
+
+if( totalSamples > 40000 )
+    trout = 0; % end packet
+    tiout = 0;
+    crout = 0;
+    ciout = 0;
 end
 
 
-sampleIndex = mod(totalSamples, samplesPerSymbol);
+
+% sampleIndex = mod(totalSamples, samplesPerSymbol);
 
 % how much of the first and second samples we are blending
 % alpha = (samplesPerSymbol-sampleIndex) / (samplesPerSymbol);
