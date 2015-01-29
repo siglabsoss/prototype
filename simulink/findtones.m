@@ -8,8 +8,8 @@ datafft = fft(data);
 srate = 0.00001;
 timestamp = 0:srate:(datalength-1)*srate;
 
-mask1 = [zeros([dcreject 1]); ones([round(datalength/2)-dcreject 1]); zeros([round(datalength/2)-dcreject 1]); zeros([dcreject-1 1])];
-mask2 = [zeros([dcreject 1]); zeros([round(datalength/2)-dcreject 1]); ones([round(datalength/2)-dcreject 1]); zeros([dcreject-1 1])];
+mask1 = [zeros([dcreject 1]); ones([round(datalength/2)-dcreject 1]); zeros([round(datalength/2)-dcreject 1]); zeros([dcreject 1])];
+mask2 = [zeros([dcreject 1]); zeros([round(datalength/2)-dcreject 1]); ones([round(datalength/2)-dcreject 1]); zeros([dcreject 1])];
 
 datafft1 = datafft.*mask1;
 datafft2 = datafft.*mask2;
