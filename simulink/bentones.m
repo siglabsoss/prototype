@@ -1,57 +1,84 @@
-function [ beat, clockUp, clockDown ] = bentones(  )
+function [ beat, clockUp, clockDown, beatDown ] = bentones(  )
 %MYTONES Summary of this function goes here
 %   Detailed explanation goes here
 
+% simulation stuff carried over from simulink
 samplesPerSymbol = 10;
 cdt = 1 / samplesPerSymbol;
-cdfUp = 50/100;
-cdfDown = 52/100;
-cdfMixer = 1/200;
-cdfBeatDown = (cdfUp - cdfDown);
+
+% frequency stuff
+cdfUp       = 1/100    + 1;
+cdfDown     = -1/100   + 1;
+cdfMixer    = 1/200;
+cdfBeatDown = (cdfUp + cdfDown);
 
 
-clockUp = zeros(0);
-clockDown = zeros(0);
-mixer = zeros(0);
-beatDown = zeros(0);
+clockUpPhase   = (90 / 360)   / cdfUp;
+clockDownPhase = (90 / 360)   / cdfDown;
+mixerPhase     = (0 / 360)   / cdfMixer;
+beatDownPhase  = (((clockUpPhase*cdfUp*360) + (clockDownPhase*cdfDown*360)) / 360)   / cdfBeatDown;
+% beatDownPhase   = (50 / 360)   / cdfBeatDown;
 
-clockUpInt = 0;
-clockDownInt = 0;
-mixerInt = 0;
-beatDownInt = 0;
 
-for i = 1:1000
+totalSamples = 1000;
 
-clockUp(i)   = complex(cos(cdfUp * 2 * pi * clockUpInt),sin(cdfUp * 2 * pi * clockUpInt));
-clockDown(i) = complex(cos(cdfDown * 2 * pi * clockDownInt),sin(cdfDown * 2 * pi * clockDownInt));
-mixer(i)     = complex(cos(cdfMixer * 2 * pi * mixerInt),sin(cdfMixer * 2 * pi * mixerInt));
-beatDown(i)  = complex(cos(cdfBeatDown * 2 * pi * beatDownInt),sin(cdfBeatDown * 2 * pi * beatDownInt));
 
-clockUpInt   = clockUpInt + cdt;
-clockDownInt = clockDownInt + cdt;
-mixerInt     = mixerInt + cdt;
-beatDownInt  = beatDownInt + cdt;
-
-end
-
+clockUp   = oneWeirdWave(cdfUp,   cdt, clockUpPhase, totalSamples);
+clockDown = oneWeirdWave(cdfDown, cdt, clockDownPhase, totalSamples);
+mixer     = oneWeirdWave(cdfMixer, cdt, mixerPhase, totalSamples);
+beatDown  = oneWeirdWave(cdfBeatDown, cdt, beatDownPhase, totalSamples);
 
 
 beat = clockUp + clockDown;
 % beat = clockUp;
 
-% beat = beat(1:8901) .* clockUp(100:9000)
 % beat = beat .* mixer;
 
-subplot 411
+
+
+beatDownZC = zeroCross(imag(beatDown));
+
+plotTime = 0:(totalSamples-1);
+plotTime = plotTime';
+
+subplot 511
 plot(imag(clockUp)');
-subplot 412
+subplot 512
 plot(imag(clockDown)');
-subplot 413
+subplot 513
 plot(imag(beat)');
-subplot 414
-plot(imag(beatDown)');
-
-
+subplot 514
+plot(plotTime,imag(beatDown)', plotTime, beatDownZC);
+% subplot 515
+% plot(plotTime);
+% plot(beatDownZC);
 
 end
 
+
+function points = oneWeirdWave(df, dt, phase, total)
+int = phase;
+points = zeros(1,total);
+for i = 1:total
+    points(i)   = complex(cos(df * 2 * pi * int),sin(df * 2 * pi * int));
+    int = int + dt;
+end
+end
+
+
+function points = zeroCross(vec)
+[~,sz] = size(vec);
+
+output = 1;
+
+points = ones(1,sz);
+
+for i = 3:sz
+    if( (vec(i-2) < 0) && (abs(vec(i-1)) < 10E-2) && (vec(i) > 0) )
+        output = output * -1;
+    end
+    
+    points(i-1) = output;
+end
+
+end
