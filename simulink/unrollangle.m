@@ -2,7 +2,7 @@ function [ output ] = unrollangle( input )
 %UNROLLANGLE pass the output of angle() into this to remove discontinuous
 %samples
 
-thresh = pi/2;
+thresh = pi;
 
 adjust = 0;
 
