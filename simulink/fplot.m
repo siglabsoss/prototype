@@ -1,8 +1,13 @@
-function [ output_args ] = ffttest( data )
+function [  ] = ffttest( data, Fs )
 %FFT Summary of this function goes here
 %   Detailed explanation goes here
 
-Fs = 100000;                    % Sampling frequency
+
+if nargin < 2
+    Fs = 100000;                    % Sampling frequency
+end
+
+
 % T = 1/Fs;                     % Sample time
 % L = size(data,1);                     % Length of signal
 % t = (0:L-1)*T;                % Time vector

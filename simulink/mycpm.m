@@ -39,13 +39,13 @@ function SetOutputPortSampleTime(block, portNumber, time)
 
 function Setup(block)
 
-global outSampleTime inSampleTime samplesPerSymbol;
+global outSampleTime inSampleTime samplesPerSymbol clockFrequency;
 
 
 % WTF is gcb?
 % this is how we get values from mask parameters
 samplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
-
+clockFrequency = eval(get_param(gcb,'ClockUpDownFrequency'));
 
 % aa = block.DialogPrm(1).Data;
 % bb = block.DialogPrm(2).Data;
@@ -83,14 +83,14 @@ block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
 %end
 
 function InitVars()
-    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector dinFilter dinFilterLength;
+    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clockDownInt df patternVector dinFilter dinFilterLength;
     v1 = 0;
     v2 = 42;
     MPSK = 4;
     totalSamples = 0;
     dataInt = 0;
     clockUpInt = 0;
-    clcokDownInt = 0; 
+    clockDownInt = 0; 
     
     % 0 is data, 1 is clock up, 2 is clock down
     pv = [ones(1,700)*1 ones(1,700)*2 ones(1,600)*0];
@@ -122,7 +122,7 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clcokDownInt df patternVector dinFilter dinFilterLength;
+global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clockDownInt df patternVector dinFilter dinFilterLength clockFrequency;
 
 din = sum(dinFilter)/dinFilterLength;
 
@@ -153,38 +153,45 @@ modee = patternVector(mod(tms,4000)+1);
 % each bit is 10 data points (when samplesPerSymbol is 10)
 % so a clock with 1000 points for rotation would be 1/100
 df = 1;
-cdf = 1/100;
+% cdf = 1/100;
+
+cdf = outSampleTime * clockFrequency * samplesPerSymbol;
 
 
-switch modee
-    case 0
-        cdin = 0;
-    case 1
-        cdin = 1;
-    case 2
-        cdin = -1;
-end
-
-cdt = cdin / samplesPerSymbol;
-clockUpInt = clockUpInt + cdt;
+% always run clock "movies"
+clockUpInt   = clockUpInt   + 1 / samplesPerSymbol;
+clockDownInt = clockDownInt - 1 / samplesPerSymbol;
 ddt = din / samplesPerSymbol;
 dataInt = dataInt + ddt;
 
-crout = cos(cdf * 2 * pi * clockUpInt);
-ciout = sin(cdf * 2 * pi * clockUpInt);
+% Clock output port
+% Switch between movies (even if discontinuous)
+% Output 0 when in data mode
+switch modee
+    case 0
+        crout = 0;
+        ciout = 0;
+    case 1
+        crout = cos(cdf * 2 * pi * clockUpInt);
+        ciout = sin(cdf * 2 * pi * clockUpInt);
+    case 2
+        crout = cos(cdf * 2 * pi * clockDownInt);
+        ciout = sin(cdf * 2 * pi * clockDownInt);
+end
 
+% Data only output port (mostly useless)
 rout = cos(df * 2 * pi * dataInt);
 iout = sin(df * 2 * pi * dataInt);
 
+% modulation output port ('t' stands for 3rd)
 trout = crout;
 tiout = ciout;
 
+% 0 is data, 1 is clock up, 2 is clock down 
 if( modee == 0 )
+    % mode 0 so put in data
     trout = rout;
     tiout = iout;
-    
-    crout = 0;
-    ciout = 0;
 end
 
 if( totalSamples > 40000 )
@@ -195,15 +202,6 @@ if( totalSamples > 40000 )
 end
 
 
-
-% sampleIndex = mod(totalSamples, samplesPerSymbol);
-
-% how much of the first and second samples we are blending
-% alpha = (samplesPerSymbol-sampleIndex) / (samplesPerSymbol);
-% beta = 1 - alpha;
-
-% % blend samples
-% dout = alpha * outputHoldPrev + beta * outputHold;
 
 % write to block
 block.OutputPort(1).Data = complex(rout,iout);
