@@ -39,13 +39,15 @@ function SetOutputPortSampleTime(block, portNumber, time)
 
 function Setup(block)
 
-global outSampleTime inSampleTime samplesPerSymbol clockFrequency;
+global outSampleTime inSampleTime samplesPerSymbol clockFrequency rotationsPerSymbol dinFilterLength;
 
 
 % WTF is gcb?
 % this is how we get values from mask parameters
 samplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
+rotationsPerSymbol = eval(get_param(gcb,'RotationsPerSym'));
 clockFrequency = eval(get_param(gcb,'ClockUpDownFrequency'));
+dinFilterLength = eval(get_param(gcb,'FilterBufferLength'));
 
 % aa = block.DialogPrm(1).Data;
 % bb = block.DialogPrm(2).Data;
@@ -83,7 +85,7 @@ block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
 %end
 
 function InitVars()
-    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clockDownInt df patternVector dinFilter dinFilterLength;
+    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clockDownInt df patternVector dinFilterr dinFilterLength;
     v1 = 0;
     v2 = 42;
     MPSK = 4;
@@ -103,8 +105,9 @@ function InitVars()
      
 
      
-     dinFilter = zeros(10,1);
-     dinFilterLength = 3;
+     
+%      dinFilterLength = 10;
+     dinFilterr = zeros(dinFilterLength,1);
 
 
 
@@ -122,12 +125,12 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clockDownInt df patternVector dinFilter dinFilterLength clockFrequency;
+global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clockDownInt df patternVector dinFilterr dinFilterLength clockFrequency rotationsPerSymbol;
 
-din = sum(dinFilter)/dinFilterLength;
+din = sum(dinFilterr)/dinFilterLength;
 
 filterIndex = mod(totalSamples, dinFilterLength) + 1;
-dinFilter(filterIndex) = block.InputPort(1).Data; % fill into filter
+dinFilterr(filterIndex) = block.InputPort(1).Data; % fill into filter
 
 
 
@@ -152,7 +155,7 @@ modee = patternVector(mod(tms,4000)+1);
 % 1/rotations per bit.
 % each bit is 10 data points (when samplesPerSymbol is 10)
 % so a clock with 1000 points for rotation would be 1/100
-df = 1;
+df = rotationsPerSymbol;
 % cdf = 1/100;
 
 cdf = outSampleTime * clockFrequency * samplesPerSymbol;

@@ -10,19 +10,19 @@ InitVars();
 % called for every input port
 function SetInputPortSampleTime(block, portNumber, time)
 
-global outSampleTime inSampleTime samplesPerSymbol;
+global demodOutSampleTime demodInSampleTime demodSamplesPerSymbol;
 
 % first set our sample time to what the engine requested
 block.InputPort(1).SampleTime = time;
 
 % then set the output
-inSampleTime = time(1);
-outSampleTime = inSampleTime * samplesPerSymbol;
+demodInSampleTime = time(1);
+demodOutSampleTime = demodInSampleTime * demodSamplesPerSymbol;
 
 % block.OutputPort(1).SampleTime = [0.05 0.05];
-block.OutputPort(1).SampleTime = [outSampleTime 0];
-% block.OutputPort(2).SampleTime = [outSampleTime 0];
-% block.OutputPort(3).SampleTime = [outSampleTime 0];
+block.OutputPort(1).SampleTime = [demodOutSampleTime 0];
+% block.OutputPort(2).SampleTime = [demodOutSampleTime 0];
+% block.OutputPort(3).SampleTime = [demodOutSampleTime 0];
 
 
 
@@ -39,12 +39,13 @@ function SetOutputPortSampleTime(block, portNumber, time)
 
 function Setup(block)
 
-global outSampleTime inSampleTime samplesPerSymbol;
+global demodOutSampleTime demodInSampleTime demodSamplesPerSymbol demodRotationsPerSymbol;
 
 
 % WTF is gcb?
 % this is how we get values from mask parameters
-samplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
+demodSamplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
+demodRotationsPerSymbol = eval(get_param(gcb,'RotationsPerSym'));
 
 
 % aa = block.DialogPrm(1).Data;
@@ -83,34 +84,25 @@ block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
 %end
 
 function InitVars()
-    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector dinFilter dinFilterLength previousSample angleAdjust previousSampleAngle previousBuffer;
+    global v1 v2 MPSK demodOutSampleTime demodSamplesPerSymbol demodTotalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer;
     v1 = 0;
     v2 = 42;
     MPSK = 4;
-    totalSamples = 0;
+    demodTotalSamples = 0;
     dataInt = 0;
     clockUpInt = 0;
     clcokDownInt = 0;
-    angleAdjust = 0;
+    demodAngleAdjust = 0;
     
     % 0 is data, 1 is clock up, 2 is clock down
     pv = [ones(1,700)*1 ones(1,700)*2 ones(1,600)*0];
     patternVector = [pv pv];
 
     
-    
-%      pv = [ones(1,200)*1 ones(1,300)*2 ones(1,500)*0];
-%      patternVector = [pv pv pv pv];
+     demodPreviousSample = 0;
+     demodPreviousSampleAngle = 0;
      
-
-     
-     dinFilter = zeros(10,1);
-     dinFilterLength = 3;
-
-     previousSample = 0;
-     previousSampleAngle = 0;
-     
-     previousBuffer = zeros(0);
+     demodPreviousBuffer = zeros(0);
 
 %end
 
@@ -126,43 +118,43 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clcokDownInt df patternVector dinFilter dinFilterLength previousSample angleAdjust previousSampleAngle previousBuffer;
+global demodSamplesPerSymbol demodTotalSamples demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer;
 
 sample = block.InputPort(1).Data;
 
 sampleAngle = angle(sample);
 
-if( totalSamples == 0 )
-    previousSample = sampleAngle;
-    previousSampleAngle = sampleAngle;
+if( demodTotalSamples == 0 )
+    demodPreviousSample = sampleAngle;
+    demodPreviousSampleAngle = sampleAngle;
 end
 
 thresh = pi;
 
-if(abs(sampleAngle-previousSample) > thresh)
+if(abs(sampleAngle-demodPreviousSample) > thresh)
     direction = 1;
-    if( sampleAngle > previousSample )
+    if( sampleAngle > demodPreviousSample )
         direction = -1;
     end
-    angleAdjust = angleAdjust + 2*pi*direction;
+    demodAngleAdjust = demodAngleAdjust + 2*pi*direction;
 end
 
 % unrolled angle
-sampleAngle = sampleAngle + angleAdjust;
+sampleAngle = sampleAngle + demodAngleAdjust;
 
 % diff(unrolled angle)
-sampleDiff = sampleAngle - previousSampleAngle;
+sampleDiff = sampleAngle - demodPreviousSampleAngle;
 
-bufferIndex = mod(totalSamples, samplesPerSymbol) +1;
+bufferIndex = mod(demodTotalSamples, demodSamplesPerSymbol) +1;
 
-previousBuffer(bufferIndex) = sampleDiff;
+demodPreviousBuffer(bufferIndex) = sampleDiff;
 
-if( bufferIndex == samplesPerSymbol )
+if( bufferIndex == demodSamplesPerSymbol )
     
     % look at buffer and make our decision
     bit = -1;
     
-    if( (sum(previousBuffer) / samplesPerSymbol) < 0 )
+    if( (sum(demodPreviousBuffer) / demodSamplesPerSymbol) < 0 )
         bit = 1;
     end
     
@@ -170,102 +162,14 @@ if( bufferIndex == samplesPerSymbol )
 end
 
 
-% block.OutputPort(1).Data = sampleDiff; %complex(rout,iout);
 
 
-din = sum(dinFilter)/dinFilterLength;
-
-filterIndex = mod(totalSamples, dinFilterLength) + 1;
-dinFilter(filterIndex) = sample; % fill into filter
-
-
-
-currentTime = block.CurrentTime;
-
-% tt = round(currentTime*10000);
-
-% gives us a ms index
-tms = floor(currentTime*10000);
-
-% 0 1 2
-modee = patternVector(mod(tms,4000)+1);
-
-% if( mod(tt, 1000) == 999 )
-%     set_param(gcs, 'SimulationCommand', 'pause');
-% end
-
-% disp(sprintf('tms %f modee %f', tms, modee));
-
-% mod(tt, 10000)
-
-% 1/rotations per bit.
-% each bit is 10 data points (when samplesPerSymbol is 10)
-% so a clock with 1000 points for rotation would be 1/100
-df = 1;
-cdf = 1/100;
-
-
-switch modee
-    case 0
-        cdin = 0;
-    case 1
-        cdin = 1;
-    case 2
-        cdin = -1;
-end
-
-cdt = cdin / samplesPerSymbol;
-clockUpInt = clockUpInt + cdt;
-ddt = din / samplesPerSymbol;
-dataInt = dataInt + ddt;
-
-crout = cos(cdf * 2 * pi * clockUpInt);
-ciout = sin(cdf * 2 * pi * clockUpInt);
-
-rout = cos(df * 2 * pi * dataInt);
-iout = sin(df * 2 * pi * dataInt);
-
-trout = crout;
-tiout = ciout;
-
-if( modee == 0 )
-    trout = rout;
-    tiout = iout;
-    
-    crout = 0;
-    ciout = 0;
-end
-
-if( totalSamples > 40000 )
-    trout = 0; % end packet
-    tiout = 0;
-    crout = 0;
-    ciout = 0;
-end
-
-
-
-% sampleIndex = mod(totalSamples, samplesPerSymbol);
-
-% how much of the first and second samples we are blending
-% alpha = (samplesPerSymbol-sampleIndex) / (samplesPerSymbol);
-% beta = 1 - alpha;
-
-% % blend samples
-% dout = alpha * outputHoldPrev + beta * outputHold;
-
-% write to block
-% block.OutputPort(1).Data = 0; %complex(rout,iout);
-% block.OutputPort(2).Data = complex(crout,ciout);
-% block.OutputPort(3).Data = complex(trout,tiout);
-
-
-totalSamples = totalSamples + 1;
+demodTotalSamples = demodTotalSamples + 1;
 
 % need to save angle of previous sample without adjustments that
 % have already been rolled into sampleAngle (aka dont use sampleAngle here)
-previousSample = angle(sample);
+demodPreviousSample = angle(sample);
 
-previousSampleAngle = sampleAngle;
+demodPreviousSampleAngle = sampleAngle;
 
 %end
