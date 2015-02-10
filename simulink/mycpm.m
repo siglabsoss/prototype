@@ -3,7 +3,7 @@
 function mycpm(block)
 
 Setup(block);
-InitVars();
+% we no longer call InitVars here, now it's done in InitializeConditions
 
 %end
 
@@ -39,7 +39,7 @@ function SetOutputPortSampleTime(block, portNumber, time)
 
 function Setup(block)
 
-global outSampleTime inSampleTime samplesPerSymbol clockFrequency rotationsPerSymbol dinFilterLength;
+global outSampleTime inSampleTime samplesPerSymbol clockFrequency rotationsPerSymbol dinFilterLength patternVectorDialog patternVectorRepeatDialog;
 
 
 % WTF is gcb?
@@ -48,6 +48,8 @@ samplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
 rotationsPerSymbol = eval(get_param(gcb,'RotationsPerSym'));
 clockFrequency = eval(get_param(gcb,'ClockUpDownFrequency'));
 dinFilterLength = eval(get_param(gcb,'FilterBufferLength'));
+patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
+patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
 
 % aa = block.DialogPrm(1).Data;
 % bb = block.DialogPrm(2).Data;
@@ -77,43 +79,77 @@ block.OutputPort(3).SamplingMode = 'Sample';
 
 
 
+
 block.RegBlockMethod('Start', @Start);
 block.RegBlockMethod('Outputs', @Outputs);
 block.RegBlockMethod('SetInputPortSampleTime', @SetInputPortSampleTime);
 block.RegBlockMethod('SetOutputPortSampleTime', @SetOutputPortSampleTime);
 block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
+block.RegBlockMethod('PostPropagationSetup', @PostPropagationSetup);
+block.RegBlockMethod('InitializeConditions', @InitializeConditions);
 %end
 
-function InitVars()
-    global v1 v2 MPSK outSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev dataInt clockUpInt clockDownInt df patternVector dinFilterr dinFilterLength;
-    v1 = 0;
-    v2 = 42;
-    MPSK = 4;
+function PostPropagationSetup(block)
+    % http://www.mathworks.com/matlabcentral/answers/98799-what-are-the-valid-datatypeid-values-for-matlab-file-s-functions-in-simulink
+    % Setup Dwork
+    
+    patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
+    patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
+
+    [~,sizeTemp1] = size(patternVectorDialog);
+
+    block.NumDworks                = 1;
+    
+    
+    
+    
+    block.Dwork(1).Name            = 'patternVector'; 
+    block.Dwork(1).Dimensions      = sizeTemp1 * patternVectorRepeatDialog;
+    block.Dwork(1).DatatypeID      = 2; % uint8
+    block.Dwork(1).Complexity      = 'Real';
+    block.Dwork(1).UsedAsDiscState = true;
+
+    
+%end
+
+function InitializeConditions(block)
+    InitVars(block);
+%end
+
+% called by InitializeConditions
+function InitVars(block)
+    global outSampleTime samplesPerSymbol totalSamples dataInt clockUpInt clockDownInt pvSize dinFilterr dinFilterLength packetLength;
+
+    patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
+    patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
+    
     totalSamples = 0;
     dataInt = 0;
     clockUpInt = 0;
     clockDownInt = 0; 
     
-    % 0 is data, 1 is clock up, 2 is clock down
-    pv = [ones(1,700)*1 ones(1,700)*2 ones(1,600)*0];
-    patternVector = [pv pv];
-
     
     
-%      pv = [ones(1,200)*1 ones(1,300)*2 ones(1,500)*0];
-%      patternVector = [pv pv pv pv];
-     
+    % repeat the pattern vector as specificed by the dialog
+    patternVector = zeros(0);
+    for j = 1:patternVectorRepeatDialog
+        patternVector = [patternVector patternVectorDialog];
+    end
 
-     
-     
-%      dinFilterLength = 10;
-     dinFilterr = zeros(dinFilterLength,1);
+    % save the full size
+    [~,pvSize] = size(patternVector);
+    
+    
+    block.Dwork(1).Data = int8(patternVector);
+    
 
+    % prepare buffer "filter"
+    dinFilterr = zeros(dinFilterLength,1);
+    
+    % fixed packet length in seconds
+    packetLength = 0.4;
 
-
-%end
-
-    df = 100;
+    %end
 
 
 function Start(block)
@@ -125,7 +161,9 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global v1 v2 MPSK outSampleTime inSampleTime samplesPerSymbol totalSamples outputHold outputHoldPrev sampleIndex dataInt clockUpInt clockDownInt df patternVector dinFilterr dinFilterLength clockFrequency rotationsPerSymbol;
+global outSampleTime inSampleTime samplesPerSymbol totalSamples sampleIndex dataInt clockUpInt clockDownInt patternVector pvSize dinFilterr dinFilterLength clockFrequency rotationsPerSymbol packetLength;
+
+patternVector = block.Dwork(1).Data;
 
 din = sum(dinFilterr)/dinFilterLength;
 
@@ -136,13 +174,15 @@ dinFilterr(filterIndex) = block.InputPort(1).Data; % fill into filter
 
 currentTime = block.CurrentTime;
 
+scaledTimeIndex = floor((currentTime / packetLength) * pvSize);
+
 % tt = round(currentTime*10000);
 
 % gives us a ms index
 tms = floor(currentTime*10000);
 
 % 0 1 2
-modee = patternVector(mod(tms,4000)+1);
+modee = patternVector(mod(scaledTimeIndex,pvSize)+1);
 
 % if( mod(tt, 1000) == 999 )
 %     set_param(gcs, 'SimulationCommand', 'pause');
@@ -197,7 +237,7 @@ if( modee == 0 )
     tiout = iout;
 end
 
-if( totalSamples > 40000 )
+if( currentTime > packetLength )
     trout = 0; % end packet
     tiout = 0;
     crout = 0;
