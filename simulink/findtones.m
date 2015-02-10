@@ -1,7 +1,16 @@
-function tones = findtones(data)
+function tones = findtones(datain)
 
-datalength = length(data);
-dcreject = 10;
+datalengthin = length(datain);
+dcreject = 5;
+
+%data has to be even length'd
+if (mod(datalengthin,2))
+    data = datain(1:end-1);
+else
+    data = datain;
+end
+
+datalength=length(data);
 
 datafft = fft(data);
 
@@ -27,6 +36,7 @@ plot(abs(datafft2))
 
 fpk1 = (ipk1)*(1/srate)/datalength;
 fpk2 = (1/srate)*(ipk2/datalength-1);
+
 
 tones = [fpk1 angle(pk1); fpk2 angle(pk2)];
 

@@ -17,8 +17,6 @@ fa2 = findtones([idealdata1;zeros([fftlength-datalength,1])]);
 %fa3 = findtones([data;zeros([fftlength-datalength,1])]);
 
 
-
-
 subplot 411
 plot(timestamp,real(idealdata))
 title('Data 0 Real')
@@ -80,36 +78,24 @@ plot(timestamp, sin(2*pi*fa1(1,1)*timestamp+fa1(1,2)),'m:')
 plot(timestamp, sin(2*pi*fa1(2,1)*timestamp+fa1(2,2)),'g:')
 title('Imaginary: Data 0 and Recreated Tones')
 subplot 313
-plot(timestamp,cos(2*pi*timestamp*(fa2(1,1)-fa2(2,1))/2+(fa2(1,2)-fa2(2,2))/2))
+plot(timestamp,cos(2*pi*timestamp*(fa1(1,1)-fa1(2,1))/2+(fa1(1,2)-fa1(2,2))/2))
 title('Real and Imaginary Beat Tones')
 
 figure
-plot(timestamp,real(data1))
+subplot 311
+plot(timestamp,real(idealdata1),'b')
 hold on
-plot(timestamp,imag(data1),'m')
-plot(timestamp, cos(2*pi*fa2(1,1)*timestamp+fa2(1,2)),'b:')
+plot(timestamp, cos(2*pi*fa2(1,1)*timestamp+fa2(1,2)),'c:')
+plot(timestamp, cos(2*pi*fa2(2,1)*timestamp+fa2(2,2)),'g:')
+title('Real: Data 1 and Recreated Tones')
+subplot 312
+plot(timestamp,imag(idealdata1),'r')
+hold on
 plot(timestamp, sin(2*pi*fa2(1,1)*timestamp+fa2(1,2)),'m:')
+plot(timestamp, sin(2*pi*fa2(2,1)*timestamp+fa2(2,2)),'g:')
+title('Imaginary: Data 1 and Recreated Tones')
+subplot 313
+plot(timestamp,cos(2*pi*timestamp*(fa2(1,1)-fa2(2,1))/2+(fa2(1,2)-fa2(2,2))/2))
+title('Real and Imaginary Beat Tones')
 
-figure
-subplot 211
-plot(timestamp, cos(2*pi*fa1(1,1)*timestamp+fa1(1,2)),'b')
-hold on
-plot(timestamp, cos(2*pi*fa1(2,1)*timestamp+fa1(2,2)),'m')
-plot(timestamp, sin(2*pi*(fa1(1,1)+fa1(2,1))*timestamp+(fa1(1,2)+fa1(2,2))),'r:')
-subplot 212
-plot(timestamp, sin(2*pi*fa1(1,1)*timestamp+fa1(1,2)),'g')
-hold on
-plot(timestamp, sin(2*pi*fa1(2,1)*timestamp+fa1(2,2)),'c')
-plot(timestamp, cos(2*pi*(fa1(1,1)+fa1(2,1))*timestamp+(fa1(1,2)+fa1(2,2))),'b:')
 
-figure
-subplot 211
-plot(timestamp, cos(2*pi*fa2(1,1)*timestamp+fa2(1,2)),'b')
-hold on
-plot(timestamp, cos(2*pi*fa2(2,1)*timestamp+fa2(2,2)),'m')
-plot(timestamp, sin(2*pi*(fa2(1,1)+fa2(2,1))*timestamp+(fa2(1,2)+fa2(2,2))),'r:')
-subplot 212
-plot(timestamp, sin(2*pi*fa2(1,1)*timestamp+fa2(1,2)),'g')
-hold on
-plot(timestamp, sin(2*pi*fa2(2,1)*timestamp+fa2(2,2)),'c')
-plot(timestamp, cos(2*pi*(fa2(1,1)+fa2(2,1))*timestamp+(fa2(1,2)+fa2(2,2))),'b:')
