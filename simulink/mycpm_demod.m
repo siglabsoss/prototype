@@ -21,7 +21,7 @@ demodOutSampleTime = demodInSampleTime * demodSamplesPerSymbol;
 
 % block.OutputPort(1).SampleTime = [0.05 0.05];
 block.OutputPort(1).SampleTime = [demodOutSampleTime 0];
-% block.OutputPort(2).SampleTime = [demodOutSampleTime 0];
+block.OutputPort(2).SampleTime = [demodOutSampleTime 0];
 % block.OutputPort(3).SampleTime = [demodOutSampleTime 0];
 
 
@@ -30,7 +30,7 @@ block.OutputPort(1).SampleTime = [demodOutSampleTime 0];
 
 function SetInputPortSamplingMode(block, port, mode)
 % When a Level-2 MATLAB S-function with multiple output ports has dynamic sampling mode setting for any of its ports, it is necessary to register a 'SetInputPortSamplingMode' method
-block.InputPort(1).SamplingMode = 0; % 0 = sample 1 = frame
+block.InputPort(port).SamplingMode = 0; % 0 = sample 1 = frame
 %end
 
 function SetOutputPortSampleTime(block, portNumber, time)
@@ -53,7 +53,7 @@ demodRotationsPerSymbol = eval(get_param(gcb,'RotationsPerSym'));
 % cc = block.DialogPrm(3).Data;
 
 block.NumInputPorts = 1;
-block.NumOutputPorts = 1;
+block.NumOutputPorts = 2;
 
 block.InputPort(1).DataTypeID = 0; % 8 for boolean, 0 for double
 block.InputPort(1).Complexity = 'Complex';
@@ -65,9 +65,9 @@ block.OutputPort(1).DatatypeID  = 0; % double
 block.OutputPort(1).Complexity  = 'Real';
 block.OutputPort(1).SamplingMode = 'Sample';
 
-% block.OutputPort(2).DatatypeID  = 0; % double
-% block.OutputPort(2).Complexity  = 'Complex';
-% block.OutputPort(2).SamplingMode = 'Sample';
+block.OutputPort(2).DatatypeID  = 0; % double
+block.OutputPort(2).Complexity  = 'Real';
+block.OutputPort(2).SamplingMode = 'Sample';
 
 % block.OutputPort(3).DatatypeID  = 0; % double
 % block.OutputPort(3).Complexity  = 'Complex';
@@ -81,13 +81,12 @@ block.RegBlockMethod('Outputs', @Outputs);
 block.RegBlockMethod('SetInputPortSampleTime', @SetInputPortSampleTime);
 block.RegBlockMethod('SetOutputPortSampleTime', @SetOutputPortSampleTime);
 block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
+%block.RegBlockMethod('SetInputPortDimensions', @SetInputPortDimensions);
+%block.RegBlockMethod('PostPropagationSetup',        @DoPostPropSetup);
 %end
 
 function InitVars()
-    global v1 v2 MPSK demodOutSampleTime demodSamplesPerSymbol demodTotalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer;
-    v1 = 0;
-    v2 = 42;
-    MPSK = 4;
+    global demodOutSampleTime demodSamplesPerSymbol demodTotalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer;
     demodTotalSamples = 0;
     dataInt = 0;
     clockUpInt = 0;
@@ -160,6 +159,8 @@ if( bufferIndex == demodSamplesPerSymbol )
     
     block.OutputPort(1).Data = bit; %complex(rout,iout);
 end
+
+block.OutputPort(2).Data = sampleAngle;
 
 
 
