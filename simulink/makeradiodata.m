@@ -1,6 +1,8 @@
 %todo:
 %add phase LO differences
 %add more than one cycle of time delay
+%add amplitude variability
+
 
 close all
 
@@ -14,9 +16,18 @@ clear timeoffset
 clear samplesoffset
 clear incoherentsum
 clear coherentsum
+clear recoveredphase
+clear xcorr_data
+clear datalength
+clear recoveredfreqphasexcorr
+clear freqoffsetxcorr
+clear xcorr_freq
+clear freqaligneddataxcorr
 
-maxdelay = 1/50; %magic number :(
+
+maxdelay = 1/60; %magic number :(
 maxLOphase = 1.56; %magic number :(
+maxFshift = 1000; %in hertz
 
 snr = 3;
 
@@ -30,33 +41,62 @@ timestamp = 0:srate:(datalength-1)*srate;
 
 numdatasets = 10;
 
-noisydata1 = awgn(idealdata,snr);
-
-subplot 211
-plot(real(idealdata))
-subplot 212
-plot(real(noisydata1))
-
-
 %make AWGN data with random delay and random phase
 for k = 1:1:numdatasets
     noisydata(:,k) = idealdata; %bypass for testing
     delaysamples(k) = round(maxdelay*rand()/srate);
     phaserotation(k) = maxLOphase*rand(); 
-    noisydata(:,k) = awgn(idealdata,snr);
-    noisydata(:,k) = noisydata(:,k).*exp(i*phaserotation(k));
+    Fshift(k) = maxFshift*rand();
+    noisydata(:,k) = awgn(idealdata,snr); %white noise
+    noisydata(:,k) = noisydata(:,k).*(exp(i*2*pi*Fshift(k)*timestamp)'); %frequency shift
+    noisydata(:,k) = noisydata(:,k).*exp(i*phaserotation(k)); %LO phase shift
     noisydata(:,k) = [zeros(delaysamples(k),1);noisydata(1:end-delaysamples(k),k)];
     %noisydata(:,k) = idealdata; %bypass for testing
 end
 
+subplot 311
+plot(timestamp,real(idealdata))
+title('Ideal Data (Real)')
+subplot 312
+plot(real(clock_comb))
+hold on
+plot(imag(clock_comb),'m:')
+title('Ideal Clock Comb (Real)')
+subplot 313
+plot(timestamp,real(noisydata(:,1)))
+
+
 %run findtones
 for k = 1:1:numdatasets
-    fa(:,:,k) = findtones([flattopwin(datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]);
+    %fa(:,:,k) = findtones([flattopwin(datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]);
     %fa(:,:,k) = findtones(noisydata(:,k));
+    fa(:,:,k) = findtones([noisydata(:,k);zeros([fftlength-datalength,1])]);
 end
 
 figure
-plot(abs(fftshift(fft([flattopwin(datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]))))
+subplot 311
+noisy_fft = fft([flattopwin(datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]);
+plot(abs(fftshift(noisy_fft)));
+title('sample padded fft of one noisy channel')
+subplot 312
+%comb_fft = fft(clock_comb,fftlength);
+comb_fft = fft([flattopwin(length(clock_comb)).*clock_comb;zeros([fftlength-length(clock_comb),1])]);
+plot(abs(fftshift(comb_fft)));
+title('padded fft of clock comb')
+subplot 313
+plot(abs(xcorr(noisy_fft, comb_fft)))
+title('Cross-Correlation in Freq Domain')
+
+%plot raw data
+figure
+for k = 1:1:numdatasets
+    subplot(numdatasets,1,k)
+    plot(timestamp,real(noisydata(:,k)))
+    xlim([0 0.5])
+    ylim([-3 3])
+end
+subplot(numdatasets,1,1)
+title('Raw data received at antennas (Real)')
 
 %plot data and recovered beat tone
 figure
@@ -65,9 +105,11 @@ for k = 1:1:numdatasets
     plot(timestamp,real(noisydata(:,k)))
     hold on
     plot(timestamp,cos(2*pi*timestamp*(fa(1,1,k)-fa(2,1,k))/2+(fa(1,2,k)-fa(2,2,k))/2),'m')
+    xlim([0 0.5])
+    ylim([-3 3])
 end
 subplot(numdatasets,1,1)
-title('Recovered Beat Tones')
+title('Recovered Beat Tones (Real)')
 
 %{
 for k = 1:1:numdatasets
@@ -88,28 +130,29 @@ for k = 1:1:numdatasets
     hold on
     plot(timestamp+timeoffset(k),cos(2*pi*timestamp*(fa(1,1,k)-fa(2,1,k))/2+(fa(1,2,k)-fa(2,2,k))/2),'m')
     xlim([0 0.5])
+    ylim([-3 3])
 end
 subplot(numdatasets,1,1)
-title('Time Aligned Data')
+title('Time Aligned Data (Real)')
 
 %recover the phase offset of the LO
-figure
 for k = 1:1:numdatasets
     recoveredphase(k) = fa(1,2,k)-timeoffset(k)*fa(1,1,k)*2*pi;
+    %{
     subplot(numdatasets,1,k)
     plot(timestamp+timeoffset(k),real(noisydata(:,k)./exp(i*(recoveredphase(k)))))
     hold on
     plot(timestamp+timeoffset(k),cos(2*pi*timestamp*(fa(1,1,k)-fa(2,1,k))/2+(fa(1,2,k)-fa(2,2,k))/2),'m')
     xlim([0 0.5])
     ylim([-1 1])
+    %}
 end
-subplot(numdatasets,1,1)
-title('Time and Phase Aligned Data')
+
 
 figure
 incoherentsum = noisydata * ones([numdatasets 1]);
 plot(timestamp, real(incoherentsum))
-title('Incoherent Sum of Signals')
+title('Incoherent Sum of Signals (Real)')
 
 figure
 for k = 1:1:numdatasets
@@ -117,12 +160,80 @@ for k = 1:1:numdatasets
     aligneddata(:,k) = [noisydata(samplesoffset(k):end,k);zeros([samplesoffset(k)-1 1])]./exp(i*(recoveredphase(k)));
     subplot(numdatasets,1,k)
     plot(timestamp, real(aligneddata(:,k)))
+    hold on
+    plot(timestamp+timeoffset(k),cos(2*pi*timestamp*(fa(1,1,k)-fa(2,1,k))/2+(fa(1,2,k)-fa(2,2,k))/2),'m')
+    xlim([0 0.5])
+    ylim([-3 3])
 end
+subplot(numdatasets,1,1)
+title('FFT Time and Phase Aligned Data (Real)')
+
 
 figure
 coherentsum = aligneddata * ones([numdatasets 1]);
 plot(timestamp, real(coherentsum))
-title('Coherent Sum of Signals')
+title('FFT Coherent Sum of Signals (Real)')
 
+%perform clock_comb frequency xcorrelation
+figure
+freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
+xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
+xcorrfreqstamp_shift = fftshift(xcorrfreqstamp); %this is a HACK
+[flip(-timestamp,2) timestamp(2:end)];
+for k = 1:1:numdatasets
+    subplot(numdatasets,1,k)
+    noisyfft(:,k) = fft([flattopwin(datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]);
+    xcorr_freq(:,k) = xcorr(noisyfft(:,k),comb_fft);
+    plot(xcorrfreqstamp,abs(fftshift(xcorr_freq(:,k))))
+    [val id] = max(xcorr_freq(:,k));
+    recoveredfreqphasexcorr(k) = angle(val);
+    freqoffsetxcorr(k) = xcorrfreqstamp_shift(id);
+end
+subplot(numdatasets,1,1)
+title('Correlation of Noisy Data FFT with Clock Comb FFT (abs val)')
 
+%frequency align data
+figure
+for k = 1:1:numdatasets
+    subplot(numdatasets,1,k)
+    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*freqoffsetxcorr(k)*timestamp)');
+    plot(timestamp, real(freqaligneddataxcorr(:,k)))
+    xlim([0 0.5])
+    subplot(numdatasets,1,k)
+    ylim([-3 3])
+end
+subplot(numdatasets,1,1)
+title('FFT-Correlation Frequency-Aligned Data (Real)')  
+
+%perform clock_comb xcorrelation
+figure
+xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)];
+for k = 1:1:numdatasets
+    subplot(numdatasets,1,k)
+    xcorr_data(:,k) = xcorr(freqaligneddataxcorr(:,k),clock_comb);
+    plot(xcorrtimestamp,abs(xcorr_data(:,k)))
+    [val id] = max(xcorr_data(:,k));
+    recoveredphasexcorr(k) = angle(val);
+    samplesoffsetxcorr(k) = id - datalength;
+end
+subplot(numdatasets,1,1)
+title('Correlation of Noisy Data with Clock Comb (abs val)')
+
+%time and phase align data
+figure
+for k = 1:1:numdatasets
+    subplot(numdatasets,1,k)
+    aligneddataxcorr(:,k) = [freqaligneddataxcorr(samplesoffsetxcorr(k):end,k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
+    subplot(numdatasets,1,k)
+    plot(timestamp, real(aligneddataxcorr(:,k)))
+    xlim([0 0.5])
+    ylim([-3 3])
+end
+subplot(numdatasets,1,1)
+title('Correlation Time and Phase Aligned Data (Real)')    
+
+figure
+coherentsumxcorr = aligneddataxcorr * ones([numdatasets 1]);
+plot(timestamp, real(coherentsumxcorr))
+title('Correlation Coherent Sum of Signals (Real)')
 
