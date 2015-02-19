@@ -2,6 +2,7 @@
 %add phase LO differences
 %add more than one cycle of time delay
 %add amplitude variability
+%awgn should be after the time shifts
 
 
 close all
@@ -29,7 +30,7 @@ maxdelay = 1/60; %magic number :(
 maxLOphase = 1.56; %magic number :(
 maxFshift = 1000; %in hertz
 
-snr = 3;
+snr = 6;
 
 power_padding = 4;
 
@@ -47,10 +48,11 @@ for k = 1:1:numdatasets
     delaysamples(k) = round(maxdelay*rand()/srate);
     phaserotation(k) = maxLOphase*rand(); 
     Fshift(k) = maxFshift*rand();
-    noisydata(:,k) = awgn(idealdata,snr); %white noise
+    noisydata(:,k) = [zeros(delaysamples(k),1);idealdata(1:end-delaysamples(k))];
     noisydata(:,k) = noisydata(:,k).*(exp(i*2*pi*Fshift(k)*timestamp)'); %frequency shift
     noisydata(:,k) = noisydata(:,k).*exp(i*phaserotation(k)); %LO phase shift
     noisydata(:,k) = [zeros(delaysamples(k),1);noisydata(1:end-delaysamples(k),k)];
+    noisydata(:,k) = awgn(noisydata(:,k),snr); %white noise
     %noisydata(:,k) = idealdata; %bypass for testing
 end
 
@@ -60,7 +62,7 @@ title('Ideal Data (Real)')
 subplot 312
 plot(real(clock_comb))
 hold on
-plot(imag(clock_comb),'m:')
+%plot(imag(clock_comb),'m:')
 title('Ideal Clock Comb (Real)')
 subplot 313
 plot(timestamp,real(noisydata(:,1)))
