@@ -3,7 +3,7 @@
 function mycpm_demod(block)
 
 Setup(block);
-InitVars();
+% we no longer call InitVars here, now it's now called InitializeConditions
 
 %end
 
@@ -81,31 +81,70 @@ block.RegBlockMethod('Outputs', @Outputs);
 block.RegBlockMethod('SetInputPortSampleTime', @SetInputPortSampleTime);
 block.RegBlockMethod('SetOutputPortSampleTime', @SetOutputPortSampleTime);
 block.RegBlockMethod('SetInputPortSamplingMode', @SetInputPortSamplingMode);
-%block.RegBlockMethod('SetInputPortDimensions', @SetInputPortDimensions);
-%block.RegBlockMethod('PostPropagationSetup',        @DoPostPropSetup);
+block.RegBlockMethod('PostPropagationSetup', @PostPropagationSetup);
+block.RegBlockMethod('InitializeConditions', @InitializeConditions);
 %end
 
-function InitVars()
-    global demodOutSampleTime demodSamplesPerSymbol demodTotalSamples outputHold outputHoldPrev dataInt clockUpInt clcokDownInt df patternVector demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer;
+
+
+function PostPropagationSetup(block)
+    % http://www.mathworks.com/matlabcentral/answers/98799-what-are-the-valid-datatypeid-values-for-matlab-file-s-functions-in-simulink
+    % Setup Dwork
+    
+    patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
+    patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
+
+    [~,sizeTemp1] = size(patternVectorDialog);
+
+    block.NumDworks                = 1;
+    
+    
+    
+    
+    block.Dwork(1).Name            = 'patternVector'; 
+    block.Dwork(1).Dimensions      = sizeTemp1 * patternVectorRepeatDialog;
+    block.Dwork(1).DatatypeID      = 2; % uint8
+    block.Dwork(1).Complexity      = 'Real';
+    block.Dwork(1).UsedAsDiscState = true;
+
+    
+%end
+
+
+function InitializeConditions(block)
+    global demodOutSampleTime demodSamplesPerSymbol demodTotalSamples dataInt clockUpInt clcokDownInt demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer demodPvSize demodPacketLength;
+    
+    patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
+    patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
+    
+    
     demodTotalSamples = 0;
     dataInt = 0;
     clockUpInt = 0;
     clcokDownInt = 0;
     demodAngleAdjust = 0;
-    
-    % 0 is data, 1 is clock up, 2 is clock down
-    pv = [ones(1,700)*1 ones(1,700)*2 ones(1,600)*0];
-    patternVector = [pv pv];
 
+    % repeat the pattern vector as specificed by the dialog
+    patternVector = zeros(0);
+    for j = 1:patternVectorRepeatDialog
+        patternVector = [patternVector patternVectorDialog];
+    end
+
+    % save the full size
+    [~,demodPvSize] = size(patternVector);
+
+
+    block.Dwork(1).Data = int8(patternVector);
+
+    demodPreviousSample = 0;
+    demodPreviousSampleAngle = 0;
+
+    demodPreviousBuffer = zeros(0);
     
-     demodPreviousSample = 0;
-     demodPreviousSampleAngle = 0;
-     
-     demodPreviousBuffer = zeros(0);
+    % fixed packet length in seconds
+    demodPacketLength = 0.4;
 
 %end
-
-    df = 100;
 
 
 function Start(block)
@@ -117,7 +156,19 @@ function Start(block)
 % real is left and right, is In-phase
   
 function Outputs(block)
-global demodSamplesPerSymbol demodTotalSamples demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer;
+global demodSamplesPerSymbol demodTotalSamples demodPreviousSample demodAngleAdjust demodPreviousSampleAngle demodPreviousBuffer demodPvSize demodPacketLength;
+
+
+%%% Pattern vector stuff
+currentTime = block.CurrentTime;
+
+scaledTimeIndex = floor((currentTime / demodPacketLength) * demodPvSize);
+
+patternVector = block.Dwork(1).Data;
+% 0 1 2
+modee = patternVector(mod(scaledTimeIndex,demodPvSize)+1);
+%%%
+
 
 sample = block.InputPort(1).Data;
 
@@ -153,14 +204,23 @@ if( bufferIndex == demodSamplesPerSymbol )
     % look at buffer and make our decision
     bit = -1;
     
-    if( (sum(demodPreviousBuffer) / demodSamplesPerSymbol) < 0 )
+    if( (sum(demodPreviousBuffer) / demodSamplesPerSymbol) > 0 )
         bit = 1;
     end
     
-    block.OutputPort(1).Data = bit; %complex(rout,iout);
+    % only output data if demodulating data
+    if( modee == 0 )
+        block.OutputPort(1).Data = bit;
+    else
+        % output an unrealstic number so we can remove this samples later
+        block.OutputPort(1).Data = -2;
+    end
 end
 
+
+
 block.OutputPort(2).Data = sampleAngle;
+
 
 
 
