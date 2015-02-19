@@ -3,7 +3,7 @@
 function mycpm(block)
 
 Setup(block);
-% we no longer call InitVars here, now it's done in InitializeConditions
+% we no longer call InitVars here, now it's now called InitializeConditions
 
 %end
 
@@ -39,7 +39,7 @@ function SetOutputPortSampleTime(block, portNumber, time)
 
 function Setup(block)
 
-global outSampleTime inSampleTime samplesPerSymbol clockFrequency rotationsPerSymbol dinFilterLength patternVectorDialog patternVectorRepeatDialog;
+global outSampleTime inSampleTime samplesPerSymbol clockFrequency rotationsPerSymbol dinFilterLength;
 
 
 % WTF is gcb?
@@ -48,8 +48,6 @@ samplesPerSymbol = eval(get_param(gcb,'SampsPerSym'));
 rotationsPerSymbol = eval(get_param(gcb,'RotationsPerSym'));
 clockFrequency = eval(get_param(gcb,'ClockUpDownFrequency'));
 dinFilterLength = eval(get_param(gcb,'FilterBufferLength'));
-patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
-patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
 
 % aa = block.DialogPrm(1).Data;
 % bb = block.DialogPrm(2).Data;
@@ -112,13 +110,9 @@ function PostPropagationSetup(block)
     
 %end
 
-function InitializeConditions(block)
-    InitVars(block);
-%end
-
 % called by InitializeConditions
-function InitVars(block)
-    global outSampleTime samplesPerSymbol totalSamples dataInt clockUpInt clockDownInt pvSize dinFilterr dinFilterLength packetLength;
+function InitializeConditions(block)
+    global totalSamples dataInt clockUpInt clockDownInt pvSize dinFilterr dinFilterLength packetLength;
 
     patternVectorDialog = eval(get_param(gcb,'PatternVectorDialog'));
     patternVectorRepeatDialog = eval(get_param(gcb,'PatternVectorRepeatDialog'));
