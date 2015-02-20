@@ -23,7 +23,7 @@ function [ dataOut ] = my_cpm_demod_offline( data, sampleTime )
     close_system(model, 0);
     
     
-    disp(cpmDemodOfflineDataOut);
+%     disp(cpmDemodOfflineDataOut);
     
     
     dataOut = cpmDemodOfflineDataOut;
