@@ -26,11 +26,11 @@ clear xcorr_freq
 clear freqaligneddataxcorr
 
 
-maxdelay = 1/60; %magic number :(
-maxLOphase = 1.56; %magic number :(
+maxdelay = 1/30; %magic number :(
+maxLOphase = 2.14; %magic number :(
 maxFshift = 1000; %in hertz
 
-snr = 6;
+snr = 3;
 
 power_padding = 4;
 
@@ -48,10 +48,11 @@ for k = 1:1:numdatasets
     delaysamples(k) = round(maxdelay*rand()/srate);
     phaserotation(k) = maxLOphase*rand(); 
     Fshift(k) = maxFshift*rand();
-    noisydata(:,k) = [zeros(delaysamples(k),1);idealdata(1:end-delaysamples(k))];
+    %noisydata(:,k) = awgn(noisydata(:,k),snr);
+    %noisydata(:,k) = [zeros(delaysamples(k),1);noisydata(1:end-delaysamples(k),k)];
     noisydata(:,k) = noisydata(:,k).*(exp(i*2*pi*Fshift(k)*timestamp)'); %frequency shift
     noisydata(:,k) = noisydata(:,k).*exp(i*phaserotation(k)); %LO phase shift
-    noisydata(:,k) = [zeros(delaysamples(k),1);noisydata(1:end-delaysamples(k),k)];
+    noisydata(:,k) = [zeros(delaysamples(k),1);noisydata(1:end-delaysamples(k),k)]; %time shift
     noisydata(:,k) = awgn(noisydata(:,k),snr); %white noise
     %noisydata(:,k) = idealdata; %bypass for testing
 end
@@ -100,6 +101,7 @@ end
 subplot(numdatasets,1,1)
 title('Raw data received at antennas (Real)')
 
+%{
 %plot data and recovered beat tone
 figure
 for k = 1:1:numdatasets
@@ -149,13 +151,14 @@ for k = 1:1:numdatasets
     ylim([-1 1])
     %}
 end
-
+%}
 
 figure
 incoherentsum = noisydata * ones([numdatasets 1]);
 plot(timestamp, real(incoherentsum))
 title('Incoherent Sum of Signals (Real)')
 
+%{
 figure
 for k = 1:1:numdatasets
     samplesoffset(k) = round(maxdelay/srate - timeoffset(k)/srate);
@@ -175,6 +178,7 @@ figure
 coherentsum = aligneddata * ones([numdatasets 1]);
 plot(timestamp, real(coherentsum))
 title('FFT Coherent Sum of Signals (Real)')
+%}
 
 %perform clock_comb frequency xcorrelation
 figure
