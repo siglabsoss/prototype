@@ -24,13 +24,14 @@ clear recoveredfreqphasexcorr
 clear freqoffsetxcorr
 clear xcorr_freq
 clear freqaligneddataxcorr
+clear noisyfft
 
 
 maxdelay = 1/30; %magic number :(
 maxLOphase = 2.14; %magic number :(
 maxFshift = 1000; %in hertz
 
-snr = 3;
+snr = -6;
 
 power_padding = 4;
 
