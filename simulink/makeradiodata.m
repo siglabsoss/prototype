@@ -27,11 +27,11 @@ clear freqaligneddataxcorr
 clear noisyfft
 
 
-maxdelay = 1/30; %magic number :(
-maxLOphase = 2.14; %magic number :(
+maxdelay = 1/50; %magic number :(
+maxLOphase = 1.6; %magic number :(
 maxFshift = 1000; %in hertz
 
-snr = -6;
+snr = 3;
 
 power_padding = 4;
 
@@ -185,16 +185,14 @@ title('FFT Coherent Sum of Signals (Real)')
 figure
 freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
 xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
-xcorrfreqstamp_shift = fftshift(xcorrfreqstamp); %this is a HACK
-[flip(-timestamp,2) timestamp(2:end)];
 for k = 1:1:numdatasets
     subplot(numdatasets,1,k)
     noisyfft(:,k) = fft([flattopwin(datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]);
-    xcorr_freq(:,k) = xcorr(noisyfft(:,k),comb_fft);
-    plot(xcorrfreqstamp,abs(fftshift(xcorr_freq(:,k))))
+    xcorr_freq(:,k) = xcorr(fftshift(noisyfft(:,k)),fftshift(comb_fft));
+    plot(xcorrfreqstamp,abs(xcorr_freq(:,k)))
     [val id] = max(xcorr_freq(:,k));
     recoveredfreqphasexcorr(k) = angle(val);
-    freqoffsetxcorr(k) = xcorrfreqstamp_shift(id);
+    freqoffsetxcorr(k) = xcorrfreqstamp(id);
 end
 subplot(numdatasets,1,1)
 title('Correlation of Noisy Data FFT with Clock Comb FFT (abs val)')

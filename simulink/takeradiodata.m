@@ -8,6 +8,7 @@ close all
 
 load edwindata.mat
 load bendata.mat
+load clock_comb_100k.mat
 
 clear noisydata
 clear fa
@@ -27,6 +28,7 @@ clear freqaligneddataxcorr
 clear noisyfft
 clear freqindex
 clear comb_fft
+clear xcorrfreqstamp
 
 maxdelay = 1/30; %magic number :(
 maxLOphase = 2.14; %magic number :(
@@ -97,7 +99,6 @@ title('Noisy Data FFT')
 
 figure
 xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
-%xcorrfreqstamp_shift = fftshift(xcorrfreqstamp); %this is a HACK
 for k = 1:1:numdatasets
     subplot(numdatasets,1,k)
     [xcorr_freq(:,k), lag(:,k)] = xcorr(fftshift(noisyfft(:,k)),fftshift(comb_fft));
