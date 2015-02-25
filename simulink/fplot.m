@@ -51,6 +51,8 @@ figure;
 plot(f,2*abs(X));
 xlabel('Frequency (in hertz)');
 title('Magnitude Response');
+disp('Each bin is ');
+disp(dF);
 
 
 end
