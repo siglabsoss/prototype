@@ -10,17 +10,18 @@ load clock_comb_100k.mat
 srate = 1/100000;
 rawtime = 0:srate:(length(rawdata)-1)*srate;
 windowsize = 0.8;
-timestep = 0.4;
+timestep = 0.3;
 power_padding = 4;
-fftdetect = 30; %max peak to rms ratio for clock comb xcorr search
-
+fftdetect = 30; %max peak to rms ratio for fft-only search
+xcorrdetect = 14; %max peak to rms ratio for clock comb xcorr search
+windowtype = @gausswin;
 
 figure
 plot(rawtime, real(rawdata))
 title('Raw RF Data (real)')
 
 %chunk the data
-for k = 0:floor(rawtime(end)/timestep)-2
+for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
     rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
 end
 
@@ -42,10 +43,11 @@ title('First 10 chunks of raw data received at antennas (Real)')
 
 %basic fft of raw data
 for k=1:1:numdatasets
-    rnoisyfft(:,k) = fft([flattopwin(datalength).*rnoisydata(:,k);zeros([fftlength-datalength,1])]);
+    rnoisyfft(:,k) = fft([window(windowtype,datalength).*rnoisydata(:,k);zeros([fftlength-datalength,1])]);
     noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/abs(rms(rnoisyfft(:,k)));
 end
-goodsets = find(noisyfftsnr > fftdetect);
+%goodsets = find(noisyfftsnr > fftdetect); %UNCOMMENT THIS TO GO BACK TO
+%FFT-ONLY SELECTION
 
 
 figure
@@ -61,27 +63,27 @@ title('First 10 Chunks Noisy Data FFT')
 %create comb fft
 figure
 freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
-comb_fft = fft([flattopwin(length(clock_comb)).*clock_comb;zeros([fftlength-length(clock_comb),1])]);
+comb_fft = fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength-length(clock_comb),1])]);
 plot(freqindex,abs(fftshift(comb_fft)));
 title('padded fft of clock comb')
 
 %Alternate sample ranking based on comb correlation
-
 xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
 for k = 1:1:numdatasets
-    
     [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(fftshift(rnoisyfft(:,k))),abs(fftshift(comb_fft)));
-    
     [val id] = max(xcorr_freq(:,k));
     recoveredfreqphasexcorr(k) = angle(val);
     freqoffsetxcorr(k) = xcorrfreqstamp(id);
+    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/abs(rms(xcorr_freq(:,k)));
 end
+goodsets = find(noisyxcorrsnr > xcorrdetect);
 
 
 %reduce to just the good datasets
 for k = 1:length(goodsets)
     noisydata(:,k) = rnoisydata(:,goodsets(k));
     noisyfft(:,k) = rnoisyfft(:,goodsets(k));
+    freqoffsetxcorr(k) = freqoffsetxcorr(goodsets(k));
 end
 
 numdatasets = length(goodsets);
@@ -93,6 +95,7 @@ for k = 1:numdatasets
 end
 subplot(numdatasets,1,1)
 title('Raw datasets where signal found (real)')
+
 
 %plot the xcorr of the samples with the comb
 figure
