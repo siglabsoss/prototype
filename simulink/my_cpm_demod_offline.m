@@ -1,11 +1,32 @@
-function [ dataOut ] = my_cpm_demod_offline( data, sampleTime )
-%MY_CPM_DEMOD_OFFLINE to change vector, repeat, rotations per symbol
-%   Detailed explanation goes here
+function [ dataOut ] = my_cpm_demod_offline( data, sampleTime, samplesPerSymbol, vector, vectorRepeat )
+%MY_CPM_DEMOD_OFFLINE pull bits out of raw data.
+%   Data should be TDC.  First sample of 'data' must be first sample of
+%   packet
+%     - data: raw input data
+%     - sampleTime: time per sample
+%     - samplesPerSymbol: copy from my cpm mod block
+%     - vector: copy from my cpm mod block
+%     - vectorRepeat: copy from my cpm mod block
 
-    % god awful way of loading custom variables into matlab simulink model
-    variableInitString = sprintf('cpmDemodOfflineSampleTime = %d; cpmDemodOfflineTimeValues = [0:%d:.4]\''; cpmDemodOfflineData = %s;', sampleTime, sampleTime, mat2str(data));
+    if( sampleTime > 1 )
+        error(sprintf('sample time looks pretty big, maybe try (1/%d)?', sampleTime));
+    end
+
+    % Only send in single variable configs here! any vectors should use file based
+    % method!
+    variableInitString = sprintf('cpmDemodOfflineSampleTime = %d;', sampleTime);
     
-   
+    [sz,~] = size(data);
+    
+    timeSeries = 0:sampleTime:sz*sampleTime-sampleTime;
+    
+    cpmDemodOfflineDataReal = [timeSeries; real(data)'];
+    cpmDemodOfflineDataImag = [timeSeries; imag(data)'];
+    
+    % save large data vectors to disk
+    save('_cpmDemodOfflineDataReal.mat', 'cpmDemodOfflineDataReal');
+    save('_cpmDemodOfflineDataImag.mat', 'cpmDemodOfflineDataImag');
+    
     % matlab requires us to refer to both of these
     model = 'my_cpm_demod_offline_model';
     modelFile = strcat(model,'.slx');
@@ -13,8 +34,16 @@ function [ dataOut ] = my_cpm_demod_offline( data, sampleTime )
     % load model (without displaying window)
     load_system(modelFile);
     
-    % send in god awful string
+%      close_system(model, 1);
+    
+    % send in configs string (this creates autosave file)
     set_param(model, 'InitFcn', variableInitString);
+    
+    % apply params to demod block
+    set_param('my_cpm_demod_offline_model/My CPM Demod','PatternVectorDialog', mat2str(vector));
+    set_param('my_cpm_demod_offline_model/My CPM Demod','PatternVectorRepeatDialog', mat2str(vectorRepeat));
+    set_param('my_cpm_demod_offline_model/My CPM Demod','SampsPerSym', mat2str(samplesPerSymbol));
+    
     
     % run it
     sim(model);
@@ -22,6 +51,9 @@ function [ dataOut ] = my_cpm_demod_offline( data, sampleTime )
     % explicity close without saving (0) cuz we changed stuff
     close_system(model, 0);
     
+    % trash the files
+    delete('_cpmDemodOfflineDataReal.mat');
+    delete('_cpmDemodOfflineDataImag.mat');
     
 %     disp(cpmDemodOfflineDataOut);
     
