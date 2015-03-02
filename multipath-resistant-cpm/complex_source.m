@@ -2,7 +2,7 @@
 %   Copyright 2015 Signal Laboratories, Inc.
 
 
-function mr_cpm_mod1(block)
+function complex_source(block)
 
  %% Setup S-Function block
   Setup(block);
@@ -13,17 +13,14 @@ function mr_cpm_mod1(block)
 function Setup(block)
 
   %% Register number of dialog parameters   
-  block.NumDialogPrms = 0;
+  block.NumDialogPrms = 2;
   
   % block.SetPreCompInpPortInfoToDynamic;
   % block.SetPreCompOutPortInfoToDynamic;
 
   %% Register number of input and output ports
-  block.NumInputPorts = 1;
+  block.NumInputPorts = 0;
   block.NumOutputPorts = 1;
-
-  block.InputPort(1).Complexity = 'Real';
-  block.InputPort(1).DataTypeID = 0; % 8 for boolean, 0 for double
 
   block.OutputPort(1).DatatypeID  = 0; % double
   block.OutputPort(1).Complexity  = 'Complex';
@@ -31,29 +28,23 @@ function Setup(block)
 
   %% Register methods
   block.RegBlockMethod('Outputs', @Outputs);
-  block.RegBlockMethod('CheckParameters',        @CheckPrms);
-  block.RegBlockMethod('ProcessParameters',      @ProcessPrms);
-  block.RegBlockMethod('InitializeConditions',   @InitConditions);
-  block.RegBlockMethod('PostPropagationSetup',   @DoPostPropSetup);
-  % block.RegBlockMethod('SetInputPortSampleTime', @InitInputSampleTime);
-  % block.RegBlockMethod('SetOutputPortSampleTime',@InitOutputSampleTime);
+  block.RegBlockMethod('CheckParameters',      @CheckPrms);
+  block.RegBlockMethod('ProcessParameters',    @ProcessPrms);
+  block.RegBlockMethod('InitializeConditions', @InitConditions);
+  block.RegBlockMethod('PostPropagationSetup', @DoPostPropSetup);
   
+  %% Set sample time
+  SampleTime = block.DialogPrm(2).Data;
+  block.SampleTimes = [SampleTime 0];
+
 %endfunction
-
-function InitOutputSampleTime(block)
-
-%end function
-
-function InitInputSampleTime(block)
-
-%end function
 
 function DoPostPropSetup(block)
 
  %% Initialize block workspace
     block.NumDworks                = 1;
         
-    block.Dwork(1).Name            = 'theta_prime'; 
+    block.Dwork(1).Name            = 'Freq'; 
     block.Dwork(1).Dimensions      = 1;
     block.Dwork(1).DatatypeID      = 0; % double
     block.Dwork(1).Complexity      = 'Real';
@@ -65,7 +56,7 @@ function DoPostPropSetup(block)
 function InitConditions(block)
 
   %% Initialize settings
-  % block.Dwork(1).Data = block.DialogPrm(1).Data;
+  block.Dwork(1).Data = block.DialogPrm(1).Data;
 
 %end function
 
@@ -86,25 +77,13 @@ function ProcessPrms(block)
 
   
 function Outputs(block)
-global theta_prime;
 
   %% Initialize function variables
+
   t = block.CurrentTime;
-  input = block.InputPort(1).Data; % fill into filter
-  
-  %% Do the math
-  Df = 2 * pi; % frequency deviation
-  theta = Df * real(input) + theta_prime; % integrate
-  theta_prime = theta;
-  output = 1i .* sin(theta) + cos(theta);
+  Freq = block.Dwork(1).Data;
 
   %% write to block
-  block.OutputPort(1).Data = output;
+  block.OutputPort(1).Data = 1i * sin(Freq * t) + cos(Freq * t);
 
 %end
-
-
-
-
-
-
