@@ -15,7 +15,10 @@ function [ dataOut ] = run_simulink( dataIn )
     set_param(modelName, 'InitFcn', variableInitString);
     
     % run it
-    sim(modelName);
+    sim(modelName,'SrcWorkspace','current');
+    
+    hws = get_param(modelName, 'modelworkspace');
+%     sim(modelName);
     
     % explicity close without saving (0) because changing InitFcn
     % counts as changing the model.  Note that set_param also
@@ -23,6 +26,6 @@ function [ dataOut ] = run_simulink( dataIn )
     close_system(modelName, 0);
     
     % return data from simOut that is created by simulink
-    dataOut = simout;
+%     dataOut = simout;
 end
 
