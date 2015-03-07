@@ -18,6 +18,18 @@ fftphasestep = pi/4;
 numsets = 20;
 freqstep = 1; %in Hz
 
+testfft = noisyfft(:,7);
+
+comb_fft = fftshift(fft(clock_comb,fftlength));
+figure
+subplot 211
+plot(abs(xcorr(comb_fft,testfft)))
+title('Cross Correlation of comb and data fft')
+subplot 212
+plot(abs(xcorr(abs(comb_fft),abs(testfft))))
+title('Cross Correlation of abs of comb and data fft')
+
+%{
 figure
 for k = 1:1:numsets
     freqshift = freqstep*(k-10);
@@ -56,3 +68,4 @@ for k = 1:1:numsets
     title(sprintf('fft xcorr one input %s degrees phase shifted',num2str(fftphaseshift*360/2/pi)))
 end
 subplot(numsets,1,k)
+%}

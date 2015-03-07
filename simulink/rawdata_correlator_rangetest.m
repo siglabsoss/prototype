@@ -39,10 +39,10 @@
 clear all
 close all
 load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
-load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'manzanitaandmiddlefield'); 
+load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield'); 
 srate = 1/125000;
 clock_comb = clock_comb125k;
-rawdata = marshalarguello;
+rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
 %end block of standalone test
 
 starttime = datetime;
@@ -50,7 +50,7 @@ starttime = datetime;
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
 xcorrdetect = 3; %max peak to rms ratio for clock comb xcorr search
-windowtype = @gausswin; %fft window type.  @triang, @rectwin, and @hamming work best
+windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = 100; %frequency search window low, in Hz
 fsearchwindow_hi = 1000; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
@@ -178,7 +178,7 @@ xlabel('Time [s]')
 freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
 comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength-length(clock_comb),1])]));
 
-%long data fft of raw data for detection for frequency alignment
+%long data fft of raw data for frequency alignment
 for k=1:1:numdatasets
     noisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]));
 end
@@ -218,6 +218,10 @@ xlabel('Frequency Offset [Hz]')
 for k = 1:1:numdatasets
     freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*freqoffsetxcorr(k)*timestamp)');
 end
+
+freqstep = 0.25;
+numsteps = 31;
+%freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
 %perform clock_comb xcorrelation
 xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
