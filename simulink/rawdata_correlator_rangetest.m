@@ -39,19 +39,23 @@
 clear all
 close all
 load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
-load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield'); 
+%load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield');
+%load('4berkshireElcamino.mat');
+load('mar17.mat','parkinglot');
 srate = 1/125000;
 clock_comb = clock_comb125k;
-rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
+rawdata = parkinglot;
+%rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
 %end block of standalone test
 
 starttime = datetime;
 
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
-xcorrdetect = 3; %max peak to rms ratio for clock comb xcorr search
-windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
-fsearchwindow_low = 100; %frequency search window low, in Hz
+xcorrdetect = 3.5; %max peak to rms ratio for clock comb xcorr search
+%xcorrdetect = 4.8;
+windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
+fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 1000; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
@@ -94,12 +98,22 @@ ylabel('Magnitude (Ettus Reported)')
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
     rnoisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*rnoisydata(:,k);zeros([fftlength_detect-datalength,1])]));
-    noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/abs(rms(rnoisyfft(:,k)));
+    noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/rms(rnoisyfft(:,k));
 end
 
 %create the reduced comb fft for detection %ADDED FFT SHIFT HERE for indexing
 freqindex = linspace(0,1/srate,fftlength_detect)-1/srate/2;
 comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength_detect-length(clock_comb),1])]));
+
+%plot the first 10 ffts
+figure
+for k=1:1:displaydatasets
+    subplot(displaydatasets,1,k)
+    plot(freqindex,abs(rnoisyfft(:,k)))
+    xlabel('Hz')
+end
+subplot(displaydatasets,1,1)
+title('FFT of First 10 Raw Datasets')
 
 %SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
 fsearch_index_low = floor((fftlength_detect)/2) + round(fsearchwindow_low*srate*fftlength_detect)+1; % need to verify possible off-by-one errors
@@ -116,10 +130,25 @@ xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 %Sample ranking based on frequency-domain comb correlation
 %xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate; %MOVED TO EARLIER for freq windowing
 freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
+
+
+
+%{
+%NON-ABS version
+for k = 1:1:numdatasets
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(rnoisyfft(fsearch_index_low:fsearch_index_hi,k),comb_fft(combwindow_index_low:combwindow_index_hi));
+    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
+end
+%}
+
+
+%ABS Version
 for k = 1:1:numdatasets
     [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
-    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/abs(rms(xcorr_freq(:,k)));
+    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
 end
+
+
 goodsets = find(noisyxcorrsnr > xcorrdetect);
 number_of_good_datasets = length(goodsets) %print out the number of good datasets found
 
@@ -144,7 +173,7 @@ title('Plot and Histogram of SNR used for Signal Detection')
 figure
 for k = 1:1:displaydatasets
     subplot(displaydatasets,1,k)
-    plot(xcorr_fstamp_fsearch,xcorr_freq(:,k))
+    plot(xcorr_fstamp_fsearch,abs(xcorr_freq(:,k)))
 end
 xlabel('Freq [Hz]')
 subplot(displaydatasets,1,1)
@@ -163,6 +192,8 @@ clear comb_fft
 clear rnoisyfft
 clear rnoisydata
 clear lag
+
+displaydatasets = min(displaydatasets,numdatasets);
 
 figure
 for k = 1:displaydatasets
@@ -195,6 +226,20 @@ fstamp_index_hi = ceil(fftlength-1) + round(fsearchwindow_hi*srate*fftlength) - 
 xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
 xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
+
+%{
+%NON-ABS VERSION:
+%run the long xcorr for frequency alignment
+for k = 1:1:numdatasets
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(noisyfft(fsearch_index_low:fsearch_index_hi,k),comb_fft(combwindow_index_low:combwindow_index_hi));
+    [val id] = max(xcorr_freq(:,k));
+    recoveredfreqphasexcorr(k) = angle(val);
+    freqoffsetxcorr(k) = xcorr_fstamp_fsearch(id);
+end
+%}
+
+
+%ABS VERSION:
 %run the long xcorr for frequency alignment
 for k = 1:1:numdatasets
     [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(noisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
@@ -202,6 +247,8 @@ for k = 1:1:numdatasets
     recoveredfreqphasexcorr(k) = angle(val);
     freqoffsetxcorr(k) = xcorr_fstamp_fsearch(id);
 end
+
+
 
 %plot the fft xcorr of the samples with the comb
 figure
@@ -257,6 +304,8 @@ for k = 1:1:numdatasets
     aligned_data(:,k) = [freqaligneddataxcorr2(samplesoffsetxcorr2(k):end,k);zeros([samplesoffsetxcorr2(k)-1 1])]./exp(i*(recoveredphasexcorr2(k)));
 end
 
+displaydatasets = min(displaydatasets,numdatasets);
+
 %plot the Aligned Data
 figure
 for k = 1:1:displaydatasets
@@ -276,8 +325,9 @@ title('Correlation Coherent Sum of Signals (Real)')
 %end
 
 %demodulate results
-Correlation_complteted_in = datetime-starttime
-
+Correlation_completed_in = datetime-starttime
+%{
 BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))
 
 BER_single_antenna = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))
+%}

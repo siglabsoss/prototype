@@ -6,7 +6,9 @@
 %clear all
 close all
 
-%load mondaymarch2.mat
+load mondaymarch2.mat
+
+load thursday.mat
 
 srate = 1/125000;
 
