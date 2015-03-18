@@ -1,12 +1,25 @@
-function [ tvector ] = comb_gen( seed )
+function [ tvector ] = comb_gen( seed, silent, doPlot )
 %COMB_GEN Summary of this function goes here
 %   Detailed explanation goes here
+
+if ( nargin < 3 )
+    doPlot = 1;
+end
+
+if( nargin < 2 )
+    silent = 0;
+end
+
 
 % this is mostly usefull for calling this fn like  comb_gen(rand());
 if( seed < 1 )
     seed = seed * 1000000;
-    disp('multiplying seed cuz less than 1');
+    if( silent == 0 )
+        disp('multiplying seed cuz less than 1');
+    end
 end
+
+   
 
 % type convert seed
 seed = int32(seed);
@@ -14,7 +27,9 @@ seed = int32(seed);
 % seed generator
 rng(seed);
 
-disp(sprintf('using %s for rand seed', mat2str(seed)));
+if( silent == 0 )
+    disp(sprintf('using %s for rand seed', mat2str(seed)));
+end
 
 fs = 25000;
 
@@ -68,10 +83,13 @@ rng(newSeed);
 % because why not
 tvector = fftshift(tvector);
 
-figure;
-plot(real(tvector));
-figure;
-plot(real(vector));
+if( doPlot )
+
+    figure;
+    plot(real(tvector));
+    figure;
+    plot(real(vector));
+end
 
 
 end
