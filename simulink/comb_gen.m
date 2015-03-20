@@ -50,7 +50,7 @@ bandMax = sz/2 + deltaBin;
 
 
 % randtune = 0.2;
-randtune = rand() * 0.8+0.03;
+randtune = rand() * 0.8+0.08;
 
 for bin = bandMin:bandMax
 %     vector(bin) = 1;% + bin*i;
