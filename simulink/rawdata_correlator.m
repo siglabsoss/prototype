@@ -44,7 +44,7 @@ power_padding = 3; %amount of extra padding to apply to the fft
 xcorrdetect = 3.5; %max peak to rms ratio for clock comb xcorr search
 %xcorrdetect = 4.8;
 windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
-fsearchwindow_low = 100; %frequency search window low, in Hz
+fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 1000; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
@@ -78,11 +78,12 @@ for k = 1:1:displaydatasets
     subplot(displaydatasets,1,k)
     plot(timestamp,real(rnoisydata(:,k)))
     xlim([0 1])
+    ylim([-0.5 0.5].*1e-3)
 end
 subplot(displaydatasets,1,1)
 title('First 10 chunks of raw data received at antennas (Real)')
 xlabel('Time [s]')
-ylabel('Magnitude (Ettus Reported)')
+
 
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
@@ -179,7 +180,7 @@ clear xcorr_freq
 clear xcorrfreqstamp
 clear comb_fft
 clear rnoisyfft
-clear rnoisydata
+%clear rnoisydata
 clear lag
 
 displaydatasets = min(displaydatasets,numdatasets);
@@ -259,6 +260,17 @@ freqstep = 0.25;
 numsteps = 31;
 %freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
+%plot frequency aligned data
+figure
+for k = 1:1:displaydatasets
+    subplot(displaydatasets,1,k)
+    plot(timestamp, freqaligneddataxcorr(:,k))
+end
+subplot(displaydatasets,1,1)
+title('First 10 Frequency-Aligned Data (Real)')
+subplot(displaydatasets,1,displaydatasets)
+xlabel('Time [s]')
+
 %perform clock_comb xcorrelation
 xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
 for k = 1:1:numdatasets
@@ -311,4 +323,8 @@ coherentsumxcorr = aligned_data * ones([numdatasets 1]);
 plot(timestamp, real(coherentsumxcorr))
 title('Correlation Coherent Sum of Signals (Real)')
 
+figure
+incoherentsum = rnoisydata * ones([size(rnoisydata,2) 1]);
+plot(timestamp, real(incoherentsum))
+title('Incoherent Sum of Signals (Real)')
 %end

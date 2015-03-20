@@ -41,10 +41,10 @@ close all
 load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
 %load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield');
 %load('4berkshireElcamino.mat');
-load('mar17.mat','parkinglot');
+load('mar17pt2.mat','ruthandelcamino');
 srate = 1/125000;
 clock_comb = clock_comb125k;
-rawdata = parkinglot;
+rawdata = ruthandelcamino;
 %rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
 %end block of standalone test
 
@@ -326,8 +326,7 @@ title('Correlation Coherent Sum of Signals (Real)')
 
 %demodulate results
 Correlation_completed_in = datetime-starttime
-%{
+
 BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))
 
 BER_single_antenna = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))
-%}
