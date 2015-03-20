@@ -2,7 +2,7 @@ function [ vout ] = reject_fn( samples )
 
 %tune
 res1 = 0.1;
-a1 = 0.13;
+a1 = 0.085;
 
 % initial timeseries
 t1 = [samples/-2*res1:1*res1:samples/2*res1];
@@ -21,7 +21,7 @@ f2 = sin(f1*a2) ./ (f1*a2);
 
 
 % center amplitude, 0 means 0 gets through
-cAmp = 0.22;
+cAmp = 0.13;
 
 % subtract so reject goes to zero (or camp)
 f2 = f2 - (1*sin(1/a2));
