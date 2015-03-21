@@ -1,4 +1,8 @@
-function [ out ] = xcorr3d_single( data, clock_comb, fs, freqOffset, freqStep )
+function [ out ] = xcorr3d_single( data, clock_comb, fs, freqOffset, freqStep, downSample )
+
+if( nargin < 6 )
+    downSample = 32;
+end
 
 out = [];
 
@@ -8,7 +12,9 @@ for shift = -freqOffset:freqStep:freqOffset
     comb = freq_shift(clock_comb, fs, shift);
     xcr = xcorr(data, comb);
     
-    xcr = downsample(xcr,4);
+    if( downSample > 1 )
+        xcr = downsample(xcr,downSample);
+    end
     out(index,:) = xcr;
 
 

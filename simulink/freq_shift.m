@@ -9,13 +9,23 @@ function [ dout ] = freq_shift( din, fs, shift )
 %   will generate a .4 second long vector at 100k samples per second with
 %   a +10 hz tone
 
+
+if( iscolumn(din) )
+   [sz,~] = size(din);
+elseif( isrow(din) )
+   din = din';
+   disp 'changing your data into column vector'
+   [sz,~] = size(din);
+else
+    error 'din must be a vector, not a matrix'
+end
+
 % shifting by zero is a nop
 if( shift == 0 )
     dout = din;
     return
 end
 
-[sz,~] = size(din);
 
 % these 4 lines generate a pure complex sine wave FTW!
 sampleInc = 1/fs * 2 * pi * shift;

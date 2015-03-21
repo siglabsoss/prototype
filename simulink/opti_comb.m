@@ -3,14 +3,27 @@ function [ dout ] = opti_comb( )
 %   Detailed explanation goes here
 
 samples = 25000;
-ss = sinc([-125:0.01:125]);
+
+sts = [-125:0.01:125];
+
+ss = sinc(sts);
 ss2 = reject_fn(25000).*ss;
 
 peak_ave_power(ss)
 peak_ave_power(ss2)
 
 
-dout = ss2';
+dout = sig_normalize(ss2');
+
+
+
+
+% test messin
+% dout = dout + (sin(sts)')/50;
+% dout = dout + rand(samples+1,1)/5;
+% dout = dout + (rand_walk(samples+1)')/8;
+
+
 
 end
 

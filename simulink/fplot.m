@@ -1,4 +1,4 @@
-function [  ] = ffttest( data, Fs )
+function [  ] = fplot( data, Fs )
 %FFT Summary of this function goes here
 %   Detailed explanation goes here
 
