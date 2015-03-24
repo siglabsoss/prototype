@@ -39,13 +39,10 @@
 clear all
 close all
 load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
-%load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield');
-%load('4berkshireElcamino.mat');
-load('mar17.mat','willowandelcamino');
+load('mar17pt2.mat','ruthandelcamino');
 srate = 1/125000;
 clock_comb = clock_comb125k;
-rawdata = willowandelcamino;
-%rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
+rawdata = ruthandelcamino;
 %end block of standalone test
 
 starttime = datetime;
@@ -92,8 +89,14 @@ for k = 1:1:displaydatasets
 end
 subplot(displaydatasets,1,1)
 title('First 10 chunks of raw data received at antennas (Real)')
+subplot(displaydatasets,1,displaydatasets)
 xlabel('Time [s]')
-ylabel('Magnitude (Ettus Reported)')
+
+figure
+incoherentsum = rnoisydata * ones([size(rnoisydata,2) 1]);
+plot(timestamp, real(incoherentsum))
+title('Incoherent Sum of Signals (Real)')
+xlabel('Time [s]')
 
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
@@ -128,9 +131,7 @@ xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate;
 xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 %Sample ranking based on frequency-domain comb correlation
-%xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate; %MOVED TO EARLIER for freq windowing
 freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
-
 
 
 %{
@@ -290,6 +291,14 @@ title('First 10 Time-Domain Correlations of Noisy Data with Clock Comb (abs val)
 subplot(displaydatasets,1,displaydatasets)
 xlabel('Time Offset [s]')
 
+%time and phase align data
+for k = 1:1:numdatasets
+    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
+end
+
+%{
+% OLD VERSION THAT ONLY SUPPORTS POSITIVE OFFSETS.
+% TO BE REMOVED IN NEXT REVISION
 goodsets2 = find(samplesoffsetxcorr > 0); % filter out partial coverage (datasets that don't have a start)
 %reduce to just the good datasets
 for k = 1:length(goodsets2)
@@ -301,10 +310,12 @@ numdatasets = length(goodsets2);
 
 %time and phase align data
 for k = 1:1:numdatasets
-    aligned_data(:,k) = [freqaligneddataxcorr2(samplesoffsetxcorr2(k):end,k);zeros([samplesoffsetxcorr2(k)-1 1])]./exp(i*(recoveredphasexcorr2(k)));
+    aligned_data(:,k) = [freqaligneddataxcorr2(samplesoffsetxcorr2(k):end,k);zeros([samplesoffsetxcorr2(k)-1 1])]./exp(i*(recoveredphasexcorr2(k))); 
 end
 
 displaydatasets = min(displaydatasets,numdatasets);
+%}
+
 
 %plot the Aligned Data
 figure

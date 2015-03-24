@@ -42,7 +42,6 @@ starttime = datetime;
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
 xcorrdetect = 3.5; %max peak to rms ratio for clock comb xcorr search
-%xcorrdetect = 4.8;
 windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 1000; %frequency search window high, in Hz
@@ -82,8 +81,14 @@ for k = 1:1:displaydatasets
 end
 subplot(displaydatasets,1,1)
 title('First 10 chunks of raw data received at antennas (Real)')
+subplot(displaydatasets,1,displaydatasets)
 xlabel('Time [s]')
 
+figure
+incoherentsum = rnoisydata * ones([size(rnoisydata,2) 1]);
+plot(timestamp, real(incoherentsum))
+title('Incoherent Sum of Signals (Real)')
+xlabel('Time [s]')
 
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
@@ -118,9 +123,8 @@ xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate;
 xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 %Sample ranking based on frequency-domain comb correlation
-%xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate; %MOVED TO EARLIER for freq windowing
-freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
+freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 
 %{
@@ -258,7 +262,6 @@ end
 
 freqstep = 0.25;
 numsteps = 31;
-%freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
 %plot frequency aligned data
 figure
@@ -291,6 +294,14 @@ title('First 10 Time-Domain Correlations of Noisy Data with Clock Comb (abs val)
 subplot(displaydatasets,1,displaydatasets)
 xlabel('Time Offset [s]')
 
+%time and phase align data
+for k = 1:1:numdatasets
+    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
+end
+
+%{
+% OLD VERSION THAT ONLY SUPPORTS POSITIVE OFFSETS.
+% TO BE REMOVED IN NEXT REVISION
 goodsets2 = find(samplesoffsetxcorr > 0); % filter out partial coverage (datasets that don't have a start)
 %reduce to just the good datasets
 for k = 1:length(goodsets2)
@@ -306,6 +317,7 @@ for k = 1:1:numdatasets
 end
 
 displaydatasets = min(displaydatasets,numdatasets);
+%}
 
 %plot the Aligned Data
 figure
@@ -323,8 +335,5 @@ coherentsumxcorr = aligned_data * ones([numdatasets 1]);
 plot(timestamp, real(coherentsumxcorr))
 title('Correlation Coherent Sum of Signals (Real)')
 
-figure
-incoherentsum = rnoisydata * ones([size(rnoisydata,2) 1]);
-plot(timestamp, real(incoherentsum))
-title('Incoherent Sum of Signals (Real)')
+
 %end
