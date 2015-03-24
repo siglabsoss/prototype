@@ -48,14 +48,16 @@ rawdata = ruthandelcamino;
 starttime = datetime;
 
 %main knobs
-power_padding = 3; %amount of extra padding to apply to the fft
+power_padding = 2; %amount of extra padding to apply to the fft
 xcorrdetect = 3.5; %max peak to rms ratio for clock comb xcorr search
-%xcorrdetect = 4.8;
 windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 1000; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
+%time-domain frequency correction features
+freqstep = 0.25;
+numsteps = 3;
 
 %other knobs
 windowsize = 0.8; % size of chunked data
@@ -86,6 +88,7 @@ for k = 1:1:displaydatasets
     subplot(displaydatasets,1,k)
     plot(timestamp,real(rnoisydata(:,k)))
     xlim([0 1])
+    ylim([-0.5 0.5].*1e-3)
 end
 subplot(displaydatasets,1,1)
 title('First 10 chunks of raw data received at antennas (Real)')
@@ -267,8 +270,6 @@ for k = 1:1:numdatasets
     freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*freqoffsetxcorr(k)*timestamp)');
 end
 
-freqstep = 0.25;
-numsteps = 31;
 freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
 %perform clock_comb xcorrelation

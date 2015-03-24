@@ -47,6 +47,9 @@ fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 1000; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
+%time-domain frequency correction features
+freqstep = 0.25;
+numsteps = 3;
 
 %other knobs
 windowsize = 0.8; % size of chunked data
@@ -123,7 +126,6 @@ xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate;
 xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 %Sample ranking based on frequency-domain comb correlation
-
 freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 
@@ -184,7 +186,7 @@ clear xcorr_freq
 clear xcorrfreqstamp
 clear comb_fft
 clear rnoisyfft
-%clear rnoisydata
+clear rnoisydata
 clear lag
 
 displaydatasets = min(displaydatasets,numdatasets);
@@ -260,14 +262,13 @@ for k = 1:1:numdatasets
     freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*freqoffsetxcorr(k)*timestamp)');
 end
 
-freqstep = 0.25;
-numsteps = 31;
+freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
 %plot frequency aligned data
 figure
 for k = 1:1:displaydatasets
     subplot(displaydatasets,1,k)
-    plot(timestamp, freqaligneddataxcorr(:,k))
+    plot(timestamp, real(freqaligneddataxcorr(:,k)))
 end
 subplot(displaydatasets,1,1)
 title('First 10 Frequency-Aligned Data (Real)')
