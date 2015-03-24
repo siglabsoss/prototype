@@ -27,30 +27,50 @@ ss3 = rej2 .* ss;
 
 
 
-% rej3 = reject_fn3(25000);
+rej3 = reject_fn3(25000);
+
+ss4 = rej3 .* ss3;
+
+
+rej4 = reject_fn4(25000);
+
+ss5 = rej4 .* ss4;
 % 
-% ss4 = rej3 .* ss3;
-% 
 
 
 
 
 
-hold on;
- plot(ss);
-% plot(ss2);
-plot(rej1);
-plot(rej2);
-plot(ss3);
-% plot(rej3);
-% plot(sig_normalize(ss4));
-hold off;
+% hold on;
+%  plot(ss);
+% % plot(ss2);
+% plot(rej1);
+% plot(rej2);
+% plot(ss3);
+% % plot(rej3);
+% % plot(sig_normalize(ss4));
+% hold off;
 
 
-dout = sig_normalize(ss3');
+% select final signal
+dout = ss5';
 
-peak_ave_power(ss)
-peak_ave_power(dout)
+
+
+
+% hilbert transform
+doutfft = fftshift(fft(dout));
+[szfft,~] = size(doutfft);
+doutfft(1:floor(szfft/2)) = 0;
+dout = ifft(fftshift(doutfft));
+
+
+% normalize
+dout = sig_normalize(dout);
+
+
+% peak_ave_power(ss)
+% peak_ave_power(dout)
 
 
 
