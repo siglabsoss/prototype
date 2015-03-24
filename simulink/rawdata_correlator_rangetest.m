@@ -41,10 +41,10 @@ close all
 load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
 %load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield');
 %load('4berkshireElcamino.mat');
-load('mar17pt2.mat','ruthandelcamino');
+load('mar17.mat','willowandelcamino');
 srate = 1/125000;
 clock_comb = clock_comb125k;
-rawdata = ruthandelcamino;
+rawdata = willowandelcamino;
 %rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
 %end block of standalone test
 
@@ -268,7 +268,7 @@ end
 
 freqstep = 0.25;
 numsteps = 31;
-%freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
+freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
 %perform clock_comb xcorrelation
 xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle

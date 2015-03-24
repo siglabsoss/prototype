@@ -17,8 +17,10 @@ for t = 1:1:size(freqaligneddataxcorr,2)
     enhanced_data(:,t) = freqaligneddataxcorr(:,t).*exp(2*pi*freq_correction(t)*timestamp)';
 end
 
+%{
 figure
-plot(freq_correction)
+plot(freq_correction, 'bo')
 title('Time-domain Correlation Frequency correction')
 xlabel('dataset')
 ylabel('correction in Hz')
+%}
