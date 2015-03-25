@@ -25,7 +25,7 @@ function BER = comb_test_by_snr(input_snr,input_comb)
 load('idealdataprn.mat','idealdataprn','patternVec','patternVecRepeat')
 idealdata = idealdataprn;
 idealdata(1:length(idealdata)/2,1) = input_comb;
-clock_comb = ccsine180;
+clock_comb = input_comb;
 pattern_vec = patternVec;
 pattern_repeat = patternVecRepeat;
 time_detect_threshold = 7.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
