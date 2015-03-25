@@ -16,8 +16,6 @@
 %     comb)
 %   - Poking around in the function: try changing windowtype and
 %     power_padding
-%   - This new version of rawdata_correlator features frequency windowing
-%   knobs for computational reduction.
 % 
 % These are useful phrases:
 %   BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))
@@ -27,24 +25,34 @@
 %todo:
 % convert to clock comb xcorr for signal finding in presense of interferers
 % write a generic goodsets function
-% do not pad the pre-selection fft DONE
-% fft data reduction by bandlimiting DONE
+% do not pad the pre-selection fft
+% fft data reduction by bandlimiting
 % add an on/off for plots
 % consider using nextpow2 with 0 power padding for the ranking xcorr (but
-% be careful of windowing issues) DONE
+% be careful of windowing issues)
 % turn for loop operations into matrix operations
 % or turn for loops into parallel for loops
 
-function aligned_data = rawdata_correlator(rawdata,srate,clock_comb,detect_threshold)
+%function aligned_data = rawdata_correlator(rawdata,srate,clock_comb)
+
+%start block of standalone test
+clear all
+close all
+load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
+load('mar17pt2.mat','ruthandelcamino');
+srate = 1/125000;
+clock_comb = clock_comb125k;
+rawdata = ruthandelcamino;
+%end block of standalone test
 
 starttime = datetime;
 
 %main knobs
-power_padding = 3; %amount of extra padding to apply to the fft
-xcorrdetect = detect_threshold; %max peak to rms ratio for clock comb xcorr search
+power_padding = 2; %amount of extra padding to apply to the fft
+xcorrdetect = 3.5; %max peak to rms ratio for clock comb xcorr search
 windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = -100; %frequency search window low, in Hz
-fsearchwindow_hi = 200; %frequency search window high, in Hz
+fsearchwindow_hi = 1000; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
@@ -264,17 +272,6 @@ end
 
 freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
-%plot frequency aligned data
-figure
-for k = 1:1:displaydatasets
-    subplot(displaydatasets,1,k)
-    plot(timestamp, real(freqaligneddataxcorr(:,k)))
-end
-subplot(displaydatasets,1,1)
-title('First 10 Frequency-Aligned Data (Real)')
-subplot(displaydatasets,1,displaydatasets)
-xlabel('Time [s]')
-
 %perform clock_comb xcorrelation
 xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
 for k = 1:1:numdatasets
@@ -314,11 +311,12 @@ numdatasets = length(goodsets2);
 
 %time and phase align data
 for k = 1:1:numdatasets
-    aligned_data(:,k) = [freqaligneddataxcorr2(samplesoffsetxcorr2(k):end,k);zeros([samplesoffsetxcorr2(k)-1 1])]./exp(i*(recoveredphasexcorr2(k)));
+    aligned_data(:,k) = [freqaligneddataxcorr2(samplesoffsetxcorr2(k):end,k);zeros([samplesoffsetxcorr2(k)-1 1])]./exp(i*(recoveredphasexcorr2(k))); 
 end
 
 displaydatasets = min(displaydatasets,numdatasets);
 %}
+
 
 %plot the Aligned Data
 figure
@@ -336,6 +334,11 @@ coherentsumxcorr = aligned_data * ones([numdatasets 1]);
 plot(timestamp, real(coherentsumxcorr))
 title('Correlation Coherent Sum of Signals (Real)')
 
+%end
+
+%demodulate results
 Correlation_completed_in = datetime-starttime
 
-end
+BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))
+
+BER_single_antenna = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == my_cpm_demod_offline(idealdata,srate,100,patternvec,1))/length(my_cpm_demod_offline(idealdata,srate,100,patternvec,1))

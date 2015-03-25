@@ -3,8 +3,10 @@
 %requires the thursday.mat (~450MB 120-seconds rf dataset)
 
 %fresh slate
-clear all
+%clear all
 close all
+
+load mondaymarch2.mat
 
 load thursday.mat
 
@@ -12,7 +14,7 @@ srate = 1/125000;
 
 clock_comb = clock_comb125k;
 
-rawdata = antennaoff;
+rawdata = cassiamiddlefield;
 
 %cleanup
 clear antennaoff

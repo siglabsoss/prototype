@@ -1,4 +1,4 @@
-function [timestamp dataOut freq datfft] = viewEttusData(inputData,Fcenter,LO_offset,gain,srate)
+function [timestamp dataOut freq datfft] = viewEttusDataSrate(inputData,Fcenter,LO_offset,gain,srate)
 %
 %USAGE:
 %    [timestamp data freq fft] =
@@ -8,8 +8,9 @@ function [timestamp dataOut freq datfft] = viewEttusData(inputData,Fcenter,LO_of
 timestamp = 0:srate:(length(inputData)-1)*srate;
 dataOut = double(inputData);
 datafft = fft(flattopwin(length(dataOut)).*dataOut);
-freq = Fcenter+linspace(0,1e8/decimation,length(inputData))'; %these all need to be columns
-freq(floor(length(inputData)/2):end) = freq(floor(length(inputData)/2):end) - 1e8/decimation;
+%freq = Fcenter+linspace(0,1/srate,length(inputData))'; %these all need to be columns
+freq = linspace(0,1/srate,length(inputData))'; %these all need to be columns
+freq(floor(length(inputData)/2):end) = freq(floor(length(inputData)/2):end) - 1/srate;
 
 figure
 subplot 211
