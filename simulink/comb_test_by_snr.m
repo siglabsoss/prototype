@@ -1,16 +1,36 @@
+%USAGE:
+%   BER = comb_test_by_snr(input_snr,input_comb)
+%
 %this is a script framework for testing out clock comb candidates.
+%   input_snr - awgn snr level for noise added to the ideal data when
+%               generating the simulated data.
+%   input_comb - this is a 25000-sample long clock comb (0.2s @ 125kHz data
+%                rate) in COLUMN form.  No need to append data, this
+%                function will append data to the end of the comb.
+%it returns:
+%   BER - row vector output with the columns:
+%           [input_snr BER_AWGN_ONLY TimeDomainBER TimeDomainSingleAntennaBER FreqDomainBER TimeDomainSingleAntennaBER]
+%
 %notes:
+% - This version does not yet automatically set detect_threshold
 % - Each comb with correlate with different strength, so remember to tweak detect_threshold for each comb.
-% - Correlation values are different for time and frequency domain metods,
-% so different detect_threshold will be required.
+% - Correlation values are different for time and frequency domain methods, so different detect_threshold will be required.
 
-
-clear all
-close all
-
+function BER = comb_test_by_snr(input_snr,input_comb)
 
 %first load a clock comb and ideal data set, and move the relevant data to
 %generic variables.
+
+%GENERICIZED INPUT BLOCK
+load('idealdataprn.mat','idealdataprn','patternVec','patternVecRepeat')
+idealdata = idealdataprn;
+idealdata(1:length(idealdata)/2,1) = input_comb;
+clock_comb = ccsine180;
+pattern_vec = patternVec;
+pattern_repeat = patternVecRepeat;
+time_detect_threshold = 7.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
+freq_detect_threshold = 1.75; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
+
 %{
 load('idealdataprn.mat')
 idealdata = idealdataprn;
@@ -29,24 +49,14 @@ clock_comb = clock_comb125k;
 pattern_vec = patternvec;
 pattern_repeat = 1;
 time_detect_threshold = 7.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
-freq_detect_threshold = 3.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
+freq_detect_threshold = 2.25; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
 %}
-
-load('idealdataprn.mat','idealdataprn','patternVec','patternVecRepeat')
-load('CombCatalog.mat')
-idealdata = idealdataprn;
-idealdata(1:length(idealdata)/2,1) = ccsine180;
-clock_comb = ccsine180;
-pattern_vec = patternVec;
-pattern_repeat = patternVecRepeat;
-time_detect_threshold = 7.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
-freq_detect_threshold = 1.75; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
 
 %set the other relavant parameters
 srate = 1/125000;
 
 %SNR normalization: use this to select an SNR (I have been targeting an SNR that gives a single-antenna BER of 0.30).
-snr_awgn = -10;
+snr_awgn = input_snr;
 expected_data = my_cpm_demod_offline(idealdata,srate,100,pattern_vec,pattern_repeat);
 BER_AWGN_ONLY = 1-sum(my_cpm_demod_offline(awgn(idealdata,snr_awgn),srate,100,pattern_vec,pattern_repeat) == expected_data)/length(expected_data)
 
@@ -113,3 +123,7 @@ Freq_BER_single_antenna(1) = 1-sum(my_cpm_demod_offline(freq_aligned_data(:,1),s
 Freq_BER_single_antenna(2) = 1-sum(my_cpm_demod_offline(freq_aligned_data(:,1),srate,100,pattern_vec,pattern_repeat) == expected_data)/length(expected_data);
 Freq_BER_single_antenna(3) = 1-sum(my_cpm_demod_offline(freq_aligned_data(:,1),srate,100,pattern_vec,pattern_repeat) == expected_data)/length(expected_data);
 Freq_BER_single_antenna_avg_of_3 = mean(Freq_BER_single_antenna)
+
+BER = [input_snr BER_AWGN_ONLY Time_BER_coherent Time_BER_single_antenna_avg_of_3 Freq_BER_coherent Freq_BER_single_antenna_avg_of_3];
+
+end
