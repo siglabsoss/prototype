@@ -1,6 +1,6 @@
 %USAGE:
 %
-%       aligned_data = rawdata_correlator(rawdata,srate,clock_comb);
+%       aligned_data = xxcorrelator(rawdata,srate,clock_comb,detect_threshold);
 %
 % To get the coherent sum, just use aligned_data*ones([size(aligned_data,2) 1])
 % 
@@ -35,18 +35,19 @@
 
 %function aligned_data = rawdata_correlator(rawdata,srate,clock_comb)
 
+%{
 %start block of standalone test
 clear all
 close all
 load('thursday.mat','clock_comb125k','patternvec','idealdata'); 
-%load('mondaymarch2.mat','cassiamiddlefield','redwoodcityhs','marshalarguello', 'whipplearguello', 'manzanitaandmiddlefield');
-%load('4berkshireElcamino.mat');
 load('mar17pt2.mat','ruthandelcamino');
 srate = 1/125000;
 clock_comb = clock_comb125k;
 rawdata = ruthandelcamino;
-%rawdata = cassiamiddlefield;%[marshalarguello; whipplearguello];
 %end block of standalone test
+%}
+
+function aligned_data = xxcorrelator(rawdata,srate,clock_comb,detect_threshold)
 
 starttime = datetime;
 
@@ -59,11 +60,12 @@ fsearchwindow_hi = 200; %frequency search window high, in Hz
 %combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 
 %XXCORR features
-downsample_rate = 80; %downsampling rate for signal search
+downsample_rate = 40; %downsampling rate for signal search
 fstep = 0.5; %frequency search step in Hz
-enhance_fstep = 0.25; %in Hz
-enhance_numsteps = 11;
-xcorr_detect = 7.5; %detection threshold for correlation search
+enhance_fstep = 0.025; %in Hz
+enhance_numsteps = 40;
+xcorr_detect = detect_threshold;
+%xcorr_detect = 11; %detection threshold for correlation search
 %xcorr_detect = 25;
 
 %other knobs
@@ -149,7 +151,7 @@ title('Histogram of Max Correlation Response')
 
 figure
 plot(fsearch_freq(goodsets),'bo')
-%title('Coarse Frequency Correction')
+title('Coarse Frequency Correction')
 xlabel('Dataset')
 ylabel('Correction [Hz]')
 
@@ -158,72 +160,11 @@ for k = 1:1:numdatasets
     freqaligneddataxcorr(:,k) = rnoisydata(:,goodsets(k)).*(exp(i*2*pi*fsearch_freq(goodsets(k))*timestamp)');
 end
 
+freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,enhance_fstep,enhance_numsteps);
 
 %END XCORR VERSION OF FREQ ALIGMENT
 %==========================================================================
 
-
-
-%FFT VERSION OF FREQUNECY ALIGNMENT
-%==========================================================================
-power_padding = 3; %amount of extra padding to apply to the fft
-fftlength = 2^(nextpow2(datalength)+power_padding);
-windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
-combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
-combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
-
-%long comb fft for frequency alignment
-freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
-comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength-length(clock_comb),1])]));
-
-
-for k = 1:1:numdatasets
-    noisydata(:,k) = rnoisydata(:,goodsets(k));
-end
-
-%noisydata=freqaligneddataxcorr;
-
-%long data fft of raw data for frequency alignment
-for k=1:1:numdatasets
-    noisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]));
-end
-
-%SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
-fsearch_index_low = floor((fftlength)/2) + round(fsearchwindow_low*srate*fftlength)+1; % need to verify possible off-by-one errors
-fsearch_index_hi = ceil((fftlength)/2) + round(fsearchwindow_hi*srate*fftlength);
-combwindow_index_low = floor((fftlength)/2) + round(combwindow_low*srate*fftlength)+1; % need to verify possible off-by-one errors
-combwindow_index_hi = ceil((fftlength)/2) + round(combwindow_hi*srate*fftlength);
-xcorr_comb_paddinglength = (fsearch_index_hi - fsearch_index_low -1) - (combwindow_index_hi-combwindow_index_low-1); %dammit matlab pads the shorter xcorr input
-fsearch_length = fsearch_index_hi-fsearch_index_low+1;
-fstamp_index_low = floor(fftlength+1) + round(fsearchwindow_low*srate*fftlength) - round(combwindow_hi*srate*fftlength)-xcorr_comb_paddinglength;
-fstamp_index_hi = ceil(fftlength-1) + round(fsearchwindow_hi*srate*fftlength) - round(combwindow_low*srate*fftlength);
-xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
-xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
-
-%run the long xcorr for frequency alignment
-for k = 1:1:numdatasets
-    [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(noisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
-    [val id] = max(xcorr_freq(:,k));
-    recoveredfreqphasexcorr(k) = angle(val);
-    freqoffsetxcorr(k) = xcorr_fstamp_fsearch(id);
-end
-
-%{
-%frequency align data
-for k = 1:1:numdatasets
-    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*freqoffsetxcorr(k)*timestamp)');
-end
-%}
-
-hold on
-plot(freqoffsetxcorr,'mo')
-legend('time domain','FFT')
-title('frequency corrections')
-
-%END FFT VERSION OF FREQ ALIGNMENT
-%==========================================================================
-
-freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,enhance_fstep,enhance_numsteps);
 
 %perform clock_comb xcorrelation
 xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
@@ -270,7 +211,6 @@ end
 displaydatasets = min(displaydatasets,numdatasets);
 %}
 
-
 %plot the Aligned Data
 figure
 for k = 1:1:displaydatasets
@@ -287,13 +227,16 @@ coherentsumxcorr = aligned_data * ones([numdatasets 1]);
 plot(timestamp, real(coherentsumxcorr))
 title('Correlation Coherent Sum of Signals (Real)')
 
-%end
-
-%demodulate results
 Correlation_completed_in = datetime-starttime
 
+end
+
+%demodulate results, part of standalone test
+
+%{
 expected_data = my_cpm_demod_offline(idealdata,srate,100,patternvec,1);
 
 BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data)
 
 BER_single_antenna = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data)
+%}
