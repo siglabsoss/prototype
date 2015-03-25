@@ -7,11 +7,12 @@ srate = 1/125000;
 load('thursday.mat','clock_comb125k','patternvec','idealdata')
 clock_comb=clock_comb125k;
 expected_data = my_cpm_demod_offline(idealdata,srate,100,patternvec,1);
+detect_threshold = 3.5;
 
 index = 1;
 load('mar17pt2.mat','ruthandelcamino')
 starttime = datetime;
-aligned_data = rawdata_correlator(ruthandelcamino,srate,clock_comb);
+aligned_data = rawdata_correlator(ruthandelcamino,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -26,7 +27,7 @@ close all
 index = 2;
 load('mar17pt2.mat','oneillandelcamino')
 starttime = datetime;
-aligned_data = rawdata_correlator(oneillandelcamino,srate,clock_comb);
+aligned_data = rawdata_correlator(oneillandelcamino,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -41,7 +42,7 @@ close all
 index = 3;
 load('mar17pt2.mat','belmontcvs')
 starttime = datetime;
-aligned_data = rawdata_correlator(belmontcvs,srate,clock_comb);
+aligned_data = rawdata_correlator(belmontcvs,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -56,7 +57,7 @@ close all
 index = 4;
 load('mar17pt2.mat','sancarlostrain')
 starttime = datetime;
-aligned_data = rawdata_correlator(sancarlostrain,srate,clock_comb);
+aligned_data = rawdata_correlator(sancarlostrain,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -71,7 +72,7 @@ close all
 index = 5;
 load('mar17.mat','hopkins')
 starttime = datetime;
-aligned_data = rawdata_correlator(hopkins,srate,clock_comb);
+aligned_data = rawdata_correlator(hopkins,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -86,7 +87,7 @@ close all
 index = 6;
 load('mar17.mat','sequoiatrain')
 starttime = datetime;
-aligned_data = rawdata_correlator(sequoiatrain,srate,clock_comb);
+aligned_data = rawdata_correlator(sequoiatrain,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -101,7 +102,7 @@ close all
 index = 7;
 load('mar17.mat','beechandelcamino')
 starttime = datetime;
-aligned_data = rawdata_correlator(beechandelcamino,srate,clock_comb);
+aligned_data = rawdata_correlator(beechandelcamino,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -116,7 +117,7 @@ close all
 index = 8;
 load('mar17.mat','willowandelcamino')
 starttime = datetime;
-aligned_data = rawdata_correlator(willowandelcamino,srate,clock_comb);
+aligned_data = rawdata_correlator(willowandelcamino,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -131,7 +132,7 @@ close all
 index = 9;
 load('mar17.mat','berkshireandmiddlefield')
 starttime = datetime;
-aligned_data = rawdata_correlator(berkshireandmiddlefield,srate,clock_comb);
+aligned_data = rawdata_correlator(berkshireandmiddlefield,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);
@@ -146,7 +147,7 @@ close all
 index = 10;
 load('mar17.mat','parkinglot')
 starttime = datetime;
-aligned_data = rawdata_correlator(parkinglot,srate,clock_comb);
+aligned_data = rawdata_correlator(parkinglot,srate,clock_comb,detect_threshold);
 Correlation_completed_in(index) = datetime-starttime
 BER_coherent(index) = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data);
 BER_single_antenna(index) = 1-sum(my_cpm_demod_offline(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data);

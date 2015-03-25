@@ -35,16 +35,16 @@
 % turn for loop operations into matrix operations
 % or turn for loops into parallel for loops
 
-function aligned_data = rawdata_correlator(rawdata,srate,clock_comb)
+function aligned_data = rawdata_correlator(rawdata,srate,clock_comb,detect_threshold)
 
 starttime = datetime;
 
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
-xcorrdetect = 3.5; %max peak to rms ratio for clock comb xcorr search
+xcorrdetect = detect_threshold; %max peak to rms ratio for clock comb xcorr search
 windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = -100; %frequency search window low, in Hz
-fsearchwindow_hi = 1000; %frequency search window high, in Hz
+fsearchwindow_hi = 200; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
@@ -336,5 +336,6 @@ coherentsumxcorr = aligned_data * ones([numdatasets 1]);
 plot(timestamp, real(coherentsumxcorr))
 title('Correlation Coherent Sum of Signals (Real)')
 
+Correlation_completed_in = datetime-starttime
 
-%end
+end

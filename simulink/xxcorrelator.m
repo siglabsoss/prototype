@@ -62,11 +62,9 @@ fsearchwindow_hi = 200; %frequency search window high, in Hz
 %XXCORR features
 downsample_rate = 40; %downsampling rate for signal search
 fstep = 0.5; %frequency search step in Hz
-enhance_fstep = 0.025; %in Hz
-enhance_numsteps = 40;
+enhance_fstep = 0.25; %in Hz
+enhance_numsteps = 11;
 xcorr_detect = detect_threshold;
-%xcorr_detect = 11; %detection threshold for correlation search
-%xcorr_detect = 25;
 
 %other knobs
 windowsize = 0.8; % size of chunked data
