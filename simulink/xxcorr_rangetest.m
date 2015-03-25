@@ -59,11 +59,11 @@ fsearchwindow_hi = 200; %frequency search window high, in Hz
 %combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 
 %XXCORR features
-downsample_rate = 80; %downsampling rate for signal search
+downsample_rate = 40; %downsampling rate for signal search
 fstep = 0.5; %frequency search step in Hz
 enhance_fstep = 0.25; %in Hz
 enhance_numsteps = 11;
-xcorr_detect = 7.5; %detection threshold for correlation search
+xcorr_detect = 9; %detection threshold for correlation search
 %xcorr_detect = 25;
 
 %other knobs
