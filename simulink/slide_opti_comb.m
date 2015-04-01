@@ -19,18 +19,24 @@ my_global_val2 = 1;
 
 vec = opti_comb4();
 
+global slide_comb_length;
+slide_comb_length = 25000;
+
+
+
 do_plot();
 uicontrol('Parent',hFig, 'Style','slider', 'Value',0, 'Min',-100,'Max',100, 'SliderStep',[1 10]./360,'Position',[150 25 300 20], 'Callback',@slider_callback);
 uicontrol('Parent',hFig, 'Style','slider', 'Value',0, 'Min',-100,'Max',100, 'SliderStep',[1 10]./360,'Position',[150 5 300 20], 'Callback',@slider_callback2);
 
 
 function do_plot
-    ts = [1:1:25000];
+    
+    ts = [1:1:slide_comb_length];
 
     plot(ts, real(vec), 'Parent',hAx);
     
 %   make a pure tone
-    pureTone = freq_shift(ones(1,25000)', 25000, 1);
+    pureTone = freq_shift(ones(1,slide_comb_length)', 25000, 1);
     
     % slide against pure tone
     figure(toneSurfFig);
@@ -41,12 +47,12 @@ function do_plot
     
     % slide against self
     figure(surfFig);
-    autoXcr = xcorr3d_single(vec,vec,5000,10,0.1,500);
+    autoXcr = xcorr3d_single(vec,vec,5000,15,0.1,250);
     surf(abs(autoXcr),'EdgeColor','none','LineStyle','none');ylabel('freq'); xlabel('time');
 %     view(114,40); % side ish view
     view(91,68);
     
-%     disp(sprintf('max auto %d max tone %d', max(max(abs(autoXcr))), max(max(abs(toneXcr)))));
+    disp(sprintf('max auto %d max tone %d', max(max(abs(autoXcr))), max(max(abs(toneXcr)))));
     disp(sprintf('delta performance over sin %d', int32(max(max(abs(autoXcr))) - max(max(abs(toneXcr))))));
 %      view(0,90); % top
 %     view(90,0); % freq view
@@ -61,7 +67,7 @@ end
 function slider_callback(hObj, eventdata)
     my_global_val = get(hObj,'Value');
     vec = opti_comb4();
-    par = peak_ave_power(vec);
+    par = peak_ave_power(vec)
     disp(sprintf('slider1 %d', my_global_val));
     do_plot();
 end
@@ -69,7 +75,7 @@ end
 function slider_callback2(hObj, eventdata)
     my_global_val2 = get(hObj,'Value');
     vec = opti_comb4();
-    par = peak_ave_power(vec);
+    par = peak_ave_power(vec)
     disp(sprintf('slider2 %d', my_global_val2));
     do_plot();
 end
