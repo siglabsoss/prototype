@@ -8,7 +8,7 @@
 clear all
 close all
 
-
+%{
 %first load a clock comb and ideal data set, and move the relevant data to
 %generic variables.
 load('idealdataprn.mat')
@@ -18,8 +18,9 @@ pattern_vec = patternVec;
 pattern_repeat = patternVecRepeat;
 time_detect_threshold = 7.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
 freq_detect_threshold = 1.75; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
+%}
 
-%{
+
 %alternate load set using thursday.mat
 load('thursday.mat')
 %idealdata = idealdata; %not needed because name is the same
@@ -28,7 +29,7 @@ pattern_vec = patternvec;
 pattern_repeat = 1;
 time_detect_threshold = 7.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
 freq_detect_threshold = 3.5; %set the detection threshold.  remember there are tons of knobs to tweak inside the correlator function too.
-%}
+
 
 %set the other relavant parameters
 srate = 1/125000;

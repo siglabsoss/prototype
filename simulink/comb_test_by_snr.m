@@ -21,6 +21,16 @@ function BER = comb_test_by_snr(input_snr,input_comb)
 %first load a clock comb and ideal data set, and move the relevant data to
 %generic variables.
 
+if( iscolumn(input_comb) )
+   
+elseif( isrow(input_comb) )
+   input_comb = input_comb';
+   disp 'changing your data into column vector'
+  
+else
+    error 'input_comb must be a vector, not a matrix'
+end
+
 %GENERICIZED INPUT BLOCK
 load('idealdataprn.mat','idealdataprn','patternVec','patternVecRepeat')
 idealdata = idealdataprn;
