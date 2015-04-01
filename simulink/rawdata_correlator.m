@@ -42,7 +42,7 @@ starttime = datetime;
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
 xcorrdetect = detect_threshold; %max peak to rms ratio for clock comb xcorr search
-windowtype = @triang; %fft window type.  @triang, @rectwin, and @hamming work best
+windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 200; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
