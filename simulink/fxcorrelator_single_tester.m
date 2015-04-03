@@ -35,7 +35,7 @@ starttime = datetime;
 aligned_data = [];
 for k=1:1:size(rnoisydata,2)
     aligned_data_single = fxcorrelator_single(rnoisydata(:,k),srate,clock_comb,detect_threshold);
-    if ~isnan(aligned_data_single)
+    if ~(sum(aligned_data_single)==0)
         aligned_data = [aligned_data, aligned_data_single];
     end
 end

@@ -35,7 +35,27 @@
 % turn for loop operations into matrix operations
 % or turn for loops into parallel for loops
 
-function aligned_data = rawdata_correlator(rawdata,srate,clock_comb,detect_threshold)
+%try a detection selector that picks all results that have a freq
+%correlation around the most popular frequnecy
+
+%instead of picking the max, do a second correlation for the expected
+%shape
+
+%function aligned_data = rawdata_correlator(rawdata,srate,clock_comb,detect_threshold)
+
+%START STANDALONE BLOCK
+clear all
+close all
+load('mar31h.mat','sanmateocaltrainclock')
+%load('mar31e.mat','haywardcaltrainclock')
+load('thursday.mat','idealdata','patternvec','clock_comb125k')
+clock_comb = clock_comb125k;
+rawdata = sanmateocaltrainclock;
+srate = 1/125000;
+pattern_vec = patternvec;
+pattern_repeat = 1;
+detect_threshold = 4.8; %original was 4.8 (normalized) and 2.3 (non-normalized) %best result was 4, non-abs normalized on hayward BER 28%
+%END STANDALONE BLOCK
 
 starttime = datetime;
 
@@ -48,8 +68,8 @@ fsearchwindow_hi = 200; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
-freqstep = 0.25;
-numsteps = 3;
+freqstep = 0.125; %original 0.25
+numsteps = 30; %original 3
 
 %other knobs
 windowsize = 0.8; % size of chunked data
@@ -96,7 +116,6 @@ xlabel('Time [s]')
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
     rnoisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*rnoisydata(:,k);zeros([fftlength_detect-datalength,1])]));
-    noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/rms(rnoisyfft(:,k));
 end
 
 %create the reduced comb fft for detection %ADDED FFT SHIFT HERE for indexing
@@ -131,30 +150,56 @@ freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 %{
 %NON-ABS version
+%NORMALIZED
+normalized_comb_fft = comb_fft(combwindow_index_low:combwindow_index_hi)/mean(abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
 for k = 1:1:numdatasets
-    [xcorr_freq(:,k), lag(:,k)] = xcorr(rnoisyfft(fsearch_index_low:fsearch_index_hi,k),comb_fft(combwindow_index_low:combwindow_index_hi));
+    %[xcorr_freq(:,k), lag(:,k)] = xcorr(rnoisyfft(fsearch_index_low:fsearch_index_hi,k),comb_fft(combwindow_index_low:combwindow_index_hi));
+    normalized_rdata = rnoisyfft(fsearch_index_low:fsearch_index_hi,k)/mean(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)))/std(rnoisyfft(fsearch_index_low:fsearch_index_hi,k));
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(normalized_rdata,normalized_comb_fft);
     noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
 end
-%}
-
-
-%ABS Version
-for k = 1:1:numdatasets
-    [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
-    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
-end
-
 
 goodsets = find(noisyxcorrsnr > xcorrdetect);
 number_of_good_datasets = length(goodsets) %print out the number of good datasets found
+%}
 
-if number_of_good_datasets == 0
-    aligned_data = zeros([datalength 3]);
-    return
+
+%{
+%ABS Version
+%NORMALIZED
+normalized_comb_fft = abs(comb_fft(combwindow_index_low:combwindow_index_hi))-mean(abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
+for k = 1:1:numdatasets
+    normalized_data = (abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k))-mean(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k))))/std(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)));
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(normalized_data,normalized_comb_fft);
+    %[xcorr_freq(:,k), lag(:,k)] = xcorr(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
+    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
 end
 
+goodsets = find(noisyxcorrsnr > xcorrdetect);
+number_of_good_datasets = length(goodsets) %print out the number of good datasets found
+%}
 
-displaydatasets = min([displaydatasets number_of_good_datasets]);
+%median FREQ selection method (requires knowledge of expected frequency)
+ftargetwindow = 1; %freq selection +/- target window in Hz
+normalized_comb_fft = abs(comb_fft(combwindow_index_low:combwindow_index_hi))-mean(abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
+for k = 1:1:numdatasets
+    normalized_data = (abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k))-mean(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k))))/std(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)));
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(normalized_data,normalized_comb_fft);
+    [fsearch_max fsearch_id] = max(xcorr_freq(:,k));
+    fsearch_foffset(k) = freqstamp_fsearch(fsearch_id);
+    noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
+end
+freqsets = find(noisyxcorrsnr > xcorrdetect);
+target_freq = median(fsearch_foffset(freqsets));
+goodsets = find(fsearch_foffset > target_freq-ftargetwindow & fsearch_foffset < target_freq+ftargetwindow);
+number_of_good_datasets = length(goodsets) %print out the number of good datasets found
+
+figure
+plot(fsearch_foffset)
+title('Search Frequency Offsets')
+ylabel('Freq Offset [Hz]')
+xlabel('Dataset')
+    
 
 %plot of the signal detection results
 figure
@@ -170,6 +215,15 @@ xlabel('xcorr SNR value')
 ylabel('hit count')
 subplot 211
 title('Plot and Histogram of SNR used for Signal Detection')
+
+
+if number_of_good_datasets == 0
+    aligned_data = zeros([datalength 3]);
+    return
+end
+
+
+displaydatasets = min([displaydatasets number_of_good_datasets]);
 
 %plot a few of the the correlations
 figure
@@ -194,6 +248,8 @@ clear comb_fft
 clear rnoisyfft
 clear rnoisydata
 clear lag
+clear normalized_comb_fft
+clear normalized_data
 
 displaydatasets = min(displaydatasets,numdatasets);
 
@@ -243,14 +299,24 @@ end
 
 %ABS VERSION:
 %run the long xcorr for frequency alignment
+%NORMALIZED
+normalized_comb_fft = abs(comb_fft(combwindow_index_low:combwindow_index_hi))-mean(abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
 for k = 1:1:numdatasets
-    [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(noisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
+    normalized_data = (abs(noisyfft(fsearch_index_low:fsearch_index_hi,k))-mean(abs(noisyfft(fsearch_index_low:fsearch_index_hi,k))))/std(abs(noisyfft(fsearch_index_low:fsearch_index_hi,k)));
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(normalized_data,normalized_comb_fft);
     [val id] = max(xcorr_freq(:,k));
     recoveredfreqphasexcorr(k) = angle(val);
     freqoffsetxcorr(k) = xcorr_fstamp_fsearch(id);
 end
 
+%plot frequency corrections
+figure
+plot(freqoffsetxcorr)
+title('Frequency Corrections')
+ylabel('Freq [Hz]')
+xlabel('Dataset')
 
+clear normalized_data
 
 %plot the fft xcorr of the samples with the comb
 figure
@@ -283,8 +349,10 @@ xlabel('Time [s]')
 
 %perform clock_comb xcorrelation
 xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
+normalized_clock_comb = clock_comb/mean(abs(clock_comb));
 for k = 1:1:numdatasets
-    xcorr_data(:,k) = xcorr(freqaligneddataxcorr(:,k),clock_comb);
+    normalized_data = freqaligneddataxcorr(:,k)/mean(abs(freqaligneddataxcorr(:,k)))/std(freqaligneddataxcorr(:,k));
+    xcorr_data(:,k) = xcorr(normalized_data,normalized_clock_comb);
     [val id] = max(xcorr_data(:,k));
     recoveredphasexcorr(k) = angle(val);
     samplesoffsetxcorr(k) = id - datalength;
@@ -306,25 +374,6 @@ for k = 1:1:numdatasets
     aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
 end
 
-%{
-% OLD VERSION THAT ONLY SUPPORTS POSITIVE OFFSETS.
-% TO BE REMOVED IN NEXT REVISION
-goodsets2 = find(samplesoffsetxcorr > 0); % filter out partial coverage (datasets that don't have a start)
-%reduce to just the good datasets
-for k = 1:length(goodsets2)
-    freqaligneddataxcorr2(:,k) = freqaligneddataxcorr(:,goodsets2(k));
-    samplesoffsetxcorr2(:,k) = samplesoffsetxcorr(:,goodsets2(k));
-    recoveredphasexcorr2(k) = recoveredphasexcorr(goodsets2(k));
-end
-numdatasets = length(goodsets2);
-
-%time and phase align data
-for k = 1:1:numdatasets
-    aligned_data(:,k) = [freqaligneddataxcorr2(samplesoffsetxcorr2(k):end,k);zeros([samplesoffsetxcorr2(k)-1 1])]./exp(i*(recoveredphasexcorr2(k)));
-end
-
-displaydatasets = min(displaydatasets,numdatasets);
-%}
 
 %plot the Aligned Data
 figure
@@ -344,4 +393,9 @@ title('Correlation Coherent Sum of Signals (Real)')
 
 Correlation_completed_in = datetime-starttime
 
-end
+%end
+
+%START STANDALONE BLOCK
+expected_data = my_cpm_demod_offline(idealdata,srate,100,pattern_vec,pattern_repeat);
+Freq_BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,pattern_vec,pattern_repeat) == expected_data)/length(expected_data)
+%END STANDALONE BLOCK

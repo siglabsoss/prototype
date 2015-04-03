@@ -135,6 +135,11 @@ goodsets = find(fsearch_snr > xcorr_detect);
 number_of_good_datasets = length(goodsets) %print out the number of good datasets found
 numdatasets = number_of_good_datasets;
 
+if number_of_good_datasets == 0
+    aligned_data = zeros([datalength 3]);
+    return
+end
+
 figure
 subplot 211
 plot(fsearch_snr,'bo-')
