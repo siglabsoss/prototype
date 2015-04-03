@@ -1,6 +1,6 @@
 % Perform correlation search for a single epoch of data against a known
 % comb, and return the data aligned to the comb, if an epoch is detected.  
-% Retuns NaN if no epoch is detected.  xxcorrelator_single can be run on am
+% Retuns zeros if no epoch is detected.  xxcorrelator_single can be run on am
 % array of RF chunks, one in each column.
 %
 % USAGE:
@@ -104,7 +104,7 @@ title('Histogram of Max Correlation Response')
 %}
 
 if numdatasets < 1
-    aligned_data = NaN;
+    aligned_data = zeros([datalength 1]);
     return
 end
 
