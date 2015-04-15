@@ -45,6 +45,7 @@ if _RTLD_GLOBAL != 0:
 from howto_swig import *
 
 # import any pure python here
+from square3_ff import square3_ff
 #
 
 # ----------------------------------------------------------------
