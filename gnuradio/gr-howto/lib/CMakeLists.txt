@@ -26,6 +26,7 @@ include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
 list(APPEND howto_sources
+    square_ff_impl.cc
 )
 
 add_library(gnuradio-howto SHARED ${howto_sources})
