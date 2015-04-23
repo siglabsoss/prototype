@@ -5,7 +5,7 @@
 %
 % USAGE:
 %
-%       aligned_data = xxcorrelator_single(rawdata,srate,clock_comb,detect_threshold);
+%       [aligned_data, aligned_phase, aligned_freq] = xxcorrelator_single(rawdata,srate,clock_comb,detect_threshold);
 %
 % rawdata is a single-dimensional array of data samples at srate.
 % rawdata must be longer than clock_comb.  If rawdata is an array, each
@@ -23,8 +23,13 @@
 % clock_comb.  If rawdata is an array and more than one epoch is detected,
 % each sequence of aligned data will occupy one column of the ouput.
 % 
+% aligned_phase is the phase of the received comb in radians, relative to
+% the receiver LO.  This is an array if the input is a matrix.
+% 
+% aligned_freq is the is the frequency of the received comb in Hz,
+% relateive to the receiver LO.  This is an array if the input is a matrix.
 
-function aligned_data = xxcorrelator_single(rawdata,srate,clock_comb,detect_threshold)
+function [aligned_data, aligned_phase, aligned_freq] = xxcorrelator_single(rawdata,srate,clock_comb,detect_threshold)
 
 %check for rawdata and comb to be in column form
 if size(rawdata,2) > size(rawdata,1)
@@ -129,6 +134,10 @@ end
 for k = 1:1:numdatasets
     aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
 end
+
+%more outputs
+aligned_phase = recoveredphasexcorr;
+aligned_freq = fsearch_freq(goodsets);
 
 end
 

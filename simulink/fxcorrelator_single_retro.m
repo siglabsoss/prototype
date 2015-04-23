@@ -5,7 +5,7 @@
 %
 % USAGE:
 %
-%       aligned_data = fxcorrelator_single(rawdata,srate,clock_comb,detect_threshold);
+%       aligned_data = fxcorrelator_single_retro(rawdata,srate,clock_comb,detect_threshold, retroreference);
 %
 % rawdata is a single-dimensional array of data samples at srate.
 % rawdata must be longer than clock_comb.  If rawdata is an array, each
@@ -23,9 +23,11 @@
 % clock_comb.  If rawdata is an array and more than one epoch is detected,
 % each sequence of aligned data will occupy one column of the ouput.
 % 
+% retro is the return transmission signal.  It is padded with zeros and
+% delayed exactly 1s from the starting epoch of the input signal.  Right
+% now it just returns the clock comb with conjugated phase.
 
-
-function aligned_data = fxcorrelator_single(rawdata,srate,clock_comb,detect_threshold)
+function [aligned_data retro] = fxcorrelator_single_retro(rawdata,srate,clock_comb,detect_threshold)
 
 %check for rawdata and comb to be in column form
 if size(rawdata,2) > size(rawdata,1)
@@ -82,11 +84,12 @@ for k = 1:1:numdatasets
     noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
 end
 
-goodsets = find(noisyxcorrsnr > detect_threshold);
+rawdatasets = numdatasets; %preserve the number of raw datasets
+goodsets = find(noisyxcorrsnr > detect_threshold)%;%print goodsets!
 numdatasets = length(goodsets);
 
 %diagnostics
-
+%{
 close all
 figure
 subplot 211
@@ -101,7 +104,7 @@ xlabel('xcorr SNR value')
 ylabel('hit count')
 subplot 211
 title('Plot and Histogram of SNR used for Signal Detection')
-
+%}
 
 
 if numdatasets < 1
@@ -169,9 +172,38 @@ for k = 1:1:numdatasets
     samplesoffsetxcorr(k) = id - datalength;
 end
 
+%plot phase and time corrections
+figure
+subplot 211
+plot(recoveredphasexcorr,'o-')
+title('Phase Offset')
+ylabel('Phase [rad]')
+xlabel('dataset')
+subplot 212
+plot(samplesoffsetxcorr,'o-')
+title('Time offset in samples')
+ylabel('offset [samples]')
+xlabel('dataset')
+
+
 %time and phase align data
 for k = 1:1:numdatasets
     aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
+end
+
+%===========================================
+%create retro-directive transmit signal
+%===========================================
+
+%create blank array of samples, 1.5s longer than the input vector.
+%this creates the zero padding as well as makes the retro output of
+%non-detected epochs zero.
+retro = zeros([size(aligned_data,1)+1.5/srate rawdatasets]);
+
+%time advance and phase conjugate the clock comb for each epoch
+%NEED TO GENERALIZE THIS TO SINGLE SAMPLES
+for k=1:1:numdatasets
+    retro(samplesoffsetxcorr(k)+1/srate:samplesoffsetxcorr(k)+1/srate+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
 end
 
 end
