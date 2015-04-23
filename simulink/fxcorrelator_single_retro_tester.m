@@ -63,7 +63,8 @@ retro_time = 0:srate:(size(retro_data,1)-1)*srate;
 figure
 for k = 1:1:displaydatasets
     subplot(displaydatasets,1,k)
-    plot(retro_time,real(retro_data(:,k)),'m')
+    plot(retro_time,real(retro_data(:,k))*1e-3,'m')
     hold on
     plot(timestamp,rnoisydata(:,k))
+    xlim([-1e-3 1e-3])
 end

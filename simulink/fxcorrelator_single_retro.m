@@ -85,7 +85,7 @@ for k = 1:1:numdatasets
 end
 
 rawdatasets = numdatasets; %preserve the number of raw datasets
-goodsets = find(noisyxcorrsnr > detect_threshold)%;%print goodsets!
+goodsets = find(noisyxcorrsnr > detect_threshold);
 numdatasets = length(goodsets);
 
 %diagnostics
@@ -106,9 +106,9 @@ subplot 211
 title('Plot and Histogram of SNR used for Signal Detection')
 %}
 
-
 if numdatasets < 1
     aligned_data = zeros([datalength 1]);
+    retro = zeros([size(aligned_data,1)+1.5/srate 1]);
     return
 end
 
