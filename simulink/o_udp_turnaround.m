@@ -12,6 +12,8 @@ fifoCount = 0;
 fifoFiles = cell(1);
 fifoFids  = zeros(0);
 fifoDataType = 'single';
+fifoDataTypeSize = 4;
+fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
 
 function [] = o_fifo_write(index, data)
     global fifoCount fifoSamples fifoFiles fifoFids fifoDataType
@@ -61,50 +63,44 @@ function index = o_fifo_new()
     fifoFiles{index} = tempname;
     [ERR, MSG] = mkfifo(fifoFiles{index}, base2dec('744',8));
     fifoFids(index)  = fopen(fifoFiles{index}, 'a+');
+%     fcntl(fifoFids(index), F_SETFL, O_NONBLOCK);
 end
 % ------------------------ fifo ------------------------ 
 
 
-txfifo = o_fifo_new();
-disp(o_fifo_avail(txfifo));
-o_fifo_write(txfifo, [1.243 pi 2*pi 4/3*pi]');
-disp(o_fifo_avail(txfifo));
-disp(o_fifo_read(txfifo, 4));
-disp(o_fifo_avail(txfifo));
+% txfifo = o_fifo_new();
+% disp(o_fifo_avail(txfifo));
+% o_fifo_write(txfifo, [1.243 pi 2*pi 4/3*pi]');
+% disp(o_fifo_avail(txfifo));
+% disp(o_fifo_read(txfifo, 4));
+% disp(o_fifo_avail(txfifo));
+% 
+% 
+% 
+% 
 
 
+function [floats] = raw_to_float(raw)
+
+    [~,sz] = size(raw);
+    
+    floats = [];
+
+    for i = [1:8:sz]
+        f1 = typecast(uint8(raw(i:i+3)),'single');
+        f2 = typecast(uint8(raw(i+4:i+7)),'single');
+        floats = [floats;f1;f2];
+    end
+
+end
+
+more off;  % ffs Octave
 
 
-
-
-
-
-return
-
-
-
-rcv_port = 1235;
-send_ip = '192.168.1.24';
-send_ip = '127.0.0.1'
-% send_ip = '192.168.1.16';
-send_port = 1236;
+rcv_port = 1235;          % radio RX port (will be udp rx)
+send_ip = '127.0.0.1'     % ip where gnuradio is running
+send_port = 1236;         % radio TX port (will be udp tx)
 payload_size = 180*8;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 disp('0 here');
@@ -112,7 +108,7 @@ disp('0 here');
 rcv_sck=socket(AF_INET, SOCK_DGRAM, 0); 
 disp('1 here');
 bind(rcv_sck,rcv_port); 
-disp('2 here');           
+disp('2 here');
 
 dout = [];
 
@@ -121,46 +117,64 @@ send_sck=socket(AF_INET, SOCK_DGRAM, 0);
 client_info = struct('addr', send_ip, 'port', send_port); 
 connect(send_sck, client_info); 
 
+rxfifo = o_fifo_new();
+% txfifo = o_fifo_new();
 
 
-
-
-for i=[1:9999999]
-
+i = 0;
+while 1
 %     disp(i);
     [data, count] = recv(rcv_sck, payload_size, 'MSG_DONTWAIT');
     if( count ~= 0 )
-%         typeinfo(data)
-%         typeinfo(data(1))
-           disp(data);
-%          disp(count);
-%          fflush(stdout);
-         
-        if( mod(i,2) == 0 )
-            send(send_sck,data); 
-        else
-            send(send_sck,uint8(zeros(1,payload_size)));
-        end
-          
-        dout = [dout data];
-    end
 
-    [~,sz] = size(dout);
+%            disp(data);
+
+%            disp();
+           disp('pre');
+           o_fifo_write(rxfifo, raw_to_float(data));
+           disp('post');
+           disp(o_fifo_avail(rxfifo));
+         
+%         if( mod(i,2) == 0 )
+%             send(send_sck,data); 
+%         else
+%             send(send_sck,uint8(zeros(1,payload_size)));
+%         end
+          
+%         dout = [dout data];
+    end
+    
+%     disp(o_fifo_avail(rxfifo));
+%     
+%     chunk = 1000;
+%     
+%     if( o_fifo_avail(rxfifo) > 1000)
+%         rrrr = o_fifo_read(rxfifo, 1000);
+%         cxs = [];
+%         for j = 1:2:1000
+%             c1 = complex(rrrr(j),rrrr(j+1));
+%             cxs = [cxs;c1];
+%         end
+%         plot(imag(cxs));
+%         return;
+%     end
+
+%     [~,sz] = size(dout);
     
 %     if( sz > 10000 )
 %         break
 %     end
-    
+    i = i + 1;
 end
 
-[~,sz] = size(dout);
-
-cout = [];
-for i = [1:8:sz]
-    f1 = typecast(uint8(dout(i:i+3)),'single');
-    f2 = typecast(uint8(dout(i+4:i+7)),'single');
-    cout = [cout complex(f2,f1)];
-end
+% [~,sz] = size(dout);
+% 
+% cout = [];
+% for i = [1:8:sz]
+%     f1 = typecast(uint8(dout(i:i+3)),'single');
+%     f2 = typecast(uint8(dout(i+4:i+7)),'single');
+%     cout = [cout complex(f2,f1)];
+% end
 % 
 
 
