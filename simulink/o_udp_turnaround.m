@@ -63,7 +63,7 @@ function index = o_fifo_new()
     fifoFiles{index} = tempname;
     [ERR, MSG] = mkfifo(fifoFiles{index}, base2dec('744',8));
     fifoFids(index)  = fopen(fifoFiles{index}, 'a+');
-%     fcntl(fifoFids(index), F_SETFL, O_NONBLOCK);
+%     fcntl(fifoFids(index), F_SETFL, O_NONBLOCK);  % uncomment to avoid hangs when trying to overfill fifo
 end
 % ------------------------ fifo ------------------------ 
 
@@ -98,7 +98,7 @@ more off;  % ffs Octave
 
 
 rcv_port = 1235;          % radio RX port (will be udp rx)
-send_ip = '127.0.0.1'     % ip where gnuradio is running
+send_ip = '127.0.0.1';    % ip where gnuradio is running
 send_port = 1236;         % radio TX port (will be udp tx)
 payload_size = 180*8;
 
