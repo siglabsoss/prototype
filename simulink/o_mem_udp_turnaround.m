@@ -18,7 +18,7 @@ fifoMaxBytes = 1048576; % this is operating system enforced, changing here will 
 global fifoSampleIndex fifoTotalSamples fifoBuffer
 fifoSampleIndex = 0;
 fifoTotalSamples = 0;
-fifoBuffer = [];
+fifoBuffer = single([]);
 
 
 function [] = o_fifo_write(index, data)
@@ -29,6 +29,10 @@ function [] = o_fifo_write(index, data)
     % locals
     overwriteStart = fifoTotalSamples + 1;
     overwriteEnd = fifoTotalSamples + sz;
+    
+%     disp(fifoBuffer);
+%     disp(data);
+%     disp(sprintf('size %d', sz));
     
     fifoBuffer(overwriteStart:overwriteEnd,1) = data;
     
@@ -76,45 +80,28 @@ function index = o_fifo_new()
 end
 % ------------------------ fifo ------------------------ 
 
-fifoBuffer
-disp(sprintf('%d avail', o_fifo_avail(1)))
-o_fifo_write(1, [1 2]')
-fifoBuffer
-o_fifo_write(1, [3 4 5 6 7]')
-disp(sprintf('%d avail', o_fifo_avail(1)))
-fifoBuffer
-o_fifo_read(1, 4)
-disp(sprintf('%d avail', o_fifo_avail(1)))
-fifoBuffer
-o_fifo_read(1, 1)
-disp(sprintf('%d avail', o_fifo_avail(1)))
-o_fifo_read(1, 1)
-disp(sprintf('%d avail', o_fifo_avail(1)))
-o_fifo_write(1, [10 11 12]')
-disp(sprintf('%d avail', o_fifo_avail(1)))
-o_fifo_read(1, 4)
-disp(sprintf('%d avail', o_fifo_avail(1)))
-
-
-
-return;
-
-
-
-
-
-
-
-
-
-
-
-
-
+% fifoBuffer
+% disp(sprintf('%d avail', o_fifo_avail(1)))
+% o_fifo_write(1, [complex(1) complex(0,2)]')
+% fifoBuffer
+% o_fifo_write(1, [complex(3) complex(4) complex(5) complex(6) 7]')
+%  disp(sprintf('%d avail', o_fifo_avail(1)))
+% fifoBuffer
+% o_fifo_read(1, 4)
+% disp(sprintf('%d avail', o_fifo_avail(1)))
+% fifoBuffer
+% o_fifo_read(1, 1)
+% disp(sprintf('%d avail', o_fifo_avail(1)))
+% o_fifo_read(1, 1)
+% disp(sprintf('%d avail', o_fifo_avail(1)))
+% o_fifo_write(1, [10 11 12]')
+% disp(sprintf('%d avail', o_fifo_avail(1)))
+% o_fifo_read(1, 4)
+% % disp(sprintf('%d avail', o_fifo_avail(1)))
+% return
 
 
 function [floats] = raw_to_float(raw)
-
     [~,sz] = size(raw);
     
     floats = [];
@@ -124,12 +111,33 @@ function [floats] = raw_to_float(raw)
         f2 = typecast(uint8(raw(i+4:i+7)),'single');
         floats = [floats;f1;f2];
     end
-
 end
+
+function [floats] = raw_to_complex(raw)
+
+    
+    list = typecast(uint8(raw),'single');
+
+    [~,sz] = size(list);
+    
+    floats = complex(list(2:2:sz),list(1:2:sz))';
+    
+    
+
+%     index = 1;
+%      for i = [1:8:sz]
+%          f1 = typecast(uint8(raw(i:i+3)),'single');
+%         f2 = typecast(uint8(raw(i+4:i+7)),'single');
+% %         floats = [floats;complex(f1,f2)];
+%          floats(index) = complex(f1,f2);
+%         index = index + 1;
+%      end
+end
+
 
 more off;  % ffs Octave
 
-
+% ------------------------ UDP ------------------------
 rcv_port = 1235;          % radio RX port (will be udp rx)
 send_ip = '127.0.0.1';    % ip where gnuradio is running
 send_port = 1236;         % radio TX port (will be udp tx)
@@ -149,33 +157,68 @@ dout = [];
 send_sck=socket(AF_INET, SOCK_DGRAM, 0); 
 client_info = struct('addr', send_ip, 'port', send_port); 
 connect(send_sck, client_info); 
+% ------------------------ UDP ------------------------
 
-rxfifo = o_fifo_new();
+
+
+load('thursday.mat','clock_comb125k','idealdata','patternvec')
+clock_comb = clock_comb125k;
+
+srate = 1/125000;
+detect_threshold = 2.5;
+
+schunk = 1/srate*0.8;
+
+aligned_data = [];
+retro_data = [];
+
+
+
+
+
+rxfifo = 1; %o_fifo_new();
 % txfifo = o_fifo_new();
 
-
+then = now;
 i = 0;
 while 1
 %     disp(i);
     [data, count] = recv(rcv_sck, payload_size, 'MSG_DONTWAIT');
     if( count ~= 0 )
 
-%            disp(data);
-
-%            disp();
-           disp('pre');
-           o_fifo_write(rxfifo, raw_to_float(data));
-           disp('post');
-           disp(o_fifo_avail(rxfifo));
+          o_fifo_write(rxfifo, raw_to_complex(data));
+%            disp(o_fifo_avail(rxfifo));
          
-%         if( mod(i,2) == 0 )
-%             send(send_sck,data); 
-%         else
-%             send(send_sck,uint8(zeros(1,payload_size)));
-%         end
-          
-%         dout = [dout data];
     end
+    
+%     
+    if( o_fifo_avail(1) > schunk )
+        samples = o_fifo_read(rxfifo, schunk); %burn
+        
+        [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+    
+        if ~(sum(aligned_data_single)==0)
+%             aligned_data = [aligned_data, aligned_data_single];
+%             retro_data = [retro_data, retro_single];
+            return;
+        end
+        
+%         return;
+        
+        disp('ok');
+        delta = datestr(now-then,'HH:MM:SS.FFF')
+        then = now;
+    end
+
+%     if( totalRxSamples > schunk*8 )
+% %         disp(sprintf('ok rx %d', totalRxSamples));
+%         delta = datestr(now-then,'HH:MM:SS.FFF')
+%         then = now;
+% %         datestr(JD,'HH:MM:SS.FFF') 
+%         totalRxSamples = totalRxSamples - schunk*8;
+%         
+%         
+%     end
     
 %     disp(o_fifo_avail(rxfifo));
 %     
