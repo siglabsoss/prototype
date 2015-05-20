@@ -164,15 +164,13 @@ fsearch_index_low = floor((fftlength)/2) + round(fsearchwindow_low*srate*fftleng
 fsearch_index_hi = ceil((fftlength)/2) + round(fsearchwindow_hi*srate*fftlength);
 combwindow_index_low = floor((fftlength)/2) + round(combwindow_low*srate*fftlength)+1; % need to verify possible off-by-one errors
 combwindow_index_hi = ceil((fftlength)/2) + round(combwindow_hi*srate*fftlength);
-padded_difference = fftlength - (fsearch_index_hi-fsearch_index_low+1);
+padded_difference = abs((fsearch_index_hi-fsearch_index_low+1)-(combwindow_index_hi-combwindow_index_low+1)); %matlab zero-pads the smaller of the two inputs to make them equal length.
 xcorr_comb_paddinglength = (fsearch_index_hi - fsearch_index_low -1) - (combwindow_index_hi-combwindow_index_low-1); %dammit matlab pads the shorter xcorr input
-%fstamp_index_low = combwindow_index_low - 1 + fftlength - fsearch_index_hi + 1; %xcorr offset is equal to the number of removed samples + 1
-%fstamp_index_low = padded_difference + (fsearch_index_low-1) + 1; 
+%fstamp_index_low =  (fftlength - combwindow_index_hi) - padded_difference + (fsearch_index_low-1) + 1; %the freqindex offset is equal to the number of removed samples plus 1.
 %fstamp_index_hi = fstamp_index_low + 2*(fsearch_index_hi-fsearch_index_low+1)-1-1; %formally this should be 2*max([fsearch_index_hi-fsearch_index_low+1, combwindow_index_hi-combwindow_index_low+1]
 fstamp_index_low = floor(fftlength+1) + round(fsearchwindow_low*srate*fftlength) - round(combwindow_hi*srate*fftlength)-xcorr_comb_paddinglength;
 fstamp_index_hi = ceil(fftlength-1) + round(fsearchwindow_hi*srate*fftlength) - round(combwindow_low*srate*fftlength);
 xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
-%xcorrfreqstamp = linspace(2/srate,0,fftlength*2-1)-1/srate;
 xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 
@@ -202,7 +200,7 @@ end
 
 %frequency align data
 for k = 1:1:numdatasets
-    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*-freqoffsetxcorr(k)*timestamp)');
+    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*-freqoffsetxcorr(k)*timestamp).'); %warning: matlab ' operator transposes row/col and conjugates 
 end
 
 %diagnostics
