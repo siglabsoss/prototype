@@ -13,7 +13,7 @@ clock_comb = clock_comb125k;
 
 %settings
 srate = 1/125000;
-detect_threshold = 2.4;
+detect_threshold = 2.5;
 %detect_threshold = 3.8; %original is 2.5
 %detect_threshold = 9;
 
