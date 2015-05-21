@@ -86,7 +86,7 @@ starttime = datetime;
 %matrix version
 %[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
 %[aligned_data retro_data] = fxcorrelator_single_retro_full(rnoisydata,srate,clock_comb,detect_threshold);
-[aligned_data retro_data] = fxcorrelator_single_retro_simple(rnoisydata,srate,clock_comb,detect_threshold);
+[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
 
 %single version
 %{

@@ -114,6 +114,12 @@ rawdatasets = numdatasets; %preserve the number of raw datasets
 goodsets = find(noisyxcorrsnr > detect_threshold);
 numdatasets = length(goodsets);
 
+if numdatasets < 1
+    aligned_data = zeros([datalength 1]);
+    retro = zeros([size(aligned_data,1)+1.5/srate 1]);
+    return
+end
+
 %DIAGNOSTICS: Print detection stats
 if diag 
     close all
@@ -130,12 +136,6 @@ if diag
     ylabel('hit count')
     subplot 211
     title('Plot and Histogram of SNR used for Signal Detection')
-end
-
-if numdatasets < 1
-    aligned_data = zeros([datalength 1]);
-    retro = zeros([size(aligned_data,1)+1.5/srate 1]);
-    return
 end
 
 %CLEANUP: reduce to just the good datasets
