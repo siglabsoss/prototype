@@ -14,6 +14,7 @@ clock_comb = clock_comb125k;
 %settings
 srate = 1/125000;
 detect_threshold = 2.5;
+%detect_threshold = 1.97; % for downsample
 %detect_threshold = 3.8; %original is 2.5
 %detect_threshold = 9;
 
@@ -81,12 +82,19 @@ plot(timestamp,real(rnoisydata*ones([size(rnoisydata,2) 1])))
 xlabel('time [s]')
 title('Incoherent Sum')
 
+%downsampling functions
+downsample_rate = 10;
+srate = srate*downsample_rate;
+clock_comb = downsample(clock_comb,downsample_rate);
+rnoisydata = downsample(rnoisydata, downsample_rate); 
+datalength = length(rnoisydata(:,1));
+timestamp = 0:srate:(datalength-1)*srate;
+
+
 starttime = datetime;
 
 %matrix version
-%[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
-%[aligned_data retro_data] = fxcorrelator_single_retro_full(rnoisydata,srate,clock_comb,detect_threshold);
-[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
+[aligned_data retro_data] = fxcorrelator_single_retro_downsample(rnoisydata,srate,clock_comb,detect_threshold);
 
 %single version
 %{
@@ -110,8 +118,11 @@ plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
 xlabel('time [s]')
 title('Coherent Sum')
 
-expected_data = my_cpm_demod_offline(idealdata,srate,100,patternvec,1);
-BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data)
+srate_orig = 1/125000; % get past the downsampling
+expected_data = my_cpm_demod_offline(idealdata,srate_orig,100,patternvec,1);
+BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100/downsample_rate,patternvec,1) == expected_data)/length(expected_data)
+%modified samples per symbol to make this work
+
 
 displaydatasets = 5;
 

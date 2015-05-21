@@ -81,12 +81,17 @@ plot(timestamp,real(rnoisydata*ones([size(rnoisydata,2) 1])))
 xlabel('time [s]')
 title('Incoherent Sum')
 
+%downsampling functions
+downsample_rate = 10;
+srate = srate*downsample_rate;
+timestamp = 0:srate:(datalength-1)*srate;
+clock_comb = downsample(clock_comb,downsample_rate);
+rawdata = downsample(rawdata, downsample_rate); %very weird result, this typo causes clock comb to be downsampled, but not rnoisydata, and this created a 0.8750 BER.  Investigate!
+
 starttime = datetime;
 
 %matrix version
-%[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
-%[aligned_data retro_data] = fxcorrelator_single_retro_full(rnoisydata,srate,clock_comb,detect_threshold);
-[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
+[aligned_data retro_data] = fxcorrelator_single_retro_downsample(rnoisydata,srate,clock_comb,detect_threshold);
 
 %single version
 %{

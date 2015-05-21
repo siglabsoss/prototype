@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro] = fxcorrelator_single_retro(rawdata,srate,clock_comb,detect_threshold)
+function [aligned_data retro] = fxcorrelator_single_retro_simple(rawdata,srate,clock_comb,detect_threshold)
 
 %diagnostic functions
 diag = 1;
@@ -72,26 +72,10 @@ end
 freqindex = linspace(0,1/srate,fftlength_detect)-1/srate/2;
 comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength_detect-length(clock_comb),1])]));
 
-%DIAGNOSTICS: Display incoming Raw Data
 if diag
     if displaydatasets > numdatasets
         displaydatasets = numdatasets;
     end
-    
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(timestamp, real(rawdata(:,k)))
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 chunks of received raw data (real)')
-    
-    figure
-    plot(timestamp_comb, real(clock_comb))
-    title('Clock Comb (real)')
-    
     figure
     for k=1:1:displaydatasets
         subplot(displaydatasets,1,k)
@@ -100,12 +84,11 @@ if diag
         xlabel('Freq [Hz]')
     end
     subplot(displaydatasets,1,1)
-    title('First 10 FFTs of received raw data (abs)')
+    title('First 10 FFTs of raw data')
     
     figure
     plot(freqindex, abs(comb_fft))
-    title('FFT of Clock Comb (abs)')
-    
+    title('FFT of Clock Comb')
 end
 
 %SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
@@ -131,7 +114,6 @@ rawdatasets = numdatasets; %preserve the number of raw datasets
 goodsets = find(noisyxcorrsnr > detect_threshold);
 numdatasets = length(goodsets);
 
-%if no good datasets found, return empty zeros
 if numdatasets < 1
     aligned_data = zeros([datalength 1]);
     retro = zeros([size(aligned_data,1)+1.5/srate 1]);
@@ -200,27 +182,7 @@ for k = 1:1:numdatasets
     freqoffsetxcorr(k) = xcorrfreqstamp(id);
 end
 
-%frequency align data
-for k = 1:1:numdatasets
-    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*-freqoffsetxcorr(k)*timestamp).'); %warning: matlab ' operator transposes row/col and conjugates, use .'
-end
-
-%perform time-domain clock_comb xcorrelation
-xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
-for k = 1:1:numdatasets
-    xcorr_data(:,k) = xcorr(freqaligneddataxcorr(:,k),clock_comb);
-    [val id] = max(xcorr_data(:,k));
-    recoveredphasexcorr(k) = angle(val);
-    samplesoffsetxcorr(k) = id - datalength;
-end
-
-%time and phase align data, return data
-for k = 1:1:numdatasets
-    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
-end
-
-%DIAGNOSTICS: display Freq-Correction and Time-Correction
-%Cross-Correlations, Corrections and corrected data
+%diagnostics
 if diag
     if displaydatasets > numdatasets
         displaydatasets = numdatasets;
@@ -233,44 +195,69 @@ if diag
         xlabel('Freq [Hz]')
     end
     subplot(displaydatasets,1,1)
-    title('First 10 Frequency-Domain Correlations for Freq Alignment (abs)')
-    
+    title('First 10 Frequency-Domain Correlations for Freq Alignment')
+end
+
+%frequency align data
+for k = 1:1:numdatasets
+    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*-freqoffsetxcorr(k)*timestamp).'); %warning: matlab ' operator transposes row/col and conjugates, use .'
+end
+
+%diagnostics
+if diag
+    if displaydatasets > numdatasets
+        displaydatasets = numdatasets;
+    end
     figure
     for k=1:1:displaydatasets
         subplot(displaydatasets,1,k)
-        plot(xcorrtimestamp, abs(xcorr_data(:,k)))
+        plot(freqindex, abs(fftshift(fft(freqaligneddataxcorr(:,k),fftlength))))
         ylabel('Magnitude')
-        xlabel('Time [s]')
+        xlabel('Freq [Hz]')
     end
     subplot(displaydatasets,1,1)
-    title('First 10 Time-Domain Correlations for Time/Phase Alignment')
-    
+    title('First 10 FFTs of Freq-aligned data')
+end
+
+%perform time-domain clock_comb xcorrelation
+xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
+for k = 1:1:numdatasets
+    xcorr_data(:,k) = xcorr(freqaligneddataxcorr(:,k),clock_comb);
+    [val id] = max(xcorr_data(:,k));
+    recoveredphasexcorr(k) = angle(val);
+    samplesoffsetxcorr(k) = id - datalength;
+end
+
+%DIAGNOSTICS: plot phase and time corrections
+if diag    
     figure
     subplot 311
     plot(freqoffsetxcorr,'o-')
-    title('Frequency Offset Correction Applied')
+    title('Frequency Offset')
     ylabel('Freq [Hz]')
     xlabel('dataset')
     subplot 312
     plot(recoveredphasexcorr,'o-')
-    title('Phase Offset Correction Applied')
+    title('Phase Offset')
     ylabel('Phase [rad]')
     xlabel('dataset')
     subplot 313
     plot(samplesoffsetxcorr,'o-')
-    title('Time Offset Correction Applied')
-    ylabel('Time [samples]')
+    title('Time offset in samples')
+    ylabel('offset [samples]')
     xlabel('dataset')
     
     figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(timestamp, real(aligned_data(:,k)))
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 Frequency-, Time-, and Phase-Aligned Datasets (real)')
+    histogram(freqoffsetxcorr)
+    xlabel('freq [Hz]')
+    ylabel('hit count')
+    title('Histogram of Frequency Offsets')
+end
+
+
+%time and phase align data
+for k = 1:1:numdatasets
+    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
 end
 
 %===========================================
@@ -285,19 +272,6 @@ retro = zeros([size(aligned_data,1)+1.5/srate rawdatasets]);
 %time advance and phase conjugate the clock comb for each epoch
 for k=1:1:numdatasets
     retro(samplesoffsetxcorr(k)+1/srate:samplesoffsetxcorr(k)+1/srate+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
-end
-
-if diag
-    retro_time = 0:srate:(size(retro,1)-1)*srate;
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(retro_time, real(retro(:,k)),'r')
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 Retrodirective Return Signals (real)')
 end
 
 end
