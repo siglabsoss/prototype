@@ -3,24 +3,22 @@ close all
 
 %START REAL DATA LOAD BLOCK
 %========================
-%{
-load('mar17pt2.mat','ruthandelcamino')
-rawdata = ruthandelcamino;
-load('thursday.mat','clock_comb125k','idealdata','patternvec')
-clock_comb = clock_comb125k;
-
-%settings
-srate = 1/125000;
-detect_threshold = 2.5;
-
-%chunk the data
-windowsize = 0.8; % size of chunked data
-timestep = 0.3; %time stepping of data chunks.  should be < windowsize - time length of rf packet
-rawtime = 0:srate:(length(rawdata)-1)*srate;
-for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
-    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
-end
-%}
+% load('mar31e.mat', 'haywardcaltrainclock')
+% rawdata = haywardcaltrainclock;
+% load('thursday.mat','clock_comb125k','idealdata','patternvec')
+% clock_comb = clock_comb125k;
+% 
+% %settings
+% srate = 1/125000;
+% detect_threshold = 2.5;
+% 
+% %chunk the data
+% windowsize = 0.8; % size of chunked data
+% timestep = 0.3; %time stepping of data chunks.  should be < windowsize - time length of rf packet
+% rawtime = 0:srate:(length(rawdata)-1)*srate;
+% for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
+%     rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
+% end
 %END REAL DATA LOAD
 %=======================
 
@@ -54,6 +52,9 @@ for k = 1:1:numdatasets
     %rnoisydata(:,k) = awgn(rnoisydata(:,k),snr_awgn); %add noise
 end
 
+%START SIM DATA LOAD
+%=============================
+
 %plot incoherent sum
 datalength = length(rnoisydata(:,1));
 timestamp = 0:srate:(datalength-1)*srate;
@@ -65,7 +66,7 @@ title('Incoherent Sum')
 starttime = time; %datetime doesn't work in octave
 
 %matrix version
-%[aligned_data retro_data] = fxcorrelator_single_retro_octave(rnoisydata,srate,clock_comb,detect_threshold);
+%[aligned_data retro_data] = retrocorrelator_octave(rnoisydata,srate,clock_comb,detect_threshold);
 
 %single version
 aligned_data = [];
