@@ -86,10 +86,10 @@ starttime = datetime;
 %matrix version
 %[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
 %[aligned_data retro_data] = fxcorrelator_single_retro_full(rnoisydata,srate,clock_comb,detect_threshold);
-[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
+%[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
 
 %single version
-%{
+
 aligned_data = [];
 retro_data = [];
 for k=1:1:size(rnoisydata,2)
@@ -99,7 +99,7 @@ for k=1:1:size(rnoisydata,2)
         retro_data = [retro_data, retro_single];
     end
 end
-%}
+
 
 Correlation_completed_in = datetime-starttime
 
