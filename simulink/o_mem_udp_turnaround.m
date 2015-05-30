@@ -6,35 +6,21 @@ pkg load sockets;
 
 
 % ------------------------ fifo ------------------------ 
-global fifoCount fifoSamples fifoFiles fifoFids fifoDataType
-fifoSamples = zeros(0);
-fifoCount = 0;
-fifoFiles = cell(1);
-fifoFids  = zeros(0);
-fifoDataType = 'single';
-fifoDataTypeSize = 4;
-fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
-
-global fifoSampleIndex fifoTotalSamples fifoBuffer
+global fifoSampleIndex fifoTotalSamples fifoBuffer fifoCount
 
 fifoTotalSamples{1} = 0;
-fifoTotalSamples{2} = 0;
 fifoBuffer{1} = single([]);
-fifoBuffer{2} = single([]);
+fifoCount = 0;
 
 
 function [] = o_fifo_write(index, data)
-    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoTotalSamples fifoBuffer
+    global fifoCount fifoTotalSamples fifoBuffer
     
     [sz,~] = size(data);
     
     % locals
     overwriteStart = fifoTotalSamples{index} + 1;
     overwriteEnd = fifoTotalSamples{index} + sz;
-    
-%     disp(fifoBuffer);
-%     disp(data);
-%     disp(sprintf('size %d', sz));
     
     fifoBuffer{index}(overwriteStart:overwriteEnd,1) = data;
     
@@ -46,7 +32,7 @@ function [] = o_fifo_write(index, data)
 end
 
 function [data] = o_fifo_read(index, count)
-    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoTotalSamples fifoBuffer
+    global fifoCount fifoTotalSamples fifoBuffer
 
     % locals
     readStart = 1;
@@ -60,22 +46,19 @@ function [data] = o_fifo_read(index, count)
 end
 
 function [avail] = o_fifo_avail(index)
-    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoTotalSamples fifoBuffer
+    global fifoCount fifoTotalSamples fifoBuffer
     
     avail = fifoTotalSamples;
 end
 
 function index = o_fifo_new()
-%     global fifoCount fifoSamples fifoFiles fifoFids fifoDataType
-% 
-%     fifoCount = fifoCount + 1;
-%     index = fifoCount;
-%     
-%     fifoSamples(index) = 0;
-%     fifoFiles{index} = tempname;
-%     [ERR, MSG] = mkfifo(fifoFiles{index}, base2dec('744',8));
-%     fifoFids(index)  = fopen(fifoFiles{index}, 'a+');
-% %     fcntl(fifoFids(index), F_SETFL, O_NONBLOCK);  % uncomment to avoid hangs when trying to overfill fifo
+    global fifoCount fifoTotalSamples fifoBuffer
+
+    fifoCount = fifoCount + 1;
+    index = fifoCount;
+    
+    fifoTotalSamples{index} = 0;
+    fifoBuffer{index} = single([]);
 end
 % ------------------------ fifo ------------------------ 
 
@@ -101,13 +84,15 @@ end
 
 
 % fifoBuffer
-% o_fifo_write(1, [complex(1) complex(0,2)]')
-% o_fifo_write(2, [complex(101) complex(0,102)]')
-% o_fifo_write(1, [complex(3) complex(4) complex(5) complex(6) 7]')
+% fifoA = o_fifo_new()
+% fifoB = o_fifo_new()
+% o_fifo_write(fifoA, [complex(1) complex(0,2)]')
+% o_fifo_write(fifoB, [complex(101) complex(0,102)]')
+% o_fifo_write(fifoA, [complex(3) complex(4) complex(5) complex(6) 7]')
 % fifoBuffer
-% o_fifo_read(1, 4)
-% o_fifo_read(2, 1)
-% o_fifo_read(2, 1)
+% o_fifo_read(fifoA, 4)
+% o_fifo_read(fifoB, 1)
+% o_fifo_read(fifoB, 1)
 % fifoBuffer
 % return
 
