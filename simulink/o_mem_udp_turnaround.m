@@ -16,27 +16,29 @@ fifoDataTypeSize = 4;
 fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
 
 global fifoSampleIndex fifoTotalSamples fifoBuffer
-fifoSampleIndex = 0;
-fifoTotalSamples = 0;
-fifoBuffer = single([]);
+
+fifoTotalSamples{1} = 0;
+fifoTotalSamples{2} = 0;
+fifoBuffer{1} = single([]);
+fifoBuffer{2} = single([]);
 
 
 function [] = o_fifo_write(index, data)
-    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoSampleIndex fifoTotalSamples fifoBuffer
+    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoTotalSamples fifoBuffer
     
     [sz,~] = size(data);
     
     % locals
-    overwriteStart = fifoTotalSamples + 1;
-    overwriteEnd = fifoTotalSamples + sz;
+    overwriteStart = fifoTotalSamples{index} + 1;
+    overwriteEnd = fifoTotalSamples{index} + sz;
     
 %     disp(fifoBuffer);
 %     disp(data);
 %     disp(sprintf('size %d', sz));
     
-    fifoBuffer(overwriteStart:overwriteEnd,1) = data;
+    fifoBuffer{index}(overwriteStart:overwriteEnd,1) = data;
     
-    fifoTotalSamples = fifoTotalSamples + sz;
+    fifoTotalSamples{index} = fifoTotalSamples{index} + sz;
 
     if( ~iscolumn(data) )
         disp('data must be columnar in o_fifo_write');
@@ -44,24 +46,21 @@ function [] = o_fifo_write(index, data)
 end
 
 function [data] = o_fifo_read(index, count)
-    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoSampleIndex fifoTotalSamples fifoBuffer
-
-    % always
-    fifoSampleIndex = 0;
+    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoTotalSamples fifoBuffer
 
     % locals
-    readStart = fifoSampleIndex + 1;
-    readEnd = fifoSampleIndex + count;
+    readStart = 1;
+    readEnd = count;
 
-    data = fifoBuffer(readStart:readEnd,1);
+    data = fifoBuffer{index}(readStart:readEnd,1);
     
-    fifoBuffer(readStart:readEnd,:) = [];
+    fifoBuffer{index}(readStart:readEnd,:) = [];
     
-    fifoTotalSamples = fifoTotalSamples - count;
+    fifoTotalSamples{index} = fifoTotalSamples{index} - count;
 end
 
 function [avail] = o_fifo_avail(index)
-    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoSampleIndex fifoTotalSamples fifoBuffer
+    global fifoCount fifoSamples fifoFiles fifoFids fifoDataType fifoTotalSamples fifoBuffer
     
     avail = fifoTotalSamples;
 end
@@ -99,6 +98,20 @@ end
 % o_fifo_read(1, 4)
 % % disp(sprintf('%d avail', o_fifo_avail(1)))
 % return
+
+
+% fifoBuffer
+% o_fifo_write(1, [complex(1) complex(0,2)]')
+% o_fifo_write(2, [complex(101) complex(0,102)]')
+% o_fifo_write(1, [complex(3) complex(4) complex(5) complex(6) 7]')
+% fifoBuffer
+% o_fifo_read(1, 4)
+% o_fifo_read(2, 1)
+% o_fifo_read(2, 1)
+% fifoBuffer
+% return
+
+
 
 
 function [floats] = raw_to_float(raw)
@@ -193,7 +206,7 @@ while 1
     
 %     
     if( o_fifo_avail(1) > schunk )
-        samples = o_fifo_read(rxfifo, schunk); %burn
+        samples = o_fifo_read(rxfifo, schunk);
         
         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
     
