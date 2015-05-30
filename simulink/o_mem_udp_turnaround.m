@@ -48,7 +48,7 @@ end
 function [avail] = o_fifo_avail(index)
     global fifoCount fifoTotalSamples fifoBuffer
     
-    avail = fifoTotalSamples;
+    avail = fifoTotalSamples{index};
 end
 
 function index = o_fifo_new()
@@ -133,6 +133,30 @@ function [floats] = raw_to_complex(raw)
 end
 
 
+function [ retro_out ] = replace_zero_ones( retro_single )
+    [sz,~] = size(retro_single)
+    dataStart = 0;
+    dataEnd = 0;
+
+%     Scan for the first non 0/0 signal
+    for i = [1:sz]
+        if( retro_single(i) != 0 )
+            dataStart = i;
+            break;
+        end
+    end
+
+    % for now we assume signal is 50K samples
+    dataEnd = dataStart + 50000;
+
+    leadOnes = dataStart-1;
+    trailOnes = sz - dataEnd;
+
+    % rebuild the same packet with 1,1 for the zero portions
+    retro_out = [complex(ones(leadOnes,1),ones(leadOnes,1)); retro_single(dataStart:dataEnd); complex(ones(trailOnes,1),ones(trailOnes,1))];
+end
+
+
 more off;  % ffs Octave
 
 % ------------------------ UDP ------------------------
@@ -174,7 +198,7 @@ retro_data = [];
 
 
 
-rxfifo = 1; %o_fifo_new();
+rxfifo = o_fifo_new();
 % txfifo = o_fifo_new();
 
 then = now;
@@ -195,11 +219,18 @@ while 1
         
         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
     
-        if ~(sum(aligned_data_single)==0)
+        if ~(sum(retro_single)==0)
 %             aligned_data = [aligned_data, aligned_data_single];
 %             retro_data = [retro_data, retro_single];
-            return;
+
+            disp('valid data');
+                        return;
+        else
+            disp('empty');
+%             return;
         end
+        
+        
         
 %         return;
         
