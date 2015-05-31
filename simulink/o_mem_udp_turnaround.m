@@ -125,7 +125,6 @@ end
 function [raw] = complex_to_raw(floats)
 
     sing = single(floats);
-%     complex(imag(sing),real(sing))
 
     % conj(x)*1i is the same as swapping real and imaginary
     list = typecast(conj(sing)*1i,'uint8');
@@ -163,23 +162,46 @@ global sin_out_t;
 sin_out_t = 0;
 
 function [ output ] = sin_out_cont( retro_single )
-
     global sin_out_t
 
     f = 5000;
-
     fs = 1/f * 2 * pi; % probably wrong
 
     [sz,~] = size(retro_single)
 
     ts = [0:sz-1]*fs + sin_out_t;
-
     ts = ts.';
 
     sin_out_t = sin_out_t + sz*fs;
 
     output = sin(ts);
+end
 
+
+global sps_then sps_count;
+sps_count = 0;
+sps_then = clock;
+
+% this only works if you call it more often than 1ce per minute
+function [output] = samples_per_second(count)
+    global sps_then sps_count;
+
+    rate_ave = 2; % how many seconds to average over
+    
+    % grab delta seconds
+    seconds = etime(clock,sps_then);
+    
+    sps_count = sps_count + count;
+    
+    if( seconds < rate_ave )
+        return
+    end
+    
+    disp(sprintf('sps: %d', sps_count/seconds));
+    
+    sps_count = 0;
+    sps_then = clock;
+    
 end
 
 
@@ -190,7 +212,8 @@ more off;  % ffs Octave
 rcv_port = 1235;          % radio RX port (will be udp rx)
 send_ip = '127.0.0.1';    % ip where gnuradio is running
 send_port = 1236;         % radio TX port (will be udp tx)
-payload_size = 180*8;
+payload_size = 2048*8;    % MTU this large works for localhost only
+payload_size_floats = payload_size / 8;
 
 
 disp('0 here');
@@ -213,7 +236,7 @@ connect(send_sck, client_info);
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
-srate = 1/125000;
+srate = 512/1E8;
 detect_threshold = 2.5;
 
 schunk = 1/srate*0.8;
@@ -223,10 +246,15 @@ retro_data = [];
 
 
 
+schunk_bytes = schunk * 10;
 
 
 rxfifo = o_fifo_new();
 txfifo = o_fifo_new();
+
+
+samples_per_second(0);
+
 
 then = now;
 i = 0;
@@ -235,22 +263,25 @@ while 1
     [data, count] = recv(rcv_sck, payload_size, 'MSG_DONTWAIT');
     if( count ~= 0 )
 
-          o_fifo_write(rxfifo, raw_to_complex(data));
-%            disp(o_fifo_avail(rxfifo));
-         
+         o_fifo_write(rxfifo, raw_to_complex(data));
+
+         [~,szin] = size(data);
+         samples_per_second(szin/8);
     end
     
 %     
-    if( o_fifo_avail(rxfifo) > schunk )
-        samples = o_fifo_read(rxfifo, schunk);
+    if( o_fifo_avail(rxfifo) > schunk_bytes )
+        samples = o_fifo_read(rxfifo, schunk_bytes);
+%         samples = raw_to_complex(o_fifo_read(rxfifo, floor(schunk/8)*8));
+        return;
         
-        [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+%         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
     
 %         size(retro_single);
 %         plot(sin_out_cont(retro_single));
 %         figure;
         
-        o_fifo_write(txfifo, sin_out_cont(retro_single));
+%         o_fifo_write(txfifo, sin_out_cont(retro_single));
 %         if ~(sum(retro_single)==0)
 % %             aligned_data = [aligned_data, aligned_data_single];
 % %             retro_data = [retro_data, retro_single];
@@ -267,13 +298,17 @@ while 1
 %         return;
         
         disp('rx');
-        delta = datestr(now-then,'HH:MM:SS.FFF')
+%         delta = datestr(now-then,'HH:MM:SS.FFF')
         then = now;
     end
     
-    if( o_fifo_avail(txfifo)*4 > payload_size )
-        
-    end
+%     disp(o_fifo_avail(txfifo));
+    
+%     while( o_fifo_avail(txfifo) > payload_size_floats )
+%         tx_floats = o_fifo_read(txfifo, payload_size_floats);
+%         send(send_sck,complex_to_raw(tx_floats));
+%         
+%     end
 
 %     if( totalRxSamples > schunk*8 )
 % %         disp(sprintf('ok rx %d', totalRxSamples));
