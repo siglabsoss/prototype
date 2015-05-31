@@ -118,18 +118,19 @@ function [floats] = raw_to_complex(raw)
 
     [~,sz] = size(list);
     
-    floats = complex(list(2:2:sz),list(1:2:sz))';
+    floats = complex(list(2:2:sz),list(1:2:sz)).'; % zomg uze .'
     
-    
+end
 
-%     index = 1;
-%      for i = [1:8:sz]
-%          f1 = typecast(uint8(raw(i:i+3)),'single');
-%         f2 = typecast(uint8(raw(i+4:i+7)),'single');
-% %         floats = [floats;complex(f1,f2)];
-%          floats(index) = complex(f1,f2);
-%         index = index + 1;
-%      end
+function [raw] = complex_to_raw(floats)
+
+    sing = single(floats);
+%     complex(imag(sing),real(sing))
+
+    % conj(x)*1i is the same as swapping real and imaginary
+    list = typecast(conj(sing)*1i,'uint8');
+    
+    raw = list;
 end
 
 
@@ -140,7 +141,7 @@ function [ retro_out ] = replace_zero_ones( retro_single )
 
 %     Scan for the first non 0/0 signal
     for i = [1:sz]
-        if( retro_single(i) != 0 )
+        if( retro_single(i) ~= 0 )
             dataStart = i;
             break;
         end
@@ -155,6 +156,32 @@ function [ retro_out ] = replace_zero_ones( retro_single )
     % rebuild the same packet with 1,1 for the zero portions
     retro_out = [complex(ones(leadOnes,1),ones(leadOnes,1)); retro_single(dataStart:dataEnd); complex(ones(trailOnes,1),ones(trailOnes,1))];
 end
+
+
+
+global sin_out_t;
+sin_out_t = 0;
+
+function [ output ] = sin_out_cont( retro_single )
+
+    global sin_out_t
+
+    f = 5000;
+
+    fs = 1/f * 2 * pi; % probably wrong
+
+    [sz,~] = size(retro_single)
+
+    ts = [0:sz-1]*fs + sin_out_t;
+
+    ts = ts.';
+
+    sin_out_t = sin_out_t + sz*fs;
+
+    output = sin(ts);
+
+end
+
 
 
 more off;  % ffs Octave
@@ -199,7 +226,7 @@ retro_data = [];
 
 
 rxfifo = o_fifo_new();
-% txfifo = o_fifo_new();
+txfifo = o_fifo_new();
 
 then = now;
 i = 0;
@@ -214,29 +241,38 @@ while 1
     end
     
 %     
-    if( o_fifo_avail(1) > schunk )
+    if( o_fifo_avail(rxfifo) > schunk )
         samples = o_fifo_read(rxfifo, schunk);
         
         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
     
-        if ~(sum(retro_single)==0)
-%             aligned_data = [aligned_data, aligned_data_single];
-%             retro_data = [retro_data, retro_single];
-
-            disp('valid data');
-                        return;
-        else
-            disp('empty');
-%             return;
-        end
+%         size(retro_single);
+%         plot(sin_out_cont(retro_single));
+%         figure;
+        
+        o_fifo_write(txfifo, sin_out_cont(retro_single));
+%         if ~(sum(retro_single)==0)
+% %             aligned_data = [aligned_data, aligned_data_single];
+% %             retro_data = [retro_data, retro_single];
+% 
+%             disp('valid data');
+%                         return;
+%         else
+%             disp('empty');
+% %             return;
+%         end
         
         
         
 %         return;
         
-        disp('ok');
+        disp('rx');
         delta = datestr(now-then,'HH:MM:SS.FFF')
         then = now;
+    end
+    
+    if( o_fifo_avail(txfifo)*4 > payload_size )
+        
     end
 
 %     if( totalRxSamples > schunk*8 )
