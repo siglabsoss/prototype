@@ -167,7 +167,7 @@ function [ output ] = sin_out_cont( retro_single )
     f = 5000;
     fs = 1/f * 2 * pi; % probably wrong
 
-    [sz,~] = size(retro_single)
+    [sz,~] = size(retro_single);
 
     ts = [0:sz-1]*fs + sin_out_t;
     ts = ts.';
@@ -237,6 +237,7 @@ load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
 srate = 512/1E8;
+srate = 1/125000;
 detect_threshold = 2.5;
 
 schunk = 1/srate*0.8;
@@ -246,7 +247,7 @@ retro_data = [];
 
 
 
-schunk_bytes = schunk * 10;
+% schunk_bytes = schunk * 10;
 
 
 rxfifo = o_fifo_new();
@@ -254,6 +255,10 @@ txfifo = o_fifo_new();
 
 
 samples_per_second(0);
+
+rxcount = 0;
+txcount = 0;
+txrxcountdelta = 1000;
 
 
 then = now;
@@ -267,27 +272,30 @@ while 1
 
          [~,szin] = size(data);
          samples_per_second(szin/8);
+         
+         rxcount = rxcount + 1;
     end
     
 %     
-    if( o_fifo_avail(rxfifo) > schunk_bytes )
-        samples = o_fifo_read(rxfifo, schunk_bytes);
+    if( o_fifo_avail(rxfifo) > schunk )
+        samples = o_fifo_read(rxfifo, schunk);
 %         samples = raw_to_complex(o_fifo_read(rxfifo, floor(schunk/8)*8));
-        return;
+%          return;
         
-%         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+        [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
     
 %         size(retro_single);
 %         plot(sin_out_cont(retro_single));
 %         figure;
         
 %         o_fifo_write(txfifo, sin_out_cont(retro_single));
+        o_fifo_write(txfifo, sin_out_cont(samples));
 %         if ~(sum(retro_single)==0)
 % %             aligned_data = [aligned_data, aligned_data_single];
 % %             retro_data = [retro_data, retro_single];
 % 
 %             disp('valid data');
-%                         return;
+% %                         return;
 %         else
 %             disp('empty');
 % %             return;
@@ -297,18 +305,26 @@ while 1
         
 %         return;
         
-        disp('rx');
+%         disp('rx');
 %         delta = datestr(now-then,'HH:MM:SS.FFF')
         then = now;
     end
     
 %     disp(o_fifo_avail(txfifo));
     
-%     while( o_fifo_avail(txfifo) > payload_size_floats )
-%         tx_floats = o_fifo_read(txfifo, payload_size_floats);
-%         send(send_sck,complex_to_raw(tx_floats));
-%         
-%     end
+    if( o_fifo_avail(txfifo) > payload_size_floats )
+%         txcount
+%         txrxcountdelta
+%         rxcount
+        if( txcount + txrxcountdelta <= rxcount )
+            tx_floats = o_fifo_read(txfifo, payload_size_floats);
+            send(send_sck,complex_to_raw(tx_floats));
+            
+            txcount = txcount + 1;
+%             disp('tx');
+        end
+        
+    end
 
 %     if( totalRxSamples > schunk*8 )
 % %         disp(sprintf('ok rx %d', totalRxSamples));
