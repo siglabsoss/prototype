@@ -118,7 +118,7 @@ function [floats] = raw_to_complex(raw)
 
     [~,sz] = size(list);
     
-    floats = complex(list(2:2:sz),list(1:2:sz)).'; % zomg uze .'
+    floats = complex(list(1:2:sz),list(2:2:sz)).'; % zomg uze .'
     
 end
 
@@ -127,14 +127,15 @@ function [raw] = complex_to_raw(floats)
     sing = single(floats);
 
     % conj(x)*1i is the same as swapping real and imaginary
-    list = typecast(conj(sing)*1i,'uint8');
+    % conj(sing)*1i
+    list = typecast(sing,'uint8');
     
     raw = list;
 end
 
 
 function [ retro_out ] = replace_zero_ones( retro_single )
-    [sz,~] = size(retro_single)
+    [sz,~] = size(retro_single);
     dataStart = 0;
     dataEnd = 0;
 
@@ -238,7 +239,7 @@ clock_comb = clock_comb125k;
 
 srate = 512/1E8;
 srate = 1/125000;
-detect_threshold = 2.5;
+detect_threshold = 4;
 
 schunk = 1/srate*0.8;
 
@@ -256,9 +257,9 @@ txfifo = o_fifo_new();
 
 samples_per_second(0);
 
-rxcount = 0;
+rxcount = 0; % in samples
 txcount = 0;
-txrxcountdelta = 1000;
+txrxcountdelta = 195E3*3;
 
 
 then = now;
@@ -268,40 +269,48 @@ while 1
     [data, count] = recv(rcv_sck, payload_size, 'MSG_DONTWAIT');
     if( count ~= 0 )
 
-         o_fifo_write(rxfifo, raw_to_complex(data));
+         cplx = raw_to_complex(data);
+        
+         o_fifo_write(rxfifo, cplx);
 
-         [~,szin] = size(data);
-         samples_per_second(szin/8);
+%          [~,szin] = size(data);
+            [szin,~] = size(cplx);
+%          samples_per_second(szin/8);
          
-         rxcount = rxcount + 1;
+         rxcount = rxcount + szin;
     end
     
 %     
     if( o_fifo_avail(rxfifo) > schunk )
         samples = o_fifo_read(rxfifo, schunk);
 %         samples = raw_to_complex(o_fifo_read(rxfifo, floor(schunk/8)*8));
-%          return;
+%         return;
         
-        [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+%         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+aligned_data_single = [];
+%         [sz,~] = size(retro_single);
     
 %         size(retro_single);
 %         plot(sin_out_cont(retro_single));
 %         figure;
-        
-%         o_fifo_write(txfifo, sin_out_cont(retro_single));
-        o_fifo_write(txfifo, sin_out_cont(samples));
-%         if ~(sum(retro_single)==0)
-% %             aligned_data = [aligned_data, aligned_data_single];
-% %             retro_data = [retro_data, retro_single];
-% 
+        if ~(sum(aligned_data_single)==0)
+%               txdata = replace_zero_ones(retro_single);
+
+%             figure;
+%             plot(real(aligned_data_single));
 %             disp('valid data');
-% %                         return;
-%         else
+        else
+            
+          
+%             txdata = complex(ones(sz,1),ones(sz,1));
+            
 %             disp('empty');
-% %             return;
-%         end
+%             return;
+        end
         
-        
+%         size(txdata)
+        txdata = sin_out_cont(samples);  % debug sin wave
+        o_fifo_write(txfifo, txdata);
         
 %         return;
         
@@ -310,7 +319,7 @@ while 1
         then = now;
     end
     
-%     disp(o_fifo_avail(txfifo));
+    disp(o_fifo_avail(txfifo) - o_fifo_avail(rxfifo));
     
     if( o_fifo_avail(txfifo) > payload_size_floats )
 %         txcount
@@ -320,7 +329,9 @@ while 1
             tx_floats = o_fifo_read(txfifo, payload_size_floats);
             send(send_sck,complex_to_raw(tx_floats));
             
-            txcount = txcount + 1;
+            txcount = txcount + payload_size_floats;
+            
+            samples_per_second(payload_size_floats);
 %             disp('tx');
         end
         
