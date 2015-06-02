@@ -264,6 +264,10 @@ txrxcountdelta = 195E3*3;
 % grab delta seconds
 tx_timer = clock;
 
+% prime tx fifo
+% txdata = sin_out_cont(ones(100000,1));  % debug sin wave
+% o_fifo_write(txfifo, txdata);
+
 then = now;
 i = 0;
 while 1
@@ -311,9 +315,8 @@ while 1
         end
         
 %         size(txdata)
-        txdata = sin_out_cont(samples);  % debug sin wave
-        o_fifo_write(txfifo, txdata);
-        
+%         txdata = sin_out_cont(samples);  % debug sin wave
+%         o_fifo_write(txfifo, txdata);
 %         return;
         
 %         disp('rx');
@@ -335,12 +338,14 @@ while 1
 %         end
 %     end
     
-    deltat = etime(clock,tx_timer) + 0.1;
+    deltat = etime(clock,tx_timer) + 0.5;
     chaseTheDragon = deltat * (1E8/512);
     if( chaseTheDragon - txcount > payload_size )
-        
         vec2 = complex(sin_out_cont(ones(payload_size/8,1)), 0.5);
         vec2_bytes = complex_to_raw(vec2);
+        
+%         vec3 = complex(o_fifo_read(txfifo, payload_size/8, 0.5));
+%         vec3_bytes = complex_to_raw(vec3);
         
         send(send_sck,vec2_bytes);
         txcount = txcount + payload_size/8;

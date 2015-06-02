@@ -6,7 +6,7 @@ sin_out_t = 0;
 function [ output ] = sin_out_cont( retro_single )
     global sin_out_t
 
-    f = 5000;
+    f = 25.1;
     fs = 1/f * 2 * pi; % probably wrong
 
     [sz,~] = size(retro_single);
@@ -43,7 +43,6 @@ send_port = 1236;
 payload_size = 1024*8;
 fs = 1E8/512;
 
-fs = fs;
 
 disp('0 here');
 % UDP Socket for reception 
@@ -72,24 +71,20 @@ disp('3 here');
 % us = gmtime(time()).usec; ms = floor(us/1000);
 % start = ms;
 tic;
+tx_timer = clock;
 
 sentSamples = 0;
 
 while 1
-    deltat = toc + 0.1;
+%     deltat = toc + 0.1;
+    deltat = etime(clock,tx_timer) + 0.1;
     
     chaseTheDragon = (deltat)*fs;
 %     disp(mat2str(samps));
     
     if( chaseTheDragon - sentSamples > payload_size )
         
-%          fi = typecast(0.5, 'single');
-%         bytesI = typecast(single(sin(i/1000)),'uint8');
-%         bytesQ = typecast(single(0.1),'uint8');
-        
-%         vec = [bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ bytesI bytesQ]';
-        
-        vec2 = complex(sin_out_cont( ones(payload_size/8,1)),0.5);
+        vec2 = complex(sin_out_cont(ones(payload_size/8,1)), 0.5);
         vec2_bytes = complex_to_raw(vec2);
         
         send(send_sck,vec2_bytes);
@@ -104,7 +99,7 @@ while 1
 %          deltat
 %         disp('tx');
     end
-    sleep(0.001) % this prevents CPU from slamming
+    sleep(0.0001) % this prevents CPU from slamming
 end
 
 
