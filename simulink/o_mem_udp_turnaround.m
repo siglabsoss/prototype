@@ -165,7 +165,7 @@ sin_out_t = 0;
 function [ output ] = sin_out_cont( retro_single )
     global sin_out_t
 
-    f = 5000;
+    f = 25.1;
     fs = 1/f * 2 * pi; % probably wrong
 
     [sz,~] = size(retro_single);
@@ -213,7 +213,7 @@ more off;  % ffs Octave
 rcv_port = 1235;          % radio RX port (will be udp rx)
 send_ip = '127.0.0.1';    % ip where gnuradio is running
 send_port = 1236;         % radio TX port (will be udp tx)
-payload_size = 2048*8;    % MTU this large works for localhost only
+payload_size = 1024*8;    % MTU this large works for localhost only
 payload_size_floats = payload_size / 8;
 
 
@@ -261,6 +261,8 @@ rxcount = 0; % in samples
 txcount = 0;
 txrxcountdelta = 195E3*3;
 
+% grab delta seconds
+tx_timer = clock;
 
 then = now;
 i = 0;
@@ -287,7 +289,7 @@ while 1
 %         return;
         
 %         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
-aligned_data_single = [];
+          aligned_data_single = [];
 %         [sz,~] = size(retro_single);
     
 %         size(retro_single);
@@ -319,22 +321,29 @@ aligned_data_single = [];
         then = now;
     end
     
-    disp(o_fifo_avail(txfifo) - o_fifo_avail(rxfifo));
+%     disp(o_fifo_avail(txfifo) - o_fifo_avail(rxfifo));
     
-    if( o_fifo_avail(txfifo) > payload_size_floats )
-%         txcount
-%         txrxcountdelta
-%         rxcount
-        if( txcount + txrxcountdelta <= rxcount )
-            tx_floats = o_fifo_read(txfifo, payload_size_floats);
-            send(send_sck,complex_to_raw(tx_floats));
-            
-            txcount = txcount + payload_size_floats;
-            
-            samples_per_second(payload_size_floats);
-%             disp('tx');
-        end
+%     if( o_fifo_avail(txfifo) > payload_size_floats )
+%         if( txcount + txrxcountdelta <= rxcount )
+%             tx_floats = o_fifo_read(txfifo, payload_size_floats);
+%             send(send_sck,complex_to_raw(tx_floats));
+%             
+%             txcount = txcount + payload_size_floats;
+%             
+%             samples_per_second(payload_size_floats);
+% %             disp('tx');
+%         end
+%     end
+    
+    deltat = etime(clock,tx_timer) + 0.1;
+    chaseTheDragon = deltat * (1E8/512);
+    if( chaseTheDragon - txcount > payload_size )
         
+        vec2 = complex(sin_out_cont(ones(payload_size/8,1)), 0.5);
+        vec2_bytes = complex_to_raw(vec2);
+        
+        send(send_sck,vec2_bytes);
+        txcount = txcount + payload_size/8;
     end
 
 %     if( totalRxSamples > schunk*8 )
