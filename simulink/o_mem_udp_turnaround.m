@@ -265,8 +265,8 @@ txrxcountdelta = 195E3*3;
 tx_timer = clock;
 
 % prime tx fifo
-% txdata = sin_out_cont(ones(100000,1));  % debug sin wave
-% o_fifo_write(txfifo, txdata);
+txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
+o_fifo_write(txfifo, single(complex(txdata,0.5)));
 
 then = now;
 i = 0;
@@ -349,6 +349,10 @@ while 1
         
         send(send_sck,vec2_bytes);
         txcount = txcount + payload_size/8;
+        
+        
+%         disp(sprintf('burn %d', payload_size/8));
+        o_fifo_read(txfifo, payload_size/8); % burn
     end
 
 %     if( totalRxSamples > schunk*8 )
