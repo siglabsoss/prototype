@@ -316,7 +316,8 @@ while 1
         
 %         size(txdata)
 %         txdata = sin_out_cont(samples);  % debug sin wave
-%         o_fifo_write(txfifo, txdata);
+        txdata = single(complex(ones(schunk,1),0.5));
+         o_fifo_write(txfifo, txdata);
 %         return;
         
 %         disp('rx');
