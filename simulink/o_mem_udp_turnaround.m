@@ -134,7 +134,7 @@ function [raw] = complex_to_raw(floats)
 end
 
 
-function [ retro_out ] = replace_zero_ones( retro_single )
+function [ retro_out ] = replace_zero_ones(retro_single )
     [sz,~] = size(retro_single);
     dataStart = 0;
     dataEnd = 0;
@@ -281,7 +281,7 @@ while 1
 
 %          [~,szin] = size(data);
             [szin,~] = size(cplx);
-%          samples_per_second(szin/8);
+          samples_per_second(szin);
          
          rxcount = rxcount + szin;
     end
@@ -316,8 +316,13 @@ while 1
         
 %         size(txdata)
 %         txdata = sin_out_cont(samples);  % debug sin wave
-        txdata = single(complex(ones(schunk,1),0.5));
-         o_fifo_write(txfifo, txdata);
+
+%        txdata = single(complex(ones(schunk,1),0.5));
+%         o_fifo_write(txfifo, txdata);
+
+        o_fifo_write(txfifo, samples);
+
+
 %         return;
         
 %         disp('rx');
@@ -339,7 +344,7 @@ while 1
 %         end
 %     end
     
-    deltat = etime(clock,tx_timer) + 0.5;
+    deltat = etime(clock,tx_timer) + 1;
     chaseTheDragon = deltat * (1E8/512);
     if( chaseTheDragon - txcount > payload_size )
         vec2 = complex(sin_out_cont(ones(payload_size/8,1)), 0.5);
@@ -348,12 +353,13 @@ while 1
 %         vec3 = complex(o_fifo_read(txfifo, payload_size/8, 0.5));
 %         vec3_bytes = complex_to_raw(vec3);
         
-        send(send_sck,vec2_bytes);
+%          send(send_sck,vec2_bytes);
         txcount = txcount + payload_size/8;
         
         
 %         disp(sprintf('burn %d', payload_size/8));
-        o_fifo_read(txfifo, payload_size/8); % burn
+       bytess = o_fifo_read(txfifo, payload_size/8);
+      send(send_sck,complex_to_raw(bytess));
     end
 
 %     if( totalRxSamples > schunk*8 )
