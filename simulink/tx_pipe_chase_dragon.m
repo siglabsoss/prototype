@@ -67,7 +67,7 @@ more off;
 tx_pipe_path = 'r0_tx_pipe';
 rx_pipe_path = 'r0_rx_pipe';
 
-tx_pipe = fopen(tx_pipe_path, 'a'); % http://man7.org/linux/man-pages/man3/fopen.3.html
+tx_pipe = fopen(tx_pipe_path, 'a+'); % http://man7.org/linux/man-pages/man3/fopen.3.html
 
 payload_size = 1024*8;
 fs = 1E8/512;

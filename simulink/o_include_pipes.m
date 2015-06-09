@@ -23,7 +23,7 @@ function [] = o_pipe_write(fid, data)
 end
 
 
-function [data] = o_pipe_read(fid, count)
+function [data, rdcount] = o_pipe_read(fid, count)
     
     pipe_type = 'uint8';
     
@@ -36,7 +36,7 @@ function [data] = o_pipe_read(fid, count)
     [sz,~] = size(data);
     
     if( sz ~= rdcount || sz ~= count )
-        disp(sprintf('in o_fifo_read %d %d %d should all be the same', sz, rdcount, count));
+        disp(sprintf('in o_pipe_read %d %d %d should all be the same', sz, rdcount, count));
     end
 end
  
@@ -48,3 +48,11 @@ function fid = o_pipe_open(filename)
     fcntl(fid, F_SETFL, O_NONBLOCK);  
 end
 
+% function [] = o_pipe_flush(fid)
+%     fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
+%     [~,count] = o_pipe_read(fid, 98288) % dono why this number works
+%     
+% %     while(count ~= 0)
+% %         [~,count] = o_pipe_read(fid, flush_chunk)
+% %     end
+% end
