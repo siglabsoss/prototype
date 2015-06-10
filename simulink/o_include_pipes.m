@@ -14,7 +14,7 @@ function [] = o_pipe_write(fid, data)
     [sz,~] = size(data);
     
     if( sz ~= wrcount )
-        disp(sprintf('o_pipe_write was given %d samples but wrote %d', sz, wrcount));
+        disp(sprintf('o_pipe_write(%d) was given %d samples but wrote %d', fid, sz, wrcount));
     end
     
     if( ~iscolumn(data) )
@@ -45,7 +45,7 @@ function fid = o_pipe_open(filename)
     
     % avoid hangs when trying to overfill fifo
     % also avoids hangs when reading empty pipe
-    fcntl(fid, F_SETFL, O_NONBLOCK);  
+    % fcntl(fid, F_SETFL, O_NONBLOCK);  
 end
 
 % function [] = o_pipe_flush(fid)

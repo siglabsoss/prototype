@@ -41,7 +41,7 @@ sin_out_t = 0;
 function [ output ] = sin_out_cont( retro_single )
     global sin_out_t
 
-    f = 55.1;
+    f = 0.123;
     fs = 1/f * 2 * pi; % probably wrong
 
     [sz,~] = size(retro_single);
@@ -60,7 +60,7 @@ cos_out_t = 0;
 function [ output ] = cos_out_cont( retro_single )
     global cos_out_t
 
-    f = 55.1;
+    f = 0.123;
     fs = 1/f * 2 * pi; % probably wrong
 
     [sz,~] = size(retro_single);
@@ -109,19 +109,13 @@ rx_pipe_path = 'r0_rx_pipe';
 
 tx_pipe = o_pipe_open(tx_pipe_path);
 rx_pipe = o_pipe_open(rx_pipe_path);
-fclose(tx_pipe);
-fclose(rx_pipe);
-tx_pipe = o_pipe_open(tx_pipe_path);
-rx_pipe = o_pipe_open(rx_pipe_path);
-fclose(tx_pipe);
-tx_pipe = o_pipe_open(tx_pipe_path);
 
 
 % sleep(2);
 % o_pipe_flush(rx_pipe); % dump samples
 % sleep(2);
 
-payload_size = 1024*25;
+payload_size = 1024*8;
 fs = 1E8/512;
 
 rxcount = 0;
@@ -145,7 +139,7 @@ while 1
         rxcount = rxcount + szin;
     end
     
-    deltat = etime(clock,tx_timer) + 0.1;
+    deltat = etime(clock,tx_timer) + 0.2;
     chaseTheDragon = (deltat)*fs;
     if( chaseTheDragon - sentSamples > payload_size )
         
@@ -157,7 +151,7 @@ while 1
         
         o_pipe_write(tx_pipe, vec2_bytes);
          
-         sentSamples += payload_size/8;
+        sentSamples += payload_size/8;
     end
     
     sleep(0.0001) % this prevents CPU from slamming

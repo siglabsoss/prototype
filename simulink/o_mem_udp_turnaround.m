@@ -7,6 +7,8 @@ pkg load sockets;
 % This is how we include our fifo package
 o_include_fifo;
 
+% just a few helper functions for pipes
+o_include_pipes;
 
 
 
@@ -125,24 +127,48 @@ more off;  % ffs Octave
 rcv_port = 1235;          % radio RX port (will be udp rx)
 send_ip = '127.0.0.1';    % ip where gnuradio is running
 send_port = 1236;         % radio TX port (will be udp tx)
-payload_size = 1024*8;    % MTU this large works for localhost only
+payload_size = 1024*16;    % MTU this large works for localhost only
 payload_size_floats = payload_size / 8;
 
 
-disp('0 here');
-% UDP Socket for reception 
-rcv_sck=socket(AF_INET, SOCK_DGRAM, 0); 
-disp('1 here');
-bind(rcv_sck,rcv_port); 
-disp('2 here');
+% ------------------------ NAMED PIPES ------------------------
 
-dout = [];
+% pipe_type = 'single';
+
+% all paths are relative to the simulink directory
+% tx_pipe_path = 'r0_tx_pipe';
+% rx_pipe_path = 'r0_rx_pipe';
+% 
+% tx_pipe = fopen(tx_pipe_path, 'a'); % http://man7.org/linux/man-pages/man3/fopen.3.html
+% 
+% 
 
 
-send_sck=socket(AF_INET, SOCK_DGRAM, 0); 
-client_info = struct('addr', send_ip, 'port', send_port); 
-connect(send_sck, client_info); 
+
+
+% disp('0 here');
+% % UDP Socket for reception 
+% rcv_sck=socket(AF_INET, SOCK_DGRAM, 0); 
+% disp('1 here');
+% bind(rcv_sck,rcv_port); 
+% disp('2 here');
+% 
+% dout = [];
+% 
+% 
+% send_sck=socket(AF_INET, SOCK_DGRAM, 0); 
+% client_info = struct('addr', send_ip, 'port', send_port); 
+% connect(send_sck, client_info); 
 % ------------------------ UDP ------------------------
+
+
+
+
+tx_pipe_path = 'r0_tx_pipe';
+rx_pipe_path = 'r0_rx_pipe';
+% tx_pipe = o_pipe_open(tx_pipe_path);
+rx_pipe = o_pipe_open(rx_pipe_path);
+% ------------------------ Gnu Radio Pipes ------------------------
 
 
 
@@ -150,7 +176,7 @@ load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
 srate = 512/1E8;
-srate = 1/125000;
+% srate = 1/125000;
 detect_threshold = 4;
 
 schunk = 1/srate*0.8;
@@ -183,19 +209,20 @@ o_fifo_write(txfifo, single(complex(txdata,0.5)));
 then = now;
 i = 0;
 while 1
-%     disp(i);
-    [data, count] = recv(rcv_sck, payload_size, 'MSG_DONTWAIT');
+    sleep(0.001);
+    
+    [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
+        cplx = raw_to_complex(data');
 
-         cplx = raw_to_complex(data);
+        o_fifo_write(rxfifo, cplx);
+
+        [szin,~] = size(cplx);
+%         samples_per_second(szin);
+
+        rxcount = rxcount + szin;
         
-         o_fifo_write(rxfifo, cplx);
-
-%          [~,szin] = size(data);
-            [szin,~] = size(cplx);
-          samples_per_second(szin);
-         
-         rxcount = rxcount + szin;
+        disp('rx');
     end
     
 %     
@@ -204,8 +231,8 @@ while 1
 %         samples = raw_to_complex(o_fifo_read(rxfifo, floor(schunk/8)*8));
 %         return;
         
-%         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
-          aligned_data_single = [];
+        [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+%           aligned_data_single = [];
 %         [sz,~] = size(retro_single);
     
 %         size(retro_single);
@@ -216,13 +243,13 @@ while 1
 
 %             figure;
 %             plot(real(aligned_data_single));
-%             disp('valid data');
+            disp('valid data');
         else
             
           
 %             txdata = complex(ones(sz,1),ones(sz,1));
             
-%             disp('empty');
+            disp('empty');
 %             return;
         end
         
@@ -232,7 +259,7 @@ while 1
 %        txdata = single(complex(ones(schunk,1),0.5));
 %         o_fifo_write(txfifo, txdata);
 
-        o_fifo_write(txfifo, samples);
+%         o_fifo_write(txfifo, samples);
 
 
 %         return;
@@ -268,10 +295,16 @@ while 1
 %          send(send_sck,vec2_bytes);
         txcount = txcount + payload_size/8;
         
+%          [szout,~] = size(vec2_bytes);
+%           samples_per_second(szout);
+        
+        disp('tx');
         
 %         disp(sprintf('burn %d', payload_size/8));
-       bytess = o_fifo_read(txfifo, payload_size/8);
-      send(send_sck,complex_to_raw(bytess));
+%        bytes = o_fifo_read(txfifo, payload_size/8);
+%       send(send_sck,complex_to_raw(bytess));
+%         o_pipe_write(tx_pipe, vec2_bytes);
+      
     end
 
 %     if( totalRxSamples > schunk*8 )
