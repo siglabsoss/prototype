@@ -4,6 +4,34 @@ o_include_pipes;
 
 
 
+global sps_then sps_count;
+sps_count = 0;
+sps_then = clock;
+
+% this only works if you call it more often than 1ce per minute
+function [output] = samples_per_second(count)
+    global sps_then sps_count;
+
+    rate_ave = 2; % how many seconds to average over
+    
+    % grab delta seconds
+    seconds = etime(clock,sps_then);
+    
+    sps_count = sps_count + count;
+    
+    if( seconds < rate_ave )
+        return
+    end
+    
+    disp(sprintf('sps: %d', sps_count/seconds));
+    
+    sps_count = 0;
+    sps_then = clock;
+    
+end
+
+
+
 
 
 
@@ -57,6 +85,18 @@ function [raw] = complex_to_raw(floats)
     raw = list;
 end
 
+function [floats] = raw_to_complex(raw)
+
+    
+    list = typecast(uint8(raw),'single');
+
+    [~,sz] = size(list);
+    
+    floats = complex(list(1:2:sz),list(2:2:sz)).'; % zomg uze .'
+    
+end
+
+
 more off;
 
 
@@ -67,19 +107,44 @@ more off;
 tx_pipe_path = 'r0_tx_pipe';
 rx_pipe_path = 'r0_rx_pipe';
 
-tx_pipe = fopen(tx_pipe_path, 'a+'); % http://man7.org/linux/man-pages/man3/fopen.3.html
+tx_pipe = o_pipe_open(tx_pipe_path);
+rx_pipe = o_pipe_open(rx_pipe_path);
+fclose(tx_pipe);
+fclose(rx_pipe);
+tx_pipe = o_pipe_open(tx_pipe_path);
+rx_pipe = o_pipe_open(rx_pipe_path);
+fclose(tx_pipe);
+tx_pipe = o_pipe_open(tx_pipe_path);
 
-payload_size = 1024*8;
+
+% sleep(2);
+% o_pipe_flush(rx_pipe); % dump samples
+% sleep(2);
+
+payload_size = 1024*25;
 fs = 1E8/512;
 
-
+rxcount = 0;
 
 tx_timer = clock;
 
 sentSamples = 0;
 
+data_sum = [];
+
 while 1
-%     deltat = toc + 0.1;
+    [data, count] = o_pipe_read(rx_pipe, payload_size);
+    if( count ~= 0 )
+        cplx = raw_to_complex(data');
+
+%         data_sum = [data_sum; cplx];
+
+        [szin,~] = size(cplx);
+        samples_per_second(szin);
+
+        rxcount = rxcount + szin;
+    end
+    
     deltat = etime(clock,tx_timer) + 0.1;
     chaseTheDragon = (deltat)*fs;
     if( chaseTheDragon - sentSamples > payload_size )
@@ -94,6 +159,7 @@ while 1
          
          sentSamples += payload_size/8;
     end
+    
     sleep(0.0001) % this prevents CPU from slamming
 end
 

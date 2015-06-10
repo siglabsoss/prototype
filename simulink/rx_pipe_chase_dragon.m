@@ -4,6 +4,34 @@ o_include_pipes;
 
 
 
+global sps_then sps_count;
+sps_count = 0;
+sps_then = clock;
+
+% this only works if you call it more often than 1ce per minute
+function [output] = samples_per_second(count)
+    global sps_then sps_count;
+
+    rate_ave = 2; % how many seconds to average over
+    
+    % grab delta seconds
+    seconds = etime(clock,sps_then);
+    
+    sps_count = sps_count + count;
+    
+    if( seconds < rate_ave )
+        return
+    end
+    
+    disp(sprintf('sps: %d', sps_count/seconds));
+    
+    sps_count = 0;
+    sps_then = clock;
+    
+end
+
+
+
 
 
 
@@ -85,7 +113,7 @@ rx_pipe = o_pipe_open(rx_pipe_path);
 % o_pipe_flush(rx_pipe); % dump samples
 % sleep(2);
 
-payload_size = 1024*8;
+payload_size = 1024*25;
 fs = 1E8/512;
 
 rxcount = 0;
@@ -97,50 +125,16 @@ sentSamples = 0;
 data_sum = [];
 
 while 1
-%     deltat = toc + 0.1;
-%     deltat = etime(clock,tx_timer) + 0.1;
-%     
-%     chaseTheDragon = (deltat)*fs;
-% %     disp(mat2str(samps));
-%     
-%     if( chaseTheDragon - sentSamples > payload_size )
-%         
-%         sin_samples = sin_out_cont(ones(payload_size/8,1))  .* 0.8;
-%         cos_samples = cos_out_cont(ones(payload_size/8,1))  .* 0.8;
-%         
-%         vec2 = complex(cos_samples, sin_samples);
-%         vec2_bytes = complex_to_raw(vec2);
-%         
-% %         send(send_sck,vec2_bytes);
-%         o_pipe_write(tx_pipe, vec2_bytes);
-% %         send(send_sck,vec);
-% %         return;
-%         
-% %          send(send_sck,uint8(ones(1,payload_size)*i));
-%         
-%          
-%          sentSamples += payload_size/8;
-% %          disp(sentSamples);
-% %          deltat
-% %         disp('tx');
-%     end
-
     [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
         cplx = raw_to_complex(data');
 
         data_sum = [data_sum; cplx];
-        
-%         o_fifo_write(rxfifo, cplx);
 
         [szin,~] = size(cplx);
-%         samples_per_second(szin);
+        samples_per_second(szin);
 
-        rxcount = rxcount + szin
-    end
-    
-    if( rxcount > payload_size*100 )
-        return;
+        rxcount = rxcount + szin;
     end
     
     sleep(0.0001) % this prevents CPU from slamming
