@@ -40,8 +40,8 @@ end
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
 windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
-fsearchwindow_low = -100; %frequency search window low, in Hz
-fsearchwindow_hi = 200; %frequency search window high, in Hz
+fsearchwindow_low = -200 + 20E3; %frequency search window low, in Hz
+fsearchwindow_hi = 200 + 20E3; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
