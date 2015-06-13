@@ -205,7 +205,7 @@ retro = zeros([size(aligned_data,1)+1.5/srate rawdatasets]);
 %time advance and phase conjugate the clock comb for each epoch
 %NEED TO GENERALIZE THIS TO SINGLE SAMPLES
 for k=1:1:numdatasets
-    retro(samplesoffsetxcorr(k)+1/srate:samplesoffsetxcorr(k)+1/srate+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
+    retro(samplesoffsetxcorr(k)+round(1/srate):samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
 end
 
 end
