@@ -83,7 +83,7 @@ xlabel('time [s]')
 title('Incoherent Sum')
 
 %downsampling functions
-downsample_rate = 10;
+downsample_rate = 5;
 srate = srate*downsample_rate;
 clock_comb = downsample(clock_comb,downsample_rate);
 rnoisydata = downsample(rnoisydata, downsample_rate); 

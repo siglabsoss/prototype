@@ -5,15 +5,18 @@ close all
 %========================
 
 %load('mar17pt2.mat','ruthandelcamino')
-load('mar31e.mat', 'haywardcaltrainclock')
-%load('mar31h.mat', 'sanmateocaltrainclock')
-rawdata = haywardcaltrainclock;
+%load('mar31e.mat', 'haywardcaltrainclock')
+%load('mar31f.mat', 'haywardcaltrainclockgain20')
+load('mar31h.mat', 'sanmateocaltrainclock')
+load('mar31g.mat', 'sanmateocaltrainclockgain10')
+load('mar31g.mat', 'sanmateocaltrainclockgain20')
+rawdata = [sanmateocaltrainclock; sanmateocaltrainclockgain10; sanmateocaltrainclockgain20];
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
 %settings
 srate = 1/125000;
-detect_threshold = 2.5;
+detect_threshold = 2.2;
 %detect_threshold = 3.8; %original is 2.5
 %detect_threshold = 9;
 
@@ -86,19 +89,19 @@ starttime = datetime;
 %matrix version
 %[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
 %[aligned_data retro_data] = fxcorrelator_single_retro_full(rnoisydata,srate,clock_comb,detect_threshold);
-%[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
+[aligned_data retro_data] = fxcorrelator_single_retro(rnoisydata,srate,clock_comb,detect_threshold);
 
 %single version
 
-aligned_data = [];
-retro_data = [];
-for k=1:1:size(rnoisydata,2)
-    [aligned_data_single retro_single] = fxcorrelator_single_retro(rnoisydata(:,k),srate,clock_comb,detect_threshold);
-    if ~(sum(aligned_data_single)==0)
-        aligned_data = [aligned_data, aligned_data_single];
-        retro_data = [retro_data, retro_single];
-    end
-end
+% aligned_data = [];
+% retro_data = [];
+% for k=1:1:size(rnoisydata,2)
+%     [aligned_data_single retro_single] = fxcorrelator_single_retro(rnoisydata(:,k),srate,clock_comb,detect_threshold);
+%     if ~(sum(aligned_data_single)==0)
+%         aligned_data = [aligned_data, aligned_data_single];
+%         retro_data = [retro_data, retro_single];
+%     end
+% end
 
 
 Correlation_completed_in = datetime-starttime
