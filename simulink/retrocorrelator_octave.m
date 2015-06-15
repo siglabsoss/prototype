@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold)
+function [aligned_data retro numdatasets retrostart retroend] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold)
 
 %check for rawdata and comb to be in column form
 if size(rawdata,2) > size(rawdata,1)
@@ -54,6 +54,8 @@ timestamp = 0:srate:(datalength-1)*srate;
 fftlength = 2^(nextpow2(datalength)+power_padding);
 timestamp_comb = 0:srate:(length(clock_comb)-1)*srate;
 fftlength_detect = 2^(nextpow2(datalength)); %reduced fftlength for signal detection stage.
+retrostart = -1;
+retroend = -1;
 
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
@@ -157,7 +159,7 @@ end
 
 %frequency align data
 for k = 1:1:numdatasets
-    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*freqoffsetxcorr(k)*timestamp)');
+    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(1i*2*pi*freqoffsetxcorr(k)*timestamp)');
 end
 
 %time domain correlation for better frequency accuracy
@@ -190,7 +192,7 @@ xlabel('dataset')
 
 %time and phase align data
 for k = 1:1:numdatasets
-    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
+    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(1i*(recoveredphasexcorr(k)));
 end
 
 %===========================================
@@ -205,7 +207,9 @@ retro = zeros([size(aligned_data,1)+1.5/srate rawdatasets]);
 %time advance and phase conjugate the clock comb for each epoch
 %NEED TO GENERALIZE THIS TO SINGLE SAMPLES
 for k=1:1:numdatasets
-    retro(samplesoffsetxcorr(k)+round(1/srate):samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
+    retrostart = samplesoffsetxcorr(k)+round(1/srate);
+    retroend = samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1;
+    retro(retrostart : retroend, goodsets(k)) = clock_comb./exp(1i*(recoveredphasexcorr(k)));
 end
 
 end
