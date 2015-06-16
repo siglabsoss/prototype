@@ -98,10 +98,14 @@ function [] = service_tx_fifo()
             
             tx_total = tx_total + payload_size_floats;
         end
+    else
+        disp('tx fifo near bottom');
     end
 end
 
 function [] = service_all()
+    service_rx_fifo();
+    service_tx_fifo();
     service_rx_fifo();
     service_tx_fifo();
 end
@@ -130,7 +134,7 @@ clock_comb = clock_comb195k;
 
 srate = 512/1E8;
 % srate = 1/125000;
-detect_threshold = 2;
+detect_threshold = 3;
 
 fs = 1/srate;
 
@@ -159,9 +163,7 @@ raw_data = [];
 % grab delta seconds
 tx_timer = clock;
 
-% prime tx fifo
-% txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
-% o_fifo_write(txfifo, single(complex(txdata,0.5)));
+
 
 % prime tx named pipe
 disp('block');
@@ -172,6 +174,12 @@ o_pipe_write(tx_pipe, complex_to_raw(txdata));
 disp('unblock');
 o_pipe_write(tx_pipe, complex_to_raw(txdata));
 disp('unblock');
+
+% prime tx fifo
+% txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
+% o_fifo_write(txfifo, txdata);
+% o_fifo_write(txfifo, txdata);
+% o_fifo_write(txfifo, txdata);
 
 % start radio in rx mode
 magic_rx = magic_rx_samples(10);
