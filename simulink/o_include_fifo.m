@@ -25,7 +25,9 @@ function [] = o_fifo_write(index, data)
     fifoTotalSamples{index} = fifoTotalSamples{index} + sz;
 
     if( ~iscolumn(data) )
-        disp('data must be columnar in o_fifo_write');
+        if( data ~= [] )
+            disp('data must be columnar in o_fifo_write');
+        end
     end
 end
 

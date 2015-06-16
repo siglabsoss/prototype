@@ -47,6 +47,7 @@ combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
 freqstep = 0.25;
 numsteps = 3;
+silence_padding_factor = 1.5; % a factor of fs which is added to the window
 
 datalength = size(rawdata,1);
 numdatasets = size(rawdata,2);
@@ -110,7 +111,7 @@ title('Plot and Histogram of SNR used for Signal Detection')
 
 if numdatasets < 1
     aligned_data = zeros([datalength 1]);
-    retro = zeros([size(aligned_data,1)+1.5/srate 1]);
+    retro = zeros([size(aligned_data,1)+silence_padding_factor/srate 1]);
     return
 end
 
@@ -199,10 +200,10 @@ end
 %create retro-directive transmit signal
 %===========================================
 
-%create blank array of samples, 1.5s longer than the input vector.
+%create blank array of samples, silence_padding_factor (1.5) seconds longer than the input vector.
 %this creates the zero padding as well as makes the retro output of
 %non-detected epochs zero.
-retro = zeros([size(aligned_data,1)+1.5/srate rawdatasets]);
+retro = zeros([size(aligned_data,1)+silence_padding_factor/srate rawdatasets]);
 
 %time advance and phase conjugate the clock comb for each epoch
 %NEED TO GENERALIZE THIS TO SINGLE SAMPLES

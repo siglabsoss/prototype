@@ -104,6 +104,9 @@ txcount = 0;
 txrxcountdelta = 195E3*3;
 
 
+% drop samples in the future
+future_drop = 0;
+
 % raw
 raw_data = [];
 
@@ -127,11 +130,17 @@ o_pipe_write(tx_pipe, magic_rx_bytes);
 then = now;
 i = 0;
 while 1
-%     sleep(0.001);
+
+    
+    
 
     % set these so we can view in octave gui
 	a1_rx_level = o_fifo_avail(rxfifo);
     a2_tx_level = o_fifo_avail(txfifo);
+    a1_future_drop = future_drop;
+    
+    
+                
     
     [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
@@ -154,14 +163,12 @@ while 1
     if( o_fifo_avail(rxfifo) > schunk )
         samples = o_fifo_read(rxfifo, schunk);
 
-        [aligned_data_single retro_single numdatasets retrostart retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+        [~, retro_single, numdatasets, retrostart, retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
          
         clear samples;
          
         retro_single = single(retro_single);
-%           aligned_data_single = [];
-%         [sz,~] = size(retro_single);
-    
+
 %         size(retro_single);
 %         plot(sin_out_cont(retro_single));
 %         figure;
@@ -172,11 +179,25 @@ while 1
 %         schunk
 %         size(retro_single)
 
-        if (numdatasets > 0)
-%            retro_single(retrostart-10:retrostart-1) = magic_tx_samples(10);
+        if (numdatasets > 0 && future_drop == 0)
+            
+            [sz,~] = size(retro_single);
+           
+            % snip in our magic samples
+            retro_single(retrostart-10:retrostart-1) = magic_tx_samples(10);
+            retro_single(retroend+1:retroend+10)     = magic_rx_samples(10);
+            
+            % retrocorrelator_octave() gave us too many samples (because ewin)
+            % this counter keeps track of how many extra samples we have in the fifo right now
+            future_drop = future_drop + (sz-schunk);
+            
+            
+            txdata = retro_single;
+            clear retro_single;
+            
 %               txdata = replace_zero_ones(retro_single);
 %             txdata = retro_single;
-            txdata = zero_zero_samples(schunk);
+%             txdata = zero_zero_samples(schunk);
 
 %             figure;
 %             plot(real(aligned_data_single));
@@ -185,12 +206,25 @@ while 1
 %             return;
         else
             clear retro_single;
-            txdata = zero_zero_samples(schunk);
-          
-%             txdata = complex(ones(sz,1),ones(sz,1));
             
+            zeros_to_queue = schunk;
+            
+            % if the 'valid data' condition put too much in our buffer
+            if( future_drop > 0 )
+                % subtract all of them, this will nominally be negative
+                zeros_to_queue = zeros_to_queue - future_drop;
+                
+                % bound the ammount, if zero txdata below ends up at [] which is ok
+                zeros_to_queue = max(0, zeros_to_queue);
+                
+                % only take away what we can from future_drop
+                future_drop = future_drop - (schunk - zeros_to_queue);
+%                 disp('making up for previous packet');
+            end
+            
+            txdata = zero_zero_samples(zeros_to_queue);
+
             disp('empty');
-%             return;
         end
         
 %         size(txdata)
