@@ -13,6 +13,10 @@ o_include_pipes;
 % utility functions including type conversions
 o_util;
 
+if( exist('radio') == 0)
+    disp('Please set radio = {0,1} to continue');
+    return
+end
 
 
 global sin_out_t;
@@ -73,8 +77,8 @@ payload_size = 1024*30;
 payload_size_floats = payload_size / 8;
 
 
-tx_pipe_path = 'r0_tx_pipe';
-rx_pipe_path = 'r0_rx_pipe';
+tx_pipe_path = sprintf('r%d_tx_pipe',radio)
+rx_pipe_path = sprintf('r%d_rx_pipe',radio)
 tx_pipe = o_pipe_open(tx_pipe_path);
 rx_pipe = o_pipe_open(rx_pipe_path);
 % ------------------------ NAMED PIPES ------------------------
@@ -101,7 +105,7 @@ samples_per_second(0);
 
 rx_total = 0; % in samples
 tx_total = 0;
-txrxcountdelta = 195E3*1;
+txrxcountdelta = 195E3*2;
 
 
 % drop samples in the future
