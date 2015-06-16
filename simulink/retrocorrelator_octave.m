@@ -211,6 +211,7 @@ for k=1:1:numdatasets
     retrostart = samplesoffsetxcorr(k)+round(1/srate);
     retroend = samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1;
     retro(retrostart : retroend, goodsets(k)) = clock_comb./exp(1i*(recoveredphasexcorr(k)));
+%     retro(retrostart : retroend, goodsets(k)) = clock_comb;
 end
 
 end

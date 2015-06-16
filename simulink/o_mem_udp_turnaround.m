@@ -100,6 +100,7 @@ schunk = 1/srate*0.8;
 rxfifo = o_fifo_new();
 txfifo = o_fifo_new();
 
+fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
 
 samples_per_second(0);
 
@@ -122,8 +123,10 @@ tx_timer = clock;
 % o_fifo_write(txfifo, single(complex(txdata,0.5)));
 
 % prime tx fifo
-% txdata = zero_zero_samples(10000);  % debug sin wave
-% o_fifo_write(txfifo, txdata);
+disp('block');
+txdata = zero_zero_samples(1.5*fifoMaxBytes/8);  % debug sin wave
+o_fifo_write(txfifo, txdata);
+disp('unblock');
 
 % start radio in rx mode
 magic_rx = magic_rx_samples(10);
