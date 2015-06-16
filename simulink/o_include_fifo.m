@@ -38,6 +38,11 @@ function [data] = o_fifo_read(index, count)
     readStart = 1;
     readEnd = count;
 
+    if( readEnd == 0 )
+        data = [];
+        return;
+    end
+    
     data = fifoBuffer{index}(readStart:readEnd,1);
     
     fifoBuffer{index}(readStart:readEnd,:) = [];

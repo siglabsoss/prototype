@@ -99,9 +99,9 @@ txfifo = o_fifo_new();
 
 samples_per_second(0);
 
-rxcount = 0; % in samples
-txcount = 0;
-txrxcountdelta = 195E3*3;
+rx_total = 0; % in samples
+tx_total = 0;
+txrxcountdelta = 195E3*1;
 
 
 % drop samples in the future
@@ -118,8 +118,8 @@ tx_timer = clock;
 % o_fifo_write(txfifo, single(complex(txdata,0.5)));
 
 % prime tx fifo
-txdata = zero_zero_samples(1000000);  % debug sin wave
-o_fifo_write(txfifo, txdata);
+% txdata = zero_zero_samples(10000);  % debug sin wave
+% o_fifo_write(txfifo, txdata);
 
 % start radio in rx mode
 magic_rx = magic_rx_samples(10);
@@ -164,12 +164,13 @@ while 1
 
 %         raw_data = [raw_data;cplx];
 
-        rxcount = rxcount + szin;
+        rx_total = rx_total + szin;
     end
     
-%     
+%     o_fifo_avail(txfifo) - o_fifo_avail(rxfifo)     
+
     if( o_fifo_avail(rxfifo) > schunk )
-        o_fifo_avail(txfifo) - o_fifo_avail(rxfifo)
+        
         samples = o_fifo_read(rxfifo, schunk);
 
         [~, retro_single, numdatasets, retrostart, retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
@@ -255,87 +256,65 @@ while 1
     
 %     disp(o_fifo_avail(txfifo) - o_fifo_avail(rxfifo));
     
-%     if( o_fifo_avail(txfifo) > payload_size_floats )
-%         if( txcount + txrxcountdelta <= rxcount )
-%             tx_floats = o_fifo_read(txfifo, payload_size_floats);
-%             send(send_sck,complex_to_raw(tx_floats));
-%             
-%             txcount = txcount + payload_size_floats;
-%             
+
+
+
+    if( o_fifo_avail(txfifo) > payload_size_floats )
+%         disp(sprintf('(%d + %d)[%d] <= %d', tx_total, txrxcountdelta, tx_total+txrxcountdelta, rx_total));
+
+        if( (tx_total + txrxcountdelta) <= rx_total )
+            fifo_tx_data = o_fifo_read(txfifo, payload_size_floats);
+            o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
+            
+            tx_total = tx_total + payload_size_floats;
+            
 %             samples_per_second(payload_size_floats);
-% %             disp('tx');
-%         end
-%     end
-    
-    deltat = etime(clock,tx_timer) + 1;
-    chaseTheDragon = deltat * fs;
-    if( chaseTheDragon - txcount > payload_size )
-
-        txcount = txcount + payload_size/8;
-
-        fifo_tx_data = o_fifo_read(txfifo, payload_size/8);
-%         typeinfo(fifo_tx_data)
-
-        
-%         fifo_tx_data = zero_zero_samples(payload_size/8);
-%         typeinfo(fifo_tx_data)
-
-        
-        o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
-        
-        clear fifo_tx_data;      
+%             disp('tx');
+        end
     end
-
-%     if( totalRxSamples > schunk*8 )
-% %         disp(sprintf('ok rx %d', totalRxSamples));
-%         delta = datestr(now-then,'HH:MM:SS.FFF')
-%         then = now;
-% %         datestr(JD,'HH:MM:SS.FFF') 
-%         totalRxSamples = totalRxSamples - schunk*8;
-%         
-%         
-%     end
     
-%     disp(o_fifo_avail(rxfifo));
-%     
-%     chunk = 1000;
-%     
-%     if( o_fifo_avail(rxfifo) > 1000)
-%         rrrr = o_fifo_read(rxfifo, 1000);
-%         cxs = [];
-%         for j = 1:2:1000
-%             c1 = complex(rrrr(j),rrrr(j+1));
-%             cxs = [cxs;c1];
+
+
+
+
+
+%     deltat = etime(clock,tx_timer);
+%     chaseTheDragon = deltat * fs;
+%     if( chaseTheDragon - tx_total > payload_size )
+% 
+%         % always bump this
+%         tx_total = tx_total + payload_size_floats;
+%         
+%         tx_now_count = payload_size_floats;
+%         if( o_fifo_avail(txfifo) < payload_size_floats )
+%             tx_now_count = o_fifo_avail(txfifo);
+%             disp(sprintf('tx underflow, only sending %d', tx_now_count));
 %         end
-%         plot(imag(cxs));
-%         return;
+% 
+%         fifo_tx_data = o_fifo_read(txfifo, tx_now_count);
+%         o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
+%         
+%         clear fifo_tx_data;      
 %     end
 
-%     [~,sz] = size(dout);
     
-%     if( sz > 10000 )
-%         break
-%     end
+    
+    
+    
+    
     i = i + 1;
 end
 
-% [~,sz] = size(dout);
-% 
-% cout = [];
-% for i = [1:8:sz]
-%     f1 = typecast(uint8(dout(i:i+3)),'single');
-%     f2 = typecast(uint8(dout(i+4:i+7)),'single');
-%     cout = [cout complex(f2,f1)];
-% end
-% 
 
 
 
-% UDP socket for sending 
-% send_sck=socket(AF_INET, SOCK_DGRAM, 0); 
-% client_info = struct("addr", send_ip, "port", send_port); 
-% connect(send_sck, client_info); 
-% %Receive requests 
-% [args_serial,len_s]=recv(rcv_sck,1000); 
-% %Send results 
-% send(send_sck,results_ser); 
+
+
+
+
+
+
+
+
+
+

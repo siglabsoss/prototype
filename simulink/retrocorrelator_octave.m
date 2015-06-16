@@ -47,7 +47,7 @@ combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
 freqstep = 0.25;
 numsteps = 3;
-silence_padding_factor = 1.5; % a factor of fs which is added to the window
+silence_padding_factor = 0.8; % a factor of fs which is added to the window
 
 datalength = size(rawdata,1);
 numdatasets = size(rawdata,2);
