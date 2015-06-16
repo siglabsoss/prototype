@@ -45,7 +45,7 @@ if size(clock_comb,2) > size(clock_comb,1)
 end
 
 %main knobs
-power_padding = 1; %amount of extra padding to apply to the fft
+power_padding = 0; %amount of extra padding to apply to the fft
 windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
 fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 200; %frequency search window high, in Hz
@@ -54,7 +54,7 @@ combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 
 datalength = size(rawdata,1);
 numdatasets = size(rawdata,2);
-timestamp = 0:srate:(datalength-1)*srate;
+timestamp = (0:srate:(datalength-1)*srate).'; %much easier if timestamp is a column
 fftlength = 2^(nextpow2(datalength)+power_padding);
 timestamp_comb = 0:srate:(length(clock_comb)-1)*srate;
 fftlength_detect = 2^(nextpow2(datalength)); %reduced fftlength for signal detection stage.
@@ -202,51 +202,26 @@ end
 
 %frequency align data
 for k = 1:1:numdatasets
-    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(i*2*pi*-freqoffsetxcorr(k)*timestamp).'); %warning: matlab ' operator transposes row/col and conjugates, use .'
-    %do this in the pure fft domain
-    freqalignedfft(:,k) = circshift(noisyfft(:,k),-id(k));
-end
-
-%DIAGNOSTICS: testing the freq shift fft
-if diag
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(abs(fft(noisydata(:,k),fftlength)))
-        hold on
-        plot(abs(fft(freqaligneddataxcorr(:,k),fftlength)),'m')
-        plot(abs(freqalignedfft(:,k)),'c')
-    end
-    subplot(displaydatasets,1,1)
-    title('freq shift diag: original vs shifted fft)')
-
+    freqalignedfft(:,k) = circshift(noisyfft(:,k),-(id(k)+fstamp_index_low-1)); %note: in order for this to work, both ffts must be the same length
 end
    
-    
-
-% %perform time-domain clock_comb xcorrelation
-% xcorrtimestamp = [flip(-timestamp,2) timestamp(2:end)]; %zero in the middle
-% for k = 1:1:numdatasets
-%     xcorr_data(:,k) = xcorr(freqaligneddataxcorr(:,k),clock_comb);
-%     [val id] = max(xcorr_data(:,k));
-%     recoveredphasexcorr(k) = angle(val);
-%     samplesoffsetxcorr(k) = id - datalength;
-% end
-
 %perform fft-version time-domain clock_comb xcorrelation
-% xcorrtimestamp = linspace(-timestamp(end),timestamp(end),fftlength); %zero in the middle
+xcorrtimestamp = [flip(-timestamp,1);timestamp(2:end)]; %zero in the middle
 for k = 1:1:numdatasets
-    xcorr_data(:,k) = ifft(fft(freqaligneddataxcorr(:,k),fftlength).*conj(fft(clock_comb,fftlength)));
-    %xcorr_data(:,k) = ifft(noisyfft(:,k).*conj(comb_fft));
-    xcorr_data2(:,k) = [xcorr_data(end-datalength+1:end,k);xcorr_data(1:datalength+1,k)];
-    [val id] = max(xcorr_data2(:,k));
-    recoveredphasexcorr(k) = angle(val);
-    samplesoffsetxcorr(k) = id - datalength;
+    xcorr_data0(:,k) = ifft(freqalignedfft(:,k).*conj(comb_fft)); %can recycle the fft here without having to re-fft the freq-corrected signal
+    xcorr_data(:,k) = [xcorr_data0(end-datalength+2:end,k);xcorr_data0(1:datalength,k)]; %limit to original length
+    [val id] = max(xcorr_data(:,k)); %find peak
+    recoveredphasexcorr(k) = angle(val); %recover phase offset
+    samplesoffsetxcorr(k) = id - datalength; %recover time offset
 end
 
-%time and phase align data, return data
+
+%ALIGN ALL: freq, time and phase align data, return data
 for k = 1:1:numdatasets
-    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
+    startindex = max([samplesoffsetxcorr(k) 1]);
+    stopindex = datalength+min([samplesoffsetxcorr(k) 0]);
+    
+    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); noisydata(startindex:stopindex,k).*exp(i*2*pi*-freqoffsetxcorr(k)*timestamp(startindex:stopindex));zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
 end
 
 %DIAGNOSTICS: display Freq-Correction and Time-Correction
@@ -312,17 +287,10 @@ end
 %non-detected epochs zero.
 retro = zeros([size(aligned_data,1)+1.5/srate rawdatasets]);
 
-% %time advance and phase conjugate the clock comb for each epoch
-% for k=1:1:numdatasets
-%     retro(samplesoffsetxcorr(k)+1/srate:samplesoffsetxcorr(k)+1/srate+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
-% end
-
-%keep it simple for testing: just a negative, phase-shifted sine way
-f_retro = -20000;
+%time advance and phase conjugate the clock comb for each epoch
 for k=1:1:numdatasets
-    retro(samplesoffsetxcorr(k)+1/srate:samplesoffsetxcorr(k)+1/srate+length(clock_comb)-1,goodsets(k)) = exp(i*2*pi*f_retro*timestamp_comb).*exp(i*(recoveredphasexcorr(k)));
+    retro(samplesoffsetxcorr(k)+1/srate:samplesoffsetxcorr(k)+1/srate+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(recoveredphasexcorr(k)));
 end
-
 
 if diag
     recoveredphasexcorr %print these out
