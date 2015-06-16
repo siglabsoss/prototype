@@ -92,13 +92,6 @@ fs = 1/srate;
 
 schunk = 1/srate*0.8;
 
-aligned_data = [];
-retro_data = [];
-
-
-
-% schunk_bytes = schunk * 10;
-
 
 rxfifo = o_fifo_new();
 txfifo = o_fifo_new();
@@ -137,7 +130,7 @@ while 1
 %     sleep(0.001);
 
     % set these so we can view in octave gui
-    a1_rx_level = o_fifo_avail(rxfifo);
+	a1_rx_level = o_fifo_avail(rxfifo);
     a2_tx_level = o_fifo_avail(txfifo);
     
     [data, count] = o_pipe_read(rx_pipe, payload_size);
@@ -147,25 +140,25 @@ while 1
         o_fifo_write(rxfifo, cplx);
 
         [szin,~] = size(cplx);
+        
+        clear cplx;
+        clear data;
 %         samples_per_second(szin);
 
 %         raw_data = [raw_data;cplx];
 
         rxcount = rxcount + szin;
-        
-%         disp('rx');
     end
     
 %     
     if( o_fifo_avail(rxfifo) > schunk )
         samples = o_fifo_read(rxfifo, schunk);
-        
-%         samples = raw_to_complex(o_fifo_read(rxfifo, floor(schunk/8)*8));
-%         return;
-        
-         [aligned_data_single retro_single numdatasets retrostart retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+
+        [aligned_data_single retro_single numdatasets retrostart retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
          
-         retro_single = single(retro_single);
+        clear samples;
+         
+        retro_single = single(retro_single);
 %           aligned_data_single = [];
 %         [sz,~] = size(retro_single);
     
