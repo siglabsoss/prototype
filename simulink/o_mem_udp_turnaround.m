@@ -10,66 +10,8 @@ o_include_fifo;
 % just a few helper functions for pipes
 o_include_pipes;
 
-
-
-
-function [floats] = raw_to_float(raw)
-    [~,sz] = size(raw);
-    
-    floats = [];
-
-    for i = [1:8:sz]
-        f1 = typecast(uint8(raw(i:i+3)),'single');
-        f2 = typecast(uint8(raw(i+4:i+7)),'single');
-        floats = [floats;f1;f2];
-    end
-end
-
-function [floats] = raw_to_complex(raw)
-
-    
-    list = typecast(uint8(raw),'single');
-
-    [~,sz] = size(list);
-    
-    floats = complex(list(1:2:sz),list(2:2:sz)).'; % zomg uze .'
-    
-end
-
-function [raw] = complex_to_raw(floats)
-
-    sing = single(floats);
-
-    % conj(x)*1i is the same as swapping real and imaginary
-    % conj(sing)*1i
-    list = typecast(sing,'uint8');
-    
-    raw = list;
-end
-
-
-function [ retro_out ] = replace_zero_ones(retro_single )
-    [sz,~] = size(retro_single);
-    dataStart = 0;
-    dataEnd = 0;
-
-%     Scan for the first non 0/0 signal
-    for i = [1:sz]
-        if( retro_single(i) ~= 0 )
-            dataStart = i;
-            break;
-        end
-    end
-
-    % for now we assume signal is 50K samples
-    dataEnd = dataStart + 50000;
-
-    leadOnes = dataStart-1;
-    trailOnes = sz - dataEnd;
-
-    % rebuild the same packet with 1,1 for the zero portions
-    retro_out = [complex(ones(leadOnes,1),ones(leadOnes,1)); retro_single(dataStart:dataEnd); complex(ones(trailOnes,1),ones(trailOnes,1))];
-end
+% utility functions including type conversions
+o_util;
 
 
 
@@ -90,22 +32,6 @@ function [ output ] = sin_out_cont( retro_single )
     sin_out_t = sin_out_t + sz*fs;
 
     output = sin(ts);
-end
-
-
-function [output] = magic_rx_samples(count)
-    single_ones = single(ones(count,1));
-    output = complex(single_ones,single_ones);
-end
-
-function [output] = magic_tx_samples(count)
-    single_ones = single(ones(count,1)*-1);
-    output = complex(single_ones,single_ones);
-end
-
-function [output] = zero_zero_samples(count)
-    single_ones = single(zeros(count,1));
-    output = complex(single_ones,single_ones);
 end
 
 
@@ -192,8 +118,12 @@ raw_data = [];
 tx_timer = clock;
 
 % prime tx fifo
-txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
-o_fifo_write(txfifo, single(complex(txdata,0.5)));
+% txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
+% o_fifo_write(txfifo, single(complex(txdata,0.5)));
+
+% prime tx fifo
+txdata = zero_zero_samples(1000000);  % debug sin wave
+o_fifo_write(txfifo, txdata);
 
 % start radio in rx mode
 magic_rx = magic_rx_samples(10);
@@ -205,6 +135,10 @@ then = now;
 i = 0;
 while 1
 %     sleep(0.001);
+
+    % set these so we can view in octave gui
+    a1_rx_level = o_fifo_avail(rxfifo);
+    a2_tx_level = o_fifo_avail(txfifo);
     
     [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
@@ -229,21 +163,36 @@ while 1
 %         samples = raw_to_complex(o_fifo_read(rxfifo, floor(schunk/8)*8));
 %         return;
         
-         [aligned_data_single retro_single] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+         [aligned_data_single retro_single numdatasets retrostart retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+         
+         retro_single = single(retro_single);
 %           aligned_data_single = [];
 %         [sz,~] = size(retro_single);
     
 %         size(retro_single);
 %         plot(sin_out_cont(retro_single));
 %         figure;
-        if ~(sum(aligned_data_single)==0)
+%         numdatasets
+%         retrostart
+%         retroend
+
+%         schunk
+%         size(retro_single)
+
+        if (numdatasets > 0)
+%            retro_single(retrostart-10:retrostart-1) = magic_tx_samples(10);
 %               txdata = replace_zero_ones(retro_single);
+%             txdata = retro_single;
+            txdata = zero_zero_samples(schunk);
 
 %             figure;
 %             plot(real(aligned_data_single));
             disp('valid data');
+%             disp(sprintf('tx pipe fill level %d', o_fifo_avail(txfifo)));
+%             return;
         else
-            
+            clear retro_single;
+            txdata = zero_zero_samples(schunk);
           
 %             txdata = complex(ones(sz,1),ones(sz,1));
             
@@ -255,7 +204,8 @@ while 1
 %         txdata = sin_out_cont(samples);  % debug sin wave
 
 %        txdata = single(complex(ones(schunk,1),0.5));
-%         o_fifo_write(txfifo, txdata);
+         o_fifo_write(txfifo, txdata);
+         clear txdata;
 
 %         o_fifo_write(txfifo, samples);
 
@@ -284,32 +234,20 @@ while 1
     deltat = etime(clock,tx_timer) + 1;
     chaseTheDragon = deltat * fs;
     if( chaseTheDragon - txcount > payload_size )
-%         vec2 = complex(sin_out_cont(ones(payload_size/8,1)), 0.5);
-%         vec2_bytes = complex_to_raw(vec2 .* 0.8);
-        
-%         vec3 = complex(o_fifo_read(txfifo, payload_size/8, 0.5));
-%         vec3_bytes = complex_to_raw(vec3);
-        
-%          send(send_sck,vec2_bytes);
-        txcount = txcount + payload_size/8;
-        
-%          [szout,~] = size(vec2_bytes);
-%           samples_per_second(payload_size);
-        
-%         disp('tx');
-        
-%         magic_rx = magic_rx_samples(payload_size/8);
-%         magic_rx_bytes = complex_to_raw(magic_rx);
-%         o_pipe_write(tx_pipe, magic_rx_bytes);
-        
-        o_pipe_write(tx_pipe, complex_to_raw(zero_zero_samples(payload_size/8)));
 
-%         disp(sprintf('burn %d', payload_size/8));
-%        bytes = o_fifo_read(txfifo, payload_size/8);
-%       send(send_sck,complex_to_raw(bytess));
-%         o_pipe_write(tx_pipe, vec2_bytes);
+        txcount = txcount + payload_size/8;
+
+        fifo_tx_data = o_fifo_read(txfifo, payload_size/8);
+%         typeinfo(fifo_tx_data)
+
         
-      
+%         fifo_tx_data = zero_zero_samples(payload_size/8);
+%         typeinfo(fifo_tx_data)
+
+        
+        o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
+        
+        clear fifo_tx_data;      
     end
 
 %     if( totalRxSamples > schunk*8 )
