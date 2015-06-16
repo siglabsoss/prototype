@@ -29,6 +29,10 @@
 
 function [aligned_data retro numdatasets retrostart retroend] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold)
 
+edwin_timer = clock;
+service_all();
+% disp(sprintf('t0 %g', etime(clock,edwin_timer)));
+
 %check for rawdata and comb to be in column form
 if size(rawdata,2) > size(rawdata,1)
     rawdata = rawdata';
@@ -64,9 +68,15 @@ for k=1:1:numdatasets
     noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/o_rms(rnoisyfft(:,k));
 end
 
+service_all();
+% disp(sprintf('t1 %g', etime(clock,edwin_timer)));
+
 %create the reduced comb fft for detection %ADDED FFT SHIFT HERE for indexing
 freqindex = linspace(0,1/srate,fftlength_detect)-1/srate/2;
 comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength_detect-length(clock_comb),1])]));
+
+service_all();
+% disp(sprintf('t2 %g', etime(clock,edwin_timer)));
 
 %SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
 fsearch_index_low = floor((fftlength_detect)/2) + round(fsearchwindow_low*srate*fftlength_detect)+1; % need to verify possible off-by-one errors
@@ -86,6 +96,9 @@ for k = 1:1:numdatasets
     [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
     noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/o_rms(xcorr_freq(:,k));
 end
+
+service_all();
+% disp(sprintf('t3 %g', etime(clock,edwin_timer)));
 
 rawdatasets = numdatasets; %preserve the number of raw datasets
 goodsets = find(noisyxcorrsnr > detect_threshold);
@@ -115,6 +128,9 @@ if numdatasets < 1
     return
 end
 
+service_all();
+% disp(sprintf('t4 %g', etime(clock,edwin_timer)));
+
 %CLEANUP: reduce to just the good datasets
 for k = 1:numdatasets
     noisydata(:,k) = rawdata(:,goodsets(k));
@@ -129,14 +145,23 @@ clear rawdata
 clear rnoisydata
 clear lag
 
+service_all();
+% disp(sprintf('t5 %g', etime(clock,edwin_timer)));
+
 %long comb fft for frequency alignment
 freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
 comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros([fftlength-length(clock_comb),1])]));
+
+service_all();
+% disp(sprintf('t6 %g', etime(clock,edwin_timer)));
 
 %long data fft of raw data for frequency alignment
 for k=1:1:numdatasets
     noisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]));
 end
+
+service_all();
+% disp(sprintf('t7 %g', etime(clock,edwin_timer)));
 
 %SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
 fsearch_index_low = floor((fftlength)/2) + round(fsearchwindow_low*srate*fftlength)+1; % need to verify possible off-by-one errors
@@ -158,13 +183,23 @@ for k = 1:1:numdatasets
     freqoffsetxcorr(k) = xcorr_fstamp_fsearch(id);
 end
 
+service_all();
+% disp(sprintf('t8 %g', etime(clock,edwin_timer)));
+
 %frequency align data
 for k = 1:1:numdatasets
     freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(1i*2*pi*freqoffsetxcorr(k)*timestamp)');
 end
 
+service_all();
+% disp(sprintf('t9 %g', etime(clock,edwin_timer)));
+
 %time domain correlation for better frequency accuracy
 freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
+
+service_all();
+% disp(sprintf('t10 %g', etime(clock,edwin_timer)));
+
 
 %perform time-domain clock_comb xcorrelation
 timestampflip = (datalength-1)*srate:-srate:0;
@@ -176,6 +211,8 @@ for k = 1:1:numdatasets
     samplesoffsetxcorr(k) = id - datalength;
 end
 
+service_all();
+% disp(sprintf('t11 %g', etime(clock,edwin_timer)));
 %plot phase and time corrections
 %{
 figure
@@ -196,6 +233,9 @@ for k = 1:1:numdatasets
     aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(1i*(recoveredphasexcorr(k)));
 end
 
+service_all();
+% disp(sprintf('t12 %g', etime(clock,edwin_timer)));
+
 %===========================================
 %create retro-directive transmit signal
 %===========================================
@@ -214,4 +254,6 @@ for k=1:1:numdatasets
 %     retro(retrostart : retroend, goodsets(k)) = clock_comb;
 end
 
+service_all();
+% disp(sprintf('t13 %g', etime(clock,edwin_timer)));
 end

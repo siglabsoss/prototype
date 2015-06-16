@@ -67,18 +67,58 @@ end
 
 
 
+function [] = service_rx_fifo()
+    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta;
+
+    [data, count] = o_pipe_read(rx_pipe, payload_size);
+    if( count ~= 0 )
+        cplx = raw_to_complex(data');
+
+        o_fifo_write(rxfifo, cplx);
+
+        [szin,~] = size(cplx);
+        
+        clear cplx;
+        clear data;
+%         samples_per_second(szin);
+
+%         raw_data = [raw_data;cplx];
+
+        rx_total = rx_total + szin;
+    end
+end
+
+function [] = service_tx_fifo()
+    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta;
+
+    if( o_fifo_avail(txfifo) > payload_size_floats )
+        if( (tx_total + txrxcountdelta) <= rx_total )
+            fifo_tx_data = o_fifo_read(txfifo, payload_size_floats);
+            o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
+            
+            tx_total = tx_total + payload_size_floats;
+        end
+    end
+end
+
+function [] = service_all()
+    service_rx_fifo();
+    service_tx_fifo();
+end
+
 more off;  % ffs Octave
 
 
 
 
 % ------------------------ NAMED PIPES ------------------------
-payload_size = 1024*30;
+global payload_size payload_size_floats tx_pipe rx_pipe;
+payload_size = 1024*40;
 payload_size_floats = payload_size / 8;
 
 
-tx_pipe_path = sprintf('r%d_tx_pipe',radio)
-rx_pipe_path = sprintf('r%d_rx_pipe',radio)
+tx_pipe_path = sprintf('r%d_tx_pipe',radio);
+rx_pipe_path = sprintf('r%d_rx_pipe',radio);
 tx_pipe = o_pipe_open(tx_pipe_path);
 rx_pipe = o_pipe_open(rx_pipe_path);
 % ------------------------ NAMED PIPES ------------------------
@@ -96,17 +136,18 @@ fs = 1/srate;
 
 schunk = 1/srate*0.8;
 
-
+global txfifo rxfifo;
 rxfifo = o_fifo_new();
 txfifo = o_fifo_new();
 
 fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
-
+% 
 samples_per_second(0);
 
+global rx_total tx_total txrxcountdelta;
 rx_total = 0; % in samples
 tx_total = 0;
-txrxcountdelta = 195E3*2;
+txrxcountdelta = 195E3*0.5;
 
 
 % drop samples in the future
@@ -122,10 +163,14 @@ tx_timer = clock;
 % txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
 % o_fifo_write(txfifo, single(complex(txdata,0.5)));
 
-% prime tx fifo
+% prime tx named pipe
 disp('block');
-txdata = zero_zero_samples(1.5*fifoMaxBytes/8);  % debug sin wave
-o_fifo_write(txfifo, txdata);
+txdata = zero_zero_samples(1.5*fifoMaxBytes/8);
+o_pipe_write(tx_pipe, complex_to_raw(txdata));
+disp('unblock');
+o_pipe_write(tx_pipe, complex_to_raw(txdata));
+disp('unblock');
+o_pipe_write(tx_pipe, complex_to_raw(txdata));
 disp('unblock');
 
 % start radio in rx mode
@@ -153,26 +198,9 @@ while 1
 	a1_rx_level = o_fifo_avail(rxfifo);
     a2_tx_level = o_fifo_avail(txfifo);
     a1_future_drop = future_drop;
-    
-    
                 
-    
-    [data, count] = o_pipe_read(rx_pipe, payload_size);
-    if( count ~= 0 )
-        cplx = raw_to_complex(data');
-
-        o_fifo_write(rxfifo, cplx);
-
-        [szin,~] = size(cplx);
-        
-        clear cplx;
-        clear data;
-%         samples_per_second(szin);
-
-%         raw_data = [raw_data;cplx];
-
-        rx_total = rx_total + szin;
-    end
+%     service_rx_fifo();
+    service_all();
     
 %     o_fifo_avail(txfifo) - o_fifo_avail(rxfifo)     
 
@@ -265,20 +293,7 @@ while 1
     
 
 
-
-    if( o_fifo_avail(txfifo) > payload_size_floats )
-%         disp(sprintf('(%d + %d)[%d] <= %d', tx_total, txrxcountdelta, tx_total+txrxcountdelta, rx_total));
-
-        if( (tx_total + txrxcountdelta) <= rx_total )
-            fifo_tx_data = o_fifo_read(txfifo, payload_size_floats);
-            o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
-            
-            tx_total = tx_total + payload_size_floats;
-            
-%             samples_per_second(payload_size_floats);
-%             disp('tx');
-        end
-    end
+%     service_tx_fifo();
     
 
 
