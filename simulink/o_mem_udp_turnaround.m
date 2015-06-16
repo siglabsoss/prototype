@@ -132,7 +132,15 @@ i = 0;
 while 1
 
     
-    
+    chars = kbhit (1);    
+    if( size(chars) ~= [0 0] )
+        switch(chars)
+            case 'a'
+                disp('dump 10k tx buffer');
+                o_fifo_read(txfifo, 10000);
+        end
+    end
+
 
     % set these so we can view in octave gui
 	a1_rx_level = o_fifo_avail(rxfifo);
@@ -161,6 +169,7 @@ while 1
     
 %     
     if( o_fifo_avail(rxfifo) > schunk )
+        o_fifo_avail(txfifo) - o_fifo_avail(rxfifo)
         samples = o_fifo_read(rxfifo, schunk);
 
         [~, retro_single, numdatasets, retrostart, retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
