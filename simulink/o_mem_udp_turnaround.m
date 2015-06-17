@@ -92,11 +92,15 @@ function [] = service_rx_fifo()
 end
 
 function [] = service_tx_fifo()
-    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta;
+    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta theta_rotate;
 
     if( o_fifo_avail(txfifo) > payload_size_floats )
         if( (tx_total + txrxcountdelta) <= rx_total )
             fifo_tx_data = o_fifo_read(txfifo, payload_size_floats);
+            
+            %rotate
+            fifo_tx_data = fifo_tx_data * exp(1i*theta_rotate);
+            
             o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
             
             tx_total = tx_total + payload_size_floats;
@@ -201,6 +205,8 @@ o_pipe_write(tx_pipe, magic_rx_bytes);
 
 % flags
 measure_rope = 0;
+global theta_rotate;
+theta_rotate = 0;
 
 
 then = now;
@@ -211,6 +217,25 @@ while 1
     chars = kbhit (1);    
     if( size(chars) ~= [0 0] )
         switch(chars)
+            % --- rx
+            case 'A'
+                disp('');
+                disp('dump 1k rx buffer');
+                o_fifo_read(rxfifo, 1000);
+            case 'S'
+                disp('');
+                disp('dump 100 rx buffer');
+                o_fifo_read(rxfifo, 100);
+            case 'D'
+                disp('');
+                disp('dump 10 rx buffer');
+                o_fifo_read(rxfifo, 10);
+            case 'F'
+                disp('');
+                disp('dump 1 rx buffer');
+                o_fifo_read(rxfifo, 1);
+                
+            % --- tx
             case 'a'
                 disp('');
                 disp('dump 1k tx buffer');
@@ -227,6 +252,29 @@ while 1
                 disp('');
                 disp('dump 1 tx buffer');
                 o_fifo_read(txfifo, 1);
+
+             % --- theta rotate
+            case 'r'
+                disp('');
+                disp('theta -= pi/8');
+                theta_rotate = theta_rotate - pi/8;
+                disp(theta_rotate);
+            case 't'
+                disp('');
+                disp('theta -= pi/4');
+                theta_rotate = theta_rotate - pi/4;
+                disp(theta_rotate);
+            case 'y'
+                disp('');
+                disp('theta += pi/4');
+                theta_rotate = theta_rotate + pi/4;
+                disp(theta_rotate);
+            case 'u'
+                disp('');
+                disp('theta += pi/8');
+                theta_rotate = theta_rotate + pi/8;
+                disp(theta_rotate);
+                
             case 'm'
                 disp('');
                 disp('starting measure');
