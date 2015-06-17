@@ -220,7 +220,6 @@ end
 for k = 1:1:numdatasets
     startindex = max([samplesoffsetxcorr(k) 1]);
     stopindex = datalength+min([samplesoffsetxcorr(k) 0]);
-    
     aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); noisydata(startindex:stopindex,k).*exp(i*2*pi*-freqoffsetxcorr(k)*timestamp(startindex:stopindex));zeros([samplesoffsetxcorr(k)-1 1])]./exp(i*(recoveredphasexcorr(k)));
 end
 
@@ -239,6 +238,17 @@ if diag
     end
     subplot(displaydatasets,1,1)
     title('First 10 Frequency-Domain Correlations for Freq Alignment (abs)')
+    
+    figure
+    subplot 311
+    plot(abs(xcorr_freq(:,1)))
+    title('real freq domain xcorr')
+    subplot 312
+    plot(abs(ifft([clock_comb; zeros([datalength-length(clock_comb) 1])].*conj(noisydata(:,1)))))
+    title('ifft of clock comb * conj(noisydata)')
+    subplot 313
+    plot(abs(fft([clock_comb; zeros([datalength-length(clock_comb) 1])].*conj(noisydata(:,1)))))
+    title('fft of clock comb * conj(noisydata)')
     
     figure
     for k=1:1:displaydatasets

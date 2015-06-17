@@ -1,0 +1,9 @@
+1. linearity
+2. time shift: a time shift in the time domain is a phase shift in the frequency domain.
+3. Time reversal: time reversal is frequency reversal
+4. Even and odd: mirror time signals are mirror frequency signals.  Rotation symmetric signals are rotation symmetric in the freq domain.
+5. Scaling: increasing the sampling rate in the time domain reduces the resolution in the frequency domain, divides amplitude by same factor
+6. Conjugation: the fourier transform of a signal's conjugate is the conjugate of the signal's frequency-reversed fourier transform
+7. Duality: the fourier transform of a fourier transform is the original signal, time reversed and amplitude multiplied by 2*pi
+8. Multiplication theorem: the integral of the multiplication of a signal and the conjugate of another signal is the integral of the same of the two freq domain representations, scaled by 1/2/pi
+9. 
