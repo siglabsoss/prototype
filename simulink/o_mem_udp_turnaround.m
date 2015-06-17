@@ -210,6 +210,7 @@ o_pipe_write(tx_pipe, magic_rx_bytes);
 measure_rope = 0;
 global theta_rotate;
 theta_rotate = 0;
+output_enable = 1;
 
 
 then = now;
@@ -262,7 +263,7 @@ while 1
                 disp('dump 1 tx buffer');
                 o_fifo_read(txfifo, 1);
 
-             % --- theta rotate
+            % --- theta rotate
             case 'r'
                 disp('');
                 disp('theta -= pi/8');
@@ -284,9 +285,19 @@ while 1
                 theta_rotate = theta_rotate + pi/8;
                 disp(theta_rotate);
                 
+            % --- Toggle output
+            case 'p'
+                disp('');
+                output_enable = bitxor(output_enable, 1);
+                if( output_enable )
+                    disp('Enabling output');
+                else
+                    disp('Disabling output');
+                end
+                
             case 'm'
                 disp('');
-                disp('starting measure');
+                disp('starting measure (make sure output is enabled)');
                 measure_rope = 1;
                 rope_start = o_fifo_written_lifetime(txfifo);
                 o_fifo_write(txfifo, clock_comb_shift);                
@@ -327,7 +338,7 @@ while 1
         retro_single = single(retro_single);
 
 
-        if (numdatasets > 0 && future_drop == 0)
+        if (numdatasets > 0 && future_drop == 0 && output_enable == 1)
             
             [sz,~] = size(retro_single);
             
