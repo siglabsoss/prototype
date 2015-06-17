@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold)
 
 edwin_timer = clock;
 service_all();
@@ -44,8 +44,8 @@ end
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
 windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
-fsearchwindow_low = -200 + 20E3; %frequency search window low, in Hz
-fsearchwindow_hi = 200 + 20E3; %frequency search window high, in Hz
+fsearchwindow_low = -200 + 10E3; %frequency search window low, in Hz
+fsearchwindow_hi = 200 + 10E3; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
@@ -61,6 +61,7 @@ timestamp_comb = 0:srate:(length(clock_comb)-1)*srate;
 fftlength_detect = 2^(nextpow2(datalength)); %reduced fftlength for signal detection stage.
 retrostart = -1;
 retroend = -1;
+samplesoffset = -1;
 
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
 for k=1:1:numdatasets
@@ -195,9 +196,10 @@ service_all();
 % disp(sprintf('t9 %g', etime(clock,edwin_timer)));
 
 %time domain correlation for better frequency accuracy
-freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
+% removed frequency_enhance at edwins request...
+% freqaligneddataxcorr = frequency_enhance(freqaligneddataxcorr,clock_comb,timestamp,freqstep,numsteps);
 
-service_all();
+% service_all();
 % disp(sprintf('t10 %g', etime(clock,edwin_timer)));
 
 
@@ -247,6 +249,7 @@ retro = zeros([size(aligned_data,1)+silence_padding_factor/srate rawdatasets]);
 
 %time advance and phase conjugate the clock comb for each epoch
 %NEED TO GENERALIZE THIS TO SINGLE SAMPLES
+samplesoffset = samplesoffsetxcorr(1);
 for k=1:1:numdatasets
     retrostart = samplesoffsetxcorr(k)+round(1/srate);
     retroend = samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1;
