@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold,fsearchwindow_low,fsearchwindow_hi)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi)
 
 edwin_timer = clock;
 service_all();
@@ -247,13 +247,18 @@ service_all();
 %non-detected epochs zero.
 retro = zeros([size(aligned_data,1)+silence_padding_factor/srate rawdatasets]);
 
+
+%if( length(clock_comb) ~= length(reply_data) )
+%    disp('edwin help!');
+%end
+
 %time advance and phase conjugate the clock comb for each epoch
 %NEED TO GENERALIZE THIS TO SINGLE SAMPLES
 samplesoffset = samplesoffsetxcorr(1);
 for k=1:1:numdatasets
     retrostart = samplesoffsetxcorr(k)+round(1/srate);
     retroend = samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1;
-    retro(retrostart : retroend, goodsets(k)) = clock_comb./exp(1i*(recoveredphasexcorr(k)));
+    retro(retrostart : retroend, goodsets(k)) = reply_data./exp(1i*(recoveredphasexcorr(k)));
 %     retro(retrostart : retroend, goodsets(k)) = clock_comb;
 end
 

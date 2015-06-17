@@ -146,6 +146,9 @@ fs = 1/srate;
 shift_ammount = 10E3;
 clock_comb_shift = freq_shift(clock_comb, fs, shift_ammount);
 
+% this is what we reply with
+clock_comb_reply = freq_shift(clock_comb, fs, -10E3);
+
 detect_threshold = 3;
 
 
@@ -217,7 +220,7 @@ while 1
     chars = kbhit (1);    
     if( size(chars) ~= [0 0] )
         switch(chars)
-            % --- rx
+            % --- rx dump
             case 'A'
                 disp('');
                 disp('dump 1k rx buffer');
@@ -235,7 +238,13 @@ while 1
                 disp('dump 1 rx buffer');
                 o_fifo_read(rxfifo, 1);
                 
-            % --- tx
+            % --- tx insert
+            case 'q'
+                disp('');
+                disp('inserting 100k into tx buffer');
+                o_fifo_write(txfifo,complex_to_raw(zero_zero_samples(100E3)));
+                
+            % --- tx dump
             case 'a'
                 disp('');
                 disp('dump 1k tx buffer');
@@ -311,7 +320,7 @@ while 1
         fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
 
-        [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+        [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
          
 %         clear samples;
          
