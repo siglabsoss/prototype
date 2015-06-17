@@ -68,7 +68,7 @@ end
 
 
 function [] = service_rx_fifo()
-    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta;
+    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta raw_data;
 
     [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
@@ -78,11 +78,14 @@ function [] = service_rx_fifo()
 
         [szin,~] = size(cplx);
         
+%         raw_data = [raw_data;cplx];
+                
+                
         clear cplx;
         clear data;
 %         samples_per_second(szin);
 
-%         raw_data = [raw_data;cplx];
+
 
         rx_total = rx_total + szin;
     end
@@ -133,10 +136,15 @@ load('clock_comb195k.mat','clock_comb195k','idealdata','patternvec');
 clock_comb = clock_comb195k;
 
 srate = 512/1E8;
-% srate = 1/125000;
+fs = 1/srate;
+
+% these are used for measuring the rope
+shift_ammount = 10E3;
+clock_comb_shift = freq_shift(clock_comb, fs, shift_ammount);
+
 detect_threshold = 3;
 
-fs = 1/srate;
+
 
 schunk = 1/srate*0.8;
 
@@ -158,6 +166,7 @@ txrxcountdelta = 195E3*0.5;
 future_drop = 0;
 
 % raw
+global raw_data;
 raw_data = [];
 
 % grab delta seconds
@@ -177,6 +186,9 @@ disp('unblock');
 
 % prime tx fifo
 % txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
+o_fifo_write(txfifo, txdata);
+
+
 % o_fifo_write(txfifo, txdata);
 % o_fifo_write(txfifo, txdata);
 % o_fifo_write(txfifo, txdata);
@@ -185,6 +197,10 @@ disp('unblock');
 magic_rx = magic_rx_samples(10);
 magic_rx_bytes = complex_to_raw(magic_rx);
 o_pipe_write(tx_pipe, magic_rx_bytes);
+
+
+% flags
+measure_rope = 0;
 
 
 then = now;
@@ -196,13 +212,34 @@ while 1
     if( size(chars) ~= [0 0] )
         switch(chars)
             case 'a'
-                disp('dump 10k tx buffer');
-                o_fifo_read(txfifo, 10000);
+                disp('');
+                disp('dump 1k tx buffer');
+                o_fifo_read(txfifo, 1000);
+            case 's'
+                disp('');
+                disp('dump 100 tx buffer');
+                o_fifo_read(txfifo, 100);
+            case 'd'
+                disp('');
+                disp('dump 10 tx buffer');
+                o_fifo_read(txfifo, 10);
+            case 'f'
+                disp('');
+                disp('dump 1 tx buffer');
+                o_fifo_read(txfifo, 1);
+            case 'm'
+                disp('');
+                disp('starting measure');
+                measure_rope = 1;
+                rope_start = o_fifo_written_lifetime(txfifo);
+                o_fifo_write(txfifo, clock_comb_shift);                
         end
     end
 
 
     % set these so we can view in octave gui
+    a0_tx_lifetime = o_fifo_written_lifetime(txfifo);
+    a0_rx_lifetime = o_fifo_read_lifetime(rxfifo);
 	a1_rx_level = o_fifo_avail(rxfifo);
     a2_tx_level = o_fifo_avail(txfifo);
     a1_future_drop = future_drop;
@@ -215,26 +252,35 @@ while 1
     if( o_fifo_avail(rxfifo) > schunk )
         
         samples = o_fifo_read(rxfifo, schunk);
+        
+        fsearchcenter = 20E3;
+        
+        if( measure_rope == 1 )
+            fsearchcenter = 10E3;
+        end
+        
+        fsearchwindow_low = -200 + fsearchcenter; %frequency search window low, in Hz
+        fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
-        [~, retro_single, numdatasets, retrostart, retroend] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold);
+
+        [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
          
-        clear samples;
+%         clear samples;
          
         retro_single = single(retro_single);
 
-%         size(retro_single);
-%         plot(sin_out_cont(retro_single));
-%         figure;
-%         numdatasets
-%         retrostart
-%         retroend
-
-%         schunk
-%         size(retro_single)
 
         if (numdatasets > 0 && future_drop == 0)
             
             [sz,~] = size(retro_single);
+            
+            if( measure_rope == 1 )
+                rope_end = o_fifo_read_lifetime(rxfifo) - schunk + samplesoffset;
+                disp(sprintf('measured rope to be %d samples', rope_end - rope_start));
+                rope_end = 0;
+                rope_start = 0;
+                measure_rope = 0;
+            end
            
             % snip in our magic samples
             retro_single(retrostart-10:retrostart-1) = magic_tx_samples(10);

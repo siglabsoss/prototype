@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,detect_threshold,fsearchwindow_low,fsearchwindow_hi)
 
 edwin_timer = clock;
 service_all();
@@ -44,8 +44,8 @@ end
 %main knobs
 power_padding = 3; %amount of extra padding to apply to the fft
 windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
-fsearchwindow_low = -200 + 10E3; %frequency search window low, in Hz
-fsearchwindow_hi = 200 + 10E3; %frequency search window high, in Hz
+% fsearchwindow_low = -200 + 10E3; %frequency search window low, in Hz
+% fsearchwindow_hi = 200 + 10E3; %frequency search window high, in Hz
 combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %time-domain frequency correction features
