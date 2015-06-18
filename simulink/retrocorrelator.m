@@ -251,6 +251,11 @@ if diag
     title('fft of clock comb * conj(noisydata)')
     
     figure
+    subplot 211
+    plot(abs(ifft(fft(noisydata(:,1)))))
+    title('i
+    
+    figure
     for k=1:1:displaydatasets
         subplot(displaydatasets,1,k)
         plot(xcorrtimestamp, abs(xcorr_data(:,k)))
