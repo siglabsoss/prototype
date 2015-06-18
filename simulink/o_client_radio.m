@@ -75,7 +75,7 @@ function [] = service_rx_fifo()
     [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
         cplx = raw_to_complex(data');
-
+      
         o_fifo_write(rxfifo, cplx);
 
         [szin,~] = size(cplx);
@@ -155,7 +155,7 @@ detect_threshold = 3;
 
 
 
-schunk = 1/srate*0.8;
+schunk = floor(fs*1);
 
 global txfifo rxfifo;
 rxfifo = o_fifo_new();
@@ -170,9 +170,6 @@ rx_total = 0; % in samples
 tx_total = 0;
 txrxcountdelta = 195E3*0.5;
 
-
-% drop samples in the future
-future_drop = 0;
 
 % raw
 global raw_data;
@@ -218,8 +215,7 @@ measure_rope = 0;
 global theta_rotate;
 theta_rotate = 0;
 output_enable = 1;
-queue_tx = 0;
-output_interval = 10;
+output_interval = 6;
 
 output_timer = clock;
 
@@ -227,82 +223,76 @@ output_timer = clock;
 i = 0;
 while 1
 
+    sleep(0.0001);
     
     chars = kbhit (1);    
     if( size(chars) ~= [0 0] )
+        disp('');
         switch(chars)
             % --- rx dump
             case 'A'
-                disp('');
                 disp('dump 1k rx buffer');
                 o_fifo_read(rxfifo, 1000);
             case 'S'
-                disp('');
                 disp('dump 100 rx buffer');
                 o_fifo_read(rxfifo, 100);
             case 'D'
-                disp('');
+                
                 disp('dump 10 rx buffer');
                 o_fifo_read(rxfifo, 10);
             case 'F'
-                disp('');
                 disp('dump 1 rx buffer');
                 o_fifo_read(rxfifo, 1);
                 
             % --- tx insert
             case 'q'
-                disp('');
                 disp('inserting 100k into tx buffer');
                 o_fifo_write(txfifo,complex_to_raw(zero_zero_samples(100E3)));
                 
             % --- tx dump
             case 'a'
-                disp('');
                 disp('dump 1k tx buffer');
                 o_fifo_read(txfifo, 1000);
             case 's'
-                disp('');
                 disp('dump 100 tx buffer');
                 o_fifo_read(txfifo, 100);
             case 'd'
-                disp('');
                 disp('dump 10 tx buffer');
                 o_fifo_read(txfifo, 10);
             case 'f'
-                disp('');
                 disp('dump 1 tx buffer');
                 o_fifo_read(txfifo, 1);
 
             % --- theta rotate
             case 'r'
-                disp('');
                 disp('theta -= pi/8');
                 theta_rotate = theta_rotate - pi/8;
                 disp(theta_rotate);
             case 't'
-                disp('');
                 disp('theta -= pi/4');
                 theta_rotate = theta_rotate - pi/4;
                 disp(theta_rotate);
             case 'y'
-                disp('');
                 disp('theta += pi/4');
                 theta_rotate = theta_rotate + pi/4;
                 disp(theta_rotate);
             case 'u'
-                disp('');
                 disp('theta += pi/8');
                 theta_rotate = theta_rotate + pi/8;
                 disp(theta_rotate);
                 
-            case ' '
-                disp('');
-                disp('sending');
-                queue_tx = queue_tx + 1;
+            case ','
+                output_interval = output_interval - 0.5;
+                disp(sprintf('sending signal every %g seconds', output_interval));
                 
+            case '.'
+                output_interval = output_interval + 0.5;
+                disp(sprintf('sending signal every %g seconds', output_interval));
+                
+
             % --- Toggle output
             case 'p'
-                disp('');
+                
                 output_enable = bitxor(output_enable, 1);
                 if( output_enable )
                     disp('Enabling output');
@@ -311,7 +301,7 @@ while 1
                 end
                 
             case 'm'
-                disp('');
+                
                 disp('starting measure (make sure output is enabled)');
                 measure_rope = 1;
                 rope_start = o_fifo_written_lifetime(txfifo);
@@ -325,7 +315,6 @@ while 1
     a0_rx_lifetime = o_fifo_read_lifetime(rxfifo);
 	a1_rx_level = o_fifo_avail(rxfifo);
     a2_tx_level = o_fifo_avail(txfifo);
-    a1_future_drop = future_drop;
                 
 %     service_rx_fifo();
     service_all();
@@ -336,21 +325,18 @@ while 1
         
         samples = o_fifo_read(rxfifo, schunk);
         
-        fsearchcenter = 20E3;
-        
-        if( measure_rope == 1 )
-            fsearchcenter = 10E3;
-        end
+        fsearchcenter = -10E3;
+       
         
         fsearchwindow_low = -200 + fsearchcenter; %frequency search window low, in Hz
         fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
 
-        [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+        [~, ~, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
          
 %         clear samples;
          
-        retro_single = single(retro_single);
+%         retro_single = single(retro_single);
 
         deltat = etime(clock,output_timer);
         
@@ -364,15 +350,26 @@ while 1
             o_fifo_read(txfifo, sz+20); % burn the same ammount we just inserted
             
             output_timer = clock;
-%             queue_tx = queue_tx - 1;
         end
 
-        numdatasets = 0;
         
-        if (numdatasets > 0 && future_drop == 0 && output_enable == 1)
+        
+        if (numdatasets > 0 && output_enable == 1)
             
-            [sz,~] = size(retro_single);
+
+            [sz,~] = size(clock_comb);
             
+            if( (schunk - samplesoffset) > (sz*1.05) && samplesoffset > 0 )
+%                 figure;
+%                 plot(real(samples));
+                
+                absdata = abs(samples).^2;
+                disp(sprintf('sum of abs of data is %g', sum(absdata)*1000));
+            end
+            
+%             [sz,~] = size(retro_single);
+            
+            % unsure if this works on clinet
             if( measure_rope == 1 )
                 rope_end = o_fifo_read_lifetime(rxfifo) - schunk + samplesoffset;
                 disp(sprintf('measured rope to be %d samples', rope_end - rope_start));
@@ -380,50 +377,21 @@ while 1
                 rope_start = 0;
                 measure_rope = 0;
             end
-           
-            % snip in our magic samples
-            retro_single(retrostart-10:retrostart-1) = magic_tx_samples(10);
-            retro_single(retroend+1:retroend+10)     = magic_rx_samples(10);
             
-            % retrocorrelator_octave() gave us too many samples (because ewin)
-            % this counter keeps track of how many extra samples we have in the fifo right now
-            future_drop = future_drop + (sz-schunk);
+%             figure;
+%             plot(real(samples));
             
-            
-            txdata = retro_single;
             clear retro_single;
             
-%               txdata = replace_zero_ones(retro_single);
-%             txdata = retro_single;
-%             txdata = zero_zero_samples(schunk);
-
-%             figure;
-%             plot(real(aligned_data_single));
             disp('valid data');
-%             disp(sprintf('tx pipe fill level %d', o_fifo_avail(txfifo)));
-%             return;
+
         else
             clear retro_single;
             
-            zeros_to_queue = schunk;
-            
-            % if the 'valid data' condition put too much in our buffer
-            if( future_drop > 0 )
-                % subtract all of them, this will nominally be negative
-                zeros_to_queue = zeros_to_queue - future_drop;
-                
-                % bound the ammount, if zero txdata below ends up at [] which is ok
-                zeros_to_queue = max(0, zeros_to_queue);
-                
-                % only take away what we can from future_drop
-                future_drop = future_drop - (schunk - zeros_to_queue);
-%                 disp('making up for previous packet');
-            end
-            
-            txdata = zero_zero_samples(zeros_to_queue);
-
-            disp('empty');
+%             disp('empty');
         end
+        
+        txdata = zero_zero_samples(schunk);
         
 %         size(txdata)
 %         txdata = sin_out_cont(samples);  % debug sin wave
