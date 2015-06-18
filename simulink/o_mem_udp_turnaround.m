@@ -13,6 +13,33 @@ o_include_pipes;
 % utility functions including type conversions
 o_util;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Notes:
+% This is the in memory fifo version of the retrocorrelator turnaround
+% This script connects to tx_tx_central in gnu radio companion
+%
+% * do not try to measure the rope length with output enable off
+%
+% * Use the rx dump to correct rope lenght issues at gnu radio
+% Hotkeys:
+%
+% o - Begins a UDP feedback from gnuradio measurement.  For best effect, hit it right after a 'valid data' 
+%     message and then hit it again to end after you hear the chirp on the HDSDR
+%
+% m - Measures the "rope" not 100% accurate
+
+
+
+
+
+
+
+
+
+
+
+
+
 if( exist('radio') == 0)
     disp('Please set radio = {0,1} to continue');
     return
@@ -110,12 +137,69 @@ function [] = service_tx_fifo()
     end
 end
 
+function [] = service_udp_feedback()
+    global udp_payload_size feedbackfifo feedback_socket udp_feedback_enable;
+
+    if( udp_feedback_enable == 1 )    
+        [data, count] = recv(feedback_socket, udp_payload_size, 'MSG_DONTWAIT');
+        if( count ~= 0 )
+            cplx = raw_to_complex(data);
+            o_fifo_write(feedbackfifo, cplx);
+        end
+    end
+end
+
+
 function [] = service_all()
     service_rx_fifo();
+    service_udp_feedback();
     service_tx_fifo();
+    service_udp_feedback();
     service_rx_fifo();
+    service_udp_feedback();
     service_tx_fifo();
+    service_udp_feedback();
 end
+
+
+
+function [] = parse_feedback()
+    global udp_payload_size feedbackfifo feedback_socket udp_feedback_enable clock_comb_reply;
+
+    feedbackcount = o_fifo_avail(feedbackfifo);
+
+    feedback = o_fifo_read(feedbackfifo,feedbackcount);
+    
+%  the feedback bundles r0 and r1 is bundled together like this
+    r0 = real(feedback);
+    r1 = imag(feedback);
+    
+    [xcr0, lag0] = xcorr(r0, real(clock_comb_reply));
+    [a0, b0] =  max(abs(xcr0));
+    
+    [xcr1, lag1] = xcorr(r1, real(clock_comb_reply));
+    [a1, b1] =  max(abs(xcr1));
+    
+    disp(sprintf('delta samples at gnuradio %d', lag0(b0) - lag1(b1)));
+    
+    if( lag0(b0) > lag1(b1) )
+        disp('radio 0 needs to be shorter');
+    else
+        disp('radio 1 needs to be shorter');
+    end
+    
+    
+    
+    
+end
+
+
+
+
+
+
+
+
 
 more off;  % ffs Octave
 
@@ -136,6 +220,24 @@ rx_pipe = o_pipe_open(rx_pipe_path);
 
 
 
+% ------------------------ UDP ------------------------
+feedback_port = 1300;          % feedback
+send_ip = '127.0.0.1';    % ip where gnuradio is running
+% send_port = 1236;         % radio TX port (will be udp tx)
+global udp_payload_size;
+udp_payload_size = 1024*30;
+% global feedback_socket;
+
+
+% disp('0 here');
+% UDP Socket for reception 
+% feedback_socket = socket(AF_INET, SOCK_DGRAM, 0);
+% disp('1 here');
+% bind(feedback_socket,feedback_port); 
+% disp('2 here');
+% ------------------------ UDP ------------------------
+
+
 load('clock_comb195k.mat','clock_comb195k','idealdata','patternvec');
 clock_comb = clock_comb195k;
 
@@ -146,6 +248,7 @@ fs = 1/srate;
 shift_ammount = 10E3;
 clock_comb_shift = freq_shift(clock_comb, fs, shift_ammount);
 
+global clock_comb_reply;
 % this is what we reply with
 clock_comb_reply = freq_shift(clock_comb, fs, -10E3);
 
@@ -155,9 +258,10 @@ detect_threshold = 3;
 
 schunk = 1/srate*0.8;
 
-global txfifo rxfifo;
+global txfifo rxfifo feedbackfifo;
 rxfifo = o_fifo_new();
 txfifo = o_fifo_new();
+feedbackfifo = o_fifo_new();
 
 fifoMaxBytes = 1048576; % this is operating system enforced, changing here will not help
 % 
@@ -211,6 +315,8 @@ measure_rope = 0;
 global theta_rotate;
 theta_rotate = 0;
 output_enable = 1;
+global udp_feedback_enable;
+udp_feedback_enable = 0;
 
 
 then = now;
@@ -295,6 +401,23 @@ while 1
                     disp('Disabling output');
                 end
                 
+            case 'o'
+                disp('');
+                global udp_feedback_enable;
+                udp_feedback_enable = bitxor(udp_feedback_enable, 1);
+                if( udp_feedback_enable )
+                    global feedback_socket;
+                    disp('Enabling UDP');
+                    feedback_socket = socket(AF_INET, SOCK_DGRAM, 0);
+                    bind(feedback_socket,feedback_port);
+                else
+                    global feedback_socket;
+                    disp('Disabling UDP');
+                    disconnect(feedback_socket);
+                    parse_feedback();
+                end
+                
+                
             case 'm'
                 disp('');
                 disp('starting measure (make sure output is enabled)');
@@ -330,12 +453,13 @@ while 1
         fsearchwindow_low = -200 + fsearchcenter; %frequency search window low, in Hz
         fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
-
-        [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+        numdatasets = 0;
+        if( udp_feedback_enable == 0 )
+            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+            retro_single = single(retro_single);
+        end
          
 %         clear samples;
-         
-        retro_single = single(retro_single);
 
 
         if (numdatasets > 0 && future_drop == 0 && output_enable == 1)
