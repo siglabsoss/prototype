@@ -179,6 +179,13 @@ raw_data = [];
 tx_timer = clock;
 
 
+figure(1);
+figure(2);
+figure(3);
+figure(4);
+
+
+
 
 % prime tx named pipe
 disp('block');
@@ -193,8 +200,8 @@ disp('unblock');
 % prime tx fifo
 % txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
 o_fifo_write(txfifo, txdata);
-% o_fifo_write(txfifo, txdata);
-% o_fifo_write(txfifo, txdata);
+o_fifo_write(txfifo, txdata);
+o_fifo_write(txfifo, txdata);
 
 
 
@@ -218,12 +225,15 @@ output_enable = 1;
 output_interval = 6;
 
 output_timer = clock;
+chunk_detect = 0;
+chunk_samples = [];
+fignum = 0;
 
 
 i = 0;
 while 1
 
-    sleep(0.0001);
+    sleep(0.001);
     
     chars = kbhit (1);    
     if( size(chars) ~= [0 0] )
@@ -331,16 +341,17 @@ while 1
         fsearchwindow_low = -200 + fsearchcenter; %frequency search window low, in Hz
         fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
-
-        [~, ~, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+%        numdatasets = 0;
+        [~, ~, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples), srate,clock_comb, clock_comb_reply, detect_threshold, fsearchwindow_low, fsearchwindow_hi);
          
+        
 %         clear samples;
          
 %         retro_single = single(retro_single);
 
         deltat = etime(clock,output_timer);
         
-        if( deltat > output_interval )
+        if( deltat > output_interval && output_enable == 1)
             
             o_fifo_write(txfifo, magic_tx_samples(10));
             o_fifo_write(txfifo, clock_comb_reply);
@@ -350,23 +361,51 @@ while 1
             o_fifo_read(txfifo, sz+20); % burn the same ammount we just inserted
             
             output_timer = clock;
+            
+            disp('transmitting');
         end
 
+         if( chunk_detect == 1 )
+                chunk_samples = [chunk_samples;samples];
+                
+                fignum = mod(fignum+1,4);
+                fignum+1
+                figure(fignum+1);
+                
+                
+                plot(real(chunk_samples));
+                
+                absdata = abs(chunk_samples).^2;
+                power_result = sum(absdata)*1000;
+                disp(sprintf('sum of abs of data is %g', power_result));
+                
+                title(power_result);
+                chunk_detect = 2;
+          end
         
-        
-        if (numdatasets > 0 && output_enable == 1)
+        if (numdatasets > 0)
             
 
-            [sz,~] = size(clock_comb);
+%             [sz,~] = size(clock_comb);
+%             
+%             if( (schunk - samplesoffset) > (sz*1.05) && samplesoffset > 0 )
+% %                 figure;
+% %                 plot(real(samples));
+%                 
+%                 absdata = abs(samples).^2;
+%                 disp(sprintf('sum of abs of data is %g', sum(absdata)*1000));
+%             end
             
-            if( (schunk - samplesoffset) > (sz*1.05) && samplesoffset > 0 )
-%                 figure;
-%                 plot(real(samples));
-                
-                absdata = abs(samples).^2;
-                disp(sprintf('sum of abs of data is %g', sum(absdata)*1000));
-            end
-            
+              if( chunk_detect == 0 )
+                  chunk_samples = samples;
+                  chunk_detect = 1;
+              end
+              
+              if( chunk_detect == 2 )
+                  chunk_detect = 0;
+              end
+           
+
 %             [sz,~] = size(retro_single);
             
             % unsure if this works on clinet
