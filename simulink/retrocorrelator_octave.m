@@ -129,6 +129,8 @@ if numdatasets < 1
     return
 end
 
+noisyxcorrsnr
+
 service_all();
 % disp(sprintf('t4 %g', etime(clock,edwin_timer)));
 

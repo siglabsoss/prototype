@@ -125,8 +125,8 @@ function [] = service_tx_fifo()
         if( (tx_total + txrxcountdelta) <= rx_total )
             fifo_tx_data = o_fifo_read(txfifo, payload_size_floats);
             
-            %rotate
-            fifo_tx_data = fifo_tx_data * exp(1i*theta_rotate);
+%             %rotate
+%             fifo_tx_data = fifo_tx_data * exp(1i*theta_rotate);
             
             o_pipe_write(tx_pipe, complex_to_raw(fifo_tx_data));
             
@@ -252,6 +252,22 @@ global clock_comb_reply;
 % this is what we reply with
 clock_comb_reply = freq_shift(clock_comb, fs, -10E3);
 
+
+% or this
+asize = 78127;
+amplitude_comb = freq_shift(ones(asize,1),fs,-10E3);
+
+if( radio == 0 )
+    % transmit increasing ramp
+    ramp = 0:1/(asize-1):1;
+else
+    % transming decreasing ramp
+    ramp = 1:-1/(asize-1):0;
+end
+    
+amplitude_comb = amplitude_comb .* ramp';
+
+
 detect_threshold = 3;
 
 
@@ -290,10 +306,10 @@ disp('block');
 txdata = zero_zero_samples(1.5*fifoMaxBytes/8);
 o_pipe_write(tx_pipe, complex_to_raw(txdata));
 disp('unblock');
-o_pipe_write(tx_pipe, complex_to_raw(txdata));
-disp('unblock');
-o_pipe_write(tx_pipe, complex_to_raw(txdata));
-disp('unblock');
+% o_pipe_write(tx_pipe, complex_to_raw(txdata));
+% disp('unblock');
+% o_pipe_write(tx_pipe, complex_to_raw(txdata));
+% disp('unblock');
 
 % prime tx fifo
 % txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
@@ -456,7 +472,7 @@ while 1
         numdatasets = 0;
         if( udp_feedback_enable == 0 )
             [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
-            retro_single = single(retro_single);
+            retro_single = single(retro_single * exp(1i*theta_rotate));
         end
          
 %         clear samples;
@@ -473,7 +489,13 @@ while 1
                 rope_start = 0;
                 measure_rope = 0;
             end
+            
+            % figure;
+            % plot(real(samples));
            
+            % at this point retro_single has already been rotated by our hotkeys
+            % so it's ok to add magic samples
+            
             % snip in our magic samples
             retro_single(retrostart-10:retrostart-1) = magic_tx_samples(10);
             retro_single(retroend+1:retroend+10)     = magic_rx_samples(10);
