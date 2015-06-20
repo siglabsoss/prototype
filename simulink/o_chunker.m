@@ -1,0 +1,56 @@
+
+1;
+function [] = service_all()
+
+end
+
+o_util;
+
+fid = fopen('1434756135-log-radio0.dat','r');
+
+[rawdata, rdcount] = fread(fid, 9E40, 'uint8');
+
+load('clock_comb195k.mat','clock_comb195k','idealdata','patternvec');
+clock_comb = clock_comb195k;
+
+%START REAL DATA LOAD BLOCK
+%========================
+% load('mar31e.mat', 'haywardcaltrainclock')
+% rawdata = haywardcaltrainclock;
+% load('thursday.mat','clock_comb125k','idealdata','patternvec')
+% clock_comb = resample(clock_comb125k,1e8,512*125000);
+
+
+%settings
+srate = 512/1e8;
+detect_threshold = 2.5;
+
+fsearchcenter = 20E3;
+fsearchwindow_low = -200 + fsearchcenter; %frequency search window low, in Hz
+fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
+
+
+%chunk the data
+windowsize = 1; % size of chunked data
+timestep = 5.9; %time stepping of data chunks.  should be < windowsize - time length of rf packet
+rawtime = 0:srate:(length(rawdata)-1)*srate;
+samplesteps = round(windowsize/srate);
+for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
+    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate)+samplesteps);
+    chunkstarts(k) = round(k*timestep/srate)+1;
+end
+%END REAL DATA LOAD
+%=======================
+
+figure
+plot(0:srate:(length(rawdata)-1)*srate,rawdata)
+title('Raw Data In')
+
+[~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,clock_comb,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+
+absolute_samples_offset = chunkstarts + samplesoffset
+
+figure
+plot(0:srate:(size(aligned_data,1)-1)*srate,real(aligned_data*ones([size(aligned_data,2) 1])))
+xlabel('time [s]')
+title('Coherent Sum Out')
