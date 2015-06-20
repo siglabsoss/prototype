@@ -6,12 +6,18 @@ end
 
 o_util;
 
-fid = fopen('1434756135-log-radio0.dat','r');
+% fid = fopen('1434756135-log-radio0.dat','r');
+% fid = fopen('1434756135-log-radio1.dat','r');
+
+% fid = fopen('r0_gnuradio_dump.raw','r');
+fid = fopen('r1_gnuradio_dump.raw','r');
 
 [rawdata, rdcount] = fread(fid, 9E40, 'uint8');
 
+data = double(raw_to_complex(rawdata'));
+
 load('clock_comb195k.mat','clock_comb195k','idealdata','patternvec');
-clock_comb = clock_comb195k;
+clock_comb = double(clock_comb195k);
 
 %START REAL DATA LOAD BLOCK
 %========================
@@ -33,24 +39,38 @@ fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 %chunk the data
 windowsize = 1; % size of chunked data
 timestep = 5.9; %time stepping of data chunks.  should be < windowsize - time length of rf packet
-rawtime = 0:srate:(length(rawdata)-1)*srate;
+rawtime = 0:srate:(length(data)-1)*srate;
 samplesteps = round(windowsize/srate);
 for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
-    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate)+samplesteps);
-    chunkstarts(k) = round(k*timestep/srate)+1;
+    rnoisydata(:,k+1) = data(round(k*timestep/srate)+1:round(k*timestep/srate)+samplesteps);
+    chunkstarts(k+1) = round(k*timestep/srate)+1;
 end
 %END REAL DATA LOAD
 %=======================
 
-figure
-plot(0:srate:(length(rawdata)-1)*srate,rawdata)
-title('Raw Data In')
+% figure
+% plot(0:srate:(length(data)-1)*srate,data)
+% title('Raw Data In')
 
-[~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,clock_comb,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+[aligned_data, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,clock_comb,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
 
 absolute_samples_offset = chunkstarts + samplesoffset
 
-figure
-plot(0:srate:(size(aligned_data,1)-1)*srate,real(aligned_data*ones([size(aligned_data,2) 1])))
-xlabel('time [s]')
-title('Coherent Sum Out')
+disp('delta between sample offsets:');
+
+diff(absolute_samples_offset)
+
+% figure
+% plot(0:srate:(size(aligned_data,1)-1)*srate,real(aligned_data*ones([size(aligned_data,2) 1])))
+% xlabel('time [s]')
+% title('Coherent Sum Out')
+
+
+
+
+
+
+
+
+
+
