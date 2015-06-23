@@ -333,7 +333,12 @@ theta_rotate = 0;
 output_enable = 1;
 global udp_feedback_enable;
 udp_feedback_enable = 0;
+log_dump = 0;
 
+if( log_dump )
+    logfilename = sprintf('%s-log-radio%d.dat', mat2str(round(time)), radio)
+    logfid = fopen(logfilename, 'w'); % http://man7.org/linux/man-pages/man3/fopen.3.html
+end
 
 then = now;
 i = 0;
@@ -460,6 +465,11 @@ while 1
         
         samples = o_fifo_read(rxfifo, schunk);
         
+        
+        if( log_dump )
+            fwrite(logfid, complex_to_raw(samples), 'uint8');
+        end
+        
         fsearchcenter = 20E3;
         
         if( measure_rope == 1 )
@@ -481,6 +491,8 @@ while 1
         if (numdatasets > 0 && future_drop == 0 && output_enable == 1)
             
             [sz,~] = size(retro_single);
+            
+            reply_samples = o_fifo_read_lifetime(rxfifo) - schunk + samplesoffset
             
             if( measure_rope == 1 )
                 rope_end = o_fifo_read_lifetime(rxfifo) - schunk + samplesoffset;
