@@ -29,6 +29,13 @@
 
 function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi)
 
+%diagnostic functions
+diag = 1;
+displaydatasets = 4;
+if diag
+    close all
+end
+
 edwin_timer = clock;
 service_all();
 % disp(sprintf('t0 %g', etime(clock,edwin_timer)));
@@ -78,6 +85,43 @@ comb_fft = fftshift(fft([window(windowtype,length(clock_comb)).*clock_comb;zeros
 
 service_all();
 % disp(sprintf('t2 %g', etime(clock,edwin_timer)));
+
+
+if diag
+    if displaydatasets > numdatasets
+        displaydatasets = numdatasets;
+    end
+    
+    figure
+    for k=1:1:displaydatasets
+        subplot(displaydatasets,1,k)
+        plot(timestamp, real(rawdata(:,k)))
+        ylabel('Magnitude')
+        xlabel('Time [s]')
+    end
+    subplot(displaydatasets,1,1)
+    title('First 4 chunks of received raw data (real)')
+    
+    figure
+    plot(timestamp_comb, real(clock_comb))
+    title('Clock Comb (real)')
+    
+    figure
+    for k=1:1:displaydatasets
+        subplot(displaydatasets,1,k)
+        plot(freqindex, abs(rnoisyfft(:,k)))
+        ylabel('Magnitude')
+        xlabel('Freq [Hz]')
+    end
+    subplot(displaydatasets,1,1)
+    title('First 4 FFTs of received raw data (abs)')
+    
+    figure
+    plot(freqindex, abs(comb_fft))
+    title('FFT of Clock Comb (abs)')
+    
+end
+
 
 %SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
 fsearch_index_low = floor((fftlength_detect)/2) + round(fsearchwindow_low*srate*fftlength_detect)+1; % need to verify possible off-by-one errors
@@ -133,6 +177,23 @@ noisyxcorrsnr
 
 service_all();
 % disp(sprintf('t4 %g', etime(clock,edwin_timer)));
+
+%DIAGNOSTICS: Print detection stats
+if diag 
+    figure
+    subplot(2,1,1)
+    plot(noisyxcorrsnr,'o')
+    hold on
+    plot(goodsets,noisyxcorrsnr(goodsets),'mo')
+    xlabel('Data Chunk Index')
+    ylabel('Comb Correlation SNR')
+    subplot(2,1,2)
+    hist(noisyxcorrsnr,20)
+    xlabel('xcorr SNR value')
+    ylabel('hit count')
+    subplot(2,1,1)
+    title('Plot and Histogram of SNR used for Signal Detection')
+end
 
 %CLEANUP: reduce to just the good datasets
 for k = 1:numdatasets
@@ -238,6 +299,62 @@ for k = 1:1:numdatasets
 end
 
 service_all();
+
+%DIAGNOSTICS: display Freq-Correction and Time-Correction
+%Cross-Correlations, Corrections and corrected data
+if diag
+    if displaydatasets > numdatasets
+        displaydatasets = numdatasets;
+    end
+    
+    figure
+    for k=1:1:displaydatasets
+        subplot(displaydatasets,1,k)
+        plot(xcorr_fstamp_fsearch, abs(xcorr_freq(:,k)))
+        ylabel('Magnitude')
+        xlabel('Freq [Hz]')
+    end
+    subplot(displaydatasets,1,1)
+    title('First 4 Frequency-Domain Correlations for Freq Alignment (abs)')
+    
+    figure
+    for k=1:1:displaydatasets
+        subplot(displaydatasets,1,k)
+        plot(xcorrtimestamp, abs(xcorr_data(:,k)))
+        ylabel('Magnitude')
+        xlabel('Time [s]')
+    end
+    subplot(displaydatasets,1,1)
+    title('First 4 Time-Domain Correlations for Time/Phase Alignment')
+    
+    figure
+    subplot(3,1,1)
+    plot(freqoffsetxcorr,'o-')
+    title('Frequency Offset Correction Applied')
+    ylabel('Freq [Hz]')
+    xlabel('dataset')
+    subplot(3,1,2)
+    plot(recoveredphasexcorr,'o-')
+    title('Phase Offset Correction Applied')
+    ylabel('Phase [rad]')
+    xlabel('dataset')
+    subplot(3,1,3)
+    plot(samplesoffsetxcorr,'o-')
+    title('Time Offset Correction Applied')
+    ylabel('Time [samples]')
+    xlabel('dataset')
+    
+    figure
+    for k=1:1:displaydatasets
+        subplot(displaydatasets,1,k)
+        plot(timestamp, real(aligned_data(:,k)))
+        ylabel('Magnitude')
+        xlabel('Time [s]')
+    end
+    subplot(displaydatasets,1,1)
+    title('First 4 Frequency-, Time-, and Phase-Aligned Datasets (real)')
+end
+
 % disp(sprintf('t12 %g', etime(clock,edwin_timer)));
 
 %===========================================
@@ -256,7 +373,7 @@ retro = zeros([size(aligned_data,1)+silence_padding_factor/srate rawdatasets]);
 
 %time advance and phase conjugate the clock comb for each epoch
 %NEED TO GENERALIZE THIS TO SINGLE SAMPLES
-samplesoffset = samplesoffsetxcorr(1);
+samplesoffset = samplesoffsetxcorr;
 for k=1:1:numdatasets
     retrostart = samplesoffsetxcorr(k)+round(1/srate);
     retroend = samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1;

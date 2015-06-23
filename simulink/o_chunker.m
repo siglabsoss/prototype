@@ -6,11 +6,11 @@ end
 
 o_util;
 
-% fid = fopen('1434756135-log-radio0.dat','r');
+ fid = fopen('1434756135-log-radio0.dat','r');
 % fid = fopen('1434756135-log-radio1.dat','r');
 
 % fid = fopen('r0_gnuradio_dump.raw','r');
-fid = fopen('r1_gnuradio_dump.raw','r');
+% fid = fopen('r1_gnuradio_dump.raw','r');
 
 [rawdata, rdcount] = fread(fid, 9E40, 'uint8');
 
@@ -38,12 +38,14 @@ fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
 %chunk the data
 windowsize = 1; % size of chunked data
-timestep = 5.9; %time stepping of data chunks.  should be < windowsize - time length of rf packet
+timestart = 1.2; %start of the first chunk
+samplestart = round(timestart/srate);
+timestep = 6.4; %time stepping of data chunks.  should be < windowsize - time length of rf packet
 rawtime = 0:srate:(length(data)-1)*srate;
 samplesteps = round(windowsize/srate);
-for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
-    rnoisydata(:,k+1) = data(round(k*timestep/srate)+1:round(k*timestep/srate)+samplesteps);
-    chunkstarts(k+1) = round(k*timestep/srate)+1;
+for k = 0:floor((rawtime(end)-timestart)/timestep)-ceil(windowsize/timestep)
+    rnoisydata(:,k+1) = data(round(samplestart+k*timestep/srate)+1:round(samplestart+k*timestep/srate)+samplesteps);
+    chunkstarts(k+1) = round(samplestart+k*timestep/srate)+1;
 end
 %END REAL DATA LOAD
 %=======================
