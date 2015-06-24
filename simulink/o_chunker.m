@@ -1,5 +1,10 @@
 
 1;
+
+clear rnoisydata
+clear chunkstarts
+close all
+
 function [] = service_all()
 
 end
@@ -61,6 +66,11 @@ absolute_samples_offset = chunkstarts + samplesoffset
 disp('delta between sample offsets:');
 
 diff(absolute_samples_offset)
+
+disp('delta delta:');
+
+diff(diff(absolute_samples_offset))
+
 
 % figure
 % plot(0:srate:(size(aligned_data,1)-1)*srate,real(aligned_data*ones([size(aligned_data,2) 1])))
