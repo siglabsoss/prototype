@@ -7,3 +7,24 @@
 7. Duality: the fourier transform of a fourier transform is the original signal, time reversed and amplitude multiplied by 2*pi
 8. Multiplication theorem: the integral of the multiplication of a signal and the conjugate of another signal is the integral of the same of the two freq domain representations, scaled by 1/2/pi
 9. 
+
+
+rewite the correlation theorem using ifft instead of fft
+
+
+doing the iff vs the fft on some data flips the output and scales it
+
+masking and shifting in the time domain doesn't matter if you then abs() the fft because time info is phase info and phase info is lost in the abs()
+
+when I mask the freq domain and then abs it (for frequency selectivity) before the xcorr, what am I doing?
+ - making a large number of the inputs zero.  this is essentially zero-padding before going into the fft for xcorr
+ - zero-padding is making the bin size smaller in the output.  So if I still want the frequency resolution, I have to keep the fft size, even if much of the input is zero.
+ - making a large number of the xcorr results zero.
+ - potentially reducing the length of the ffts required in xcorr
+
+for now, use fixed length (perform frequency selectivity by masking only) ffts and come back and see if you can do a computation reduction
+ - can I incorporate the indexing mask into the preserve lags portion of the fft xcorr?
+ 
+to do:
+ - reduce length of fxcorr
+ - eliminate noisydata, and just use rawdata(goodsets)

@@ -53,14 +53,14 @@ freqcorr = xcorr(fft(clock_comb,fftlength),fft(comb_shift,fftlength));
 plot(abs(freqcorr));
 title('autocorrelation of fft of clock comb')
 subplot 312
-fft_freqcorr = ifft([fftlength*flip([clock_comb;zeros([fftlength-datalength 1])])].*conj([fftlength*flip([comb_shift;zeros([fftlength-datalength 1])]);]));
+fft_freqcorr = ifft([fftlength*flip([clock_comb;zeros([fftlength-datalength 1]);zeros([fftlength 1])])].*conj([fftlength*flip([comb_shift;zeros([fftlength-datalength 1]);zeros([fftlength 1])])]));
 fft_freqcorr = [fft_freqcorr(end-fftlength+2:end); fft_freqcorr(1:fftlength)];
 plot(abs(fft_freqcorr),'m')
 hold on
 plot(abs(freqcorr),'b:')
 title('duality applied to correlation theorem')
 subplot 313
-fft_fft_freqcorr = ifft(fft(fft(clock_comb,fftlength)).*conj(fft(fft(clock_comb,fftlength))));
+fft_fft_freqcorr = ifft(fft(fft(clock_comb,fftlength)).*conj(fft(fft(comb_shift,fftlength))));
 fft_fft_freqcorr = [fft_fft_freqcorr(end-fftlength+2:end); fft_fft_freqcorr(1:fftlength)];
 plot(abs(fft_fft_freqcorr))
 title('ifft of fft of fft method')
@@ -74,3 +74,37 @@ hold on
 plot(imag(ffft),'b:')
 plot(real(duality_fft),'m')
 plot(imag(duality_fft),'m:')
+title('test of duality theorem')
+
+%testing time delay effect on freq domain correlation
+numshifts = 4;
+clock_shift(:,1) = [clock_comb;zeros([3000 1])];
+clock_shift(:,2) = circshift([clock_comb;zeros([3000 1])], 500);
+clock_shift(:,3) = circshift([clock_comb;zeros([3000 1])], 1000);
+clock_shift(:,4) = circshift([clock_comb;zeros([3000 1])], 2000);
+
+for k = 1:1:numshifts
+    shiftcorr(:,k) = xcorr(fft(clock_comb,fftlength), fft(clock_shift(:,k),fftlength));
+end
+
+
+for k = 1:1:numshifts
+    shiftcorr_abs(:,k) = xcorr(abs(fft(clock_comb,fftlength)), abs(fft(clock_shift(:,k),fftlength)));
+end
+
+figure
+plot(abs(shiftcorr))
+title('xcorr of ffts of time shifted clock combs')
+
+figure
+plot(abs(shiftcorr_abs))
+title('xcorr of abs of ffts of time shifted clock combs')
+
+
+
+
+
+
+
+%questions:
+% what is the fourier transform of abs()
