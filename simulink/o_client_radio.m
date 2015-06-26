@@ -155,7 +155,7 @@ detect_threshold = 3;
 
 
 
-schunk = floor(fs*1);
+schunk = floor(fs*0.8);
 
 global txfifo rxfifo;
 rxfifo = o_fifo_new();
@@ -222,12 +222,18 @@ measure_rope = 0;
 global theta_rotate;
 theta_rotate = 0;
 output_enable = 1;
-output_interval = 6;
+output_interval = 6-0.6;
 
 output_timer = clock;
 chunk_detect = 0;
 chunk_samples = [];
 fignum = 0;
+log_dump = 1;
+
+if( log_dump )
+    logfilename = sprintf('%s-log-client%d.dat', mat2str(round(time)), radio)
+    logfid = fopen(logfilename, 'w'); % http://man7.org/linux/man-pages/man3/fopen.3.html
+end
 
 
 i = 0;
@@ -337,12 +343,15 @@ while 1
         
         fsearchcenter = -10E3;
        
+        if( log_dump )
+            fwrite(logfid, complex_to_raw(samples), 'uint8');
+        end
         
         fsearchwindow_low = -200 + fsearchcenter; %frequency search window low, in Hz
         fsearchwindow_hi = 200 + fsearchcenter;   %frequency search window high, in Hz
 
-%        numdatasets = 0;
-        [~, ~, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples), srate,clock_comb, clock_comb_reply, detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+        numdatasets = 0;
+%         [~, ~, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples), srate,clock_comb, clock_comb_reply, detect_threshold, fsearchwindow_low, fsearchwindow_hi);
          
         
 %         clear samples;

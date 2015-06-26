@@ -29,6 +29,8 @@
 
 function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go)
 
+pkg load signal;
+
 %diagnostic functions
 diag = 0;
 displaydatasets = 4;
