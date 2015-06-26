@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go)
 
 %diagnostic functions
 diag = 0;
@@ -253,6 +253,7 @@ service_all();
 %frequency align data
 for k = 1:1:numdatasets
     freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(1i*2*pi*freqoffsetxcorr(k)*timestamp)');
+    freqoffsetxcorr(k)
 end
 
 service_all();
@@ -377,8 +378,11 @@ samplesoffset = samplesoffsetxcorr;
 for k=1:1:numdatasets
     retrostart = samplesoffsetxcorr(k)+round(1/srate);
     retroend = samplesoffsetxcorr(k)+round(1/srate)+length(clock_comb)-1;
-    retro(retrostart : retroend, goodsets(k)) = reply_data./exp(1i*(recoveredphasexcorr(k)));
-%     retro(retrostart : retroend, goodsets(k)) = clock_comb;
+    if( retro_go )
+         retro(retrostart : retroend, goodsets(k)) = reply_data./exp(1i*(recoveredphasexcorr(k)));
+    else
+         retro(retrostart : retroend, goodsets(k)) = reply_data;
+    end
 end
 
 service_all();

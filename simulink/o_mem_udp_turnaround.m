@@ -95,7 +95,7 @@ end
 
 
 function [] = service_rx_fifo()
-    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta raw_data;
+    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta raw_data a0_tx_lifetime a0_rx_lifetime a1_rx_level a2_tx_level a1_future_drop;
 
     [data, count] = o_pipe_read(rx_pipe, payload_size);
     if( count ~= 0 )
@@ -119,7 +119,7 @@ function [] = service_rx_fifo()
 end
 
 function [] = service_tx_fifo()
-    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta theta_rotate;
+    global payload_size payload_size_floats tx_pipe rx_pipe txfifo rxfifo rx_total tx_total txrxcountdelta theta_rotate a0_tx_lifetime a0_rx_lifetime a1_rx_level a2_tx_level a1_future_drop;
 
     if( o_fifo_avail(txfifo) > payload_size_floats )
         if( (tx_total + txrxcountdelta) <= rx_total )
@@ -270,6 +270,17 @@ amplitude_ramp_up   = amplitude_comb .* rampup';
 amplitude_ramp_down = amplitude_comb .* rampdown';
 % ------------------------ end ramps ------------------------
 
+
+% ------------------------ construct half phased waves ------------------------
+asizehalf = 39063;
+phased_half = freq_shift(ones(asizehalf,1),fs,-10E3);
+
+% (index 3)
+phaseda = [phased_half;phased_half*e^(i*pi);0];
+% (index 4)
+phasedb = [phased_half;phased_half;0];
+% ------------------------ end ------------------------
+
 reply_wave = clock_comb_reply;
 
 detect_threshold = 3;
@@ -310,6 +321,7 @@ disp('block');
 txdata = zero_zero_samples(1.5*fifoMaxBytes/8);
 o_pipe_write(tx_pipe, complex_to_raw(txdata));
 disp('unblock');
+o_pipe_read(tx_pipe, 1024);
 % o_pipe_write(tx_pipe, complex_to_raw(txdata));
 % disp('unblock');
 % o_pipe_write(tx_pipe, complex_to_raw(txdata));
@@ -317,6 +329,7 @@ disp('unblock');
 
 % prime tx fifo
 % txdata = sin_out_cont(ones(1000000,1));  % debug sin wave
+txdata = zero_zero_samples(1.5*fifoMaxBytes/8);
 o_fifo_write(txfifo, txdata);
 
 
@@ -340,6 +353,7 @@ udp_feedback_enable = 0;
 log_dump = 0;
 output_wave_index = 0;
 amplitude = 1;
+retro_go = 1;
 
 if( log_dump )
     logfilename = sprintf('%s-log-radio%d.dat', mat2str(round(time)), radio)
@@ -350,6 +364,7 @@ then = now;
 i = 0;
 while 1
 
+    sleep(0.0001);
     
     chars = kbhit (1);    
     if( size(chars) ~= [0 0] )
@@ -357,15 +372,18 @@ while 1
         switch(chars)
             % --- rx dump
             case 'A'
+                disp('dump 10k rx buffer');
+                o_fifo_read(rxfifo, 10000);
+            case 'S'
                 disp('dump 1k rx buffer');
                 o_fifo_read(rxfifo, 1000);
-            case 'S'
+            case 'D'
                 disp('dump 100 rx buffer');
                 o_fifo_read(rxfifo, 100);
-            case 'D'
+            case 'F'
                 disp('dump 10 rx buffer');
                 o_fifo_read(rxfifo, 10);
-            case 'F'
+            case 'G'
                 disp('dump 1 rx buffer');
                 o_fifo_read(rxfifo, 1);
                 
@@ -376,15 +394,18 @@ while 1
                 
             % --- tx dump
             case 'a'
+                disp('dump 10k tx buffer');
+                o_fifo_read(txfifo, 10000);
+            case 's'
                 disp('dump 1k tx buffer');
                 o_fifo_read(txfifo, 1000);
-            case 's'
+            case 'd'
                 disp('dump 100 tx buffer');
                 o_fifo_read(txfifo, 100);
-            case 'd'
+            case 'f'
                 disp('dump 10 tx buffer');
                 o_fifo_read(txfifo, 10);
-            case 'f'
+            case 'g'
                 disp('dump 1 tx buffer');
                 o_fifo_read(txfifo, 1);
 
@@ -419,7 +440,7 @@ while 1
             case 'w'
                 disp('Switching reply wave to:');
                 output_wave_index = output_wave_index + 1;
-                output_wave_index = mod(output_wave_index,3); % bounds to 0,1,2
+                output_wave_index = mod(output_wave_index,5); % add bounds
                 switch(output_wave_index)
                     case 0
                         disp('Clock Comb');
@@ -430,6 +451,12 @@ while 1
                     case 2
                         reply_wave = amplitude_ramp_down;
                         disp('Ramp Down');
+                    case 3
+                        reply_wave = phaseda;
+                        disp('Phased A');
+                    case 4
+                        reply_wave = phasedb;
+                        disp('Phased B');
                 end
                 
             % --- Amplitude reduction
@@ -460,6 +487,15 @@ while 1
                     parse_feedback();
                 end
                 
+            case 'z'
+                retro_go = bitxor(retro_go, 1);
+                if( retro_go )
+                    disp('enabling retro phase adjustment');
+                else
+                    disp('disabling retro phase adjustment');
+                end
+                
+                
                 
             case 'm'
                 disp('starting measure (make sure output is enabled)');
@@ -471,6 +507,7 @@ while 1
 
 
     % set these so we can view in octave gui
+    global a0_tx_lifetime a0_rx_lifetime a1_rx_level a2_tx_level a1_future_drop
     a0_tx_lifetime = o_fifo_written_lifetime(txfifo);
     a0_rx_lifetime = o_fifo_read_lifetime(rxfifo);
 	a1_rx_level = o_fifo_avail(rxfifo);
@@ -502,7 +539,7 @@ while 1
 
         numdatasets = 0;
         if( udp_feedback_enable == 0 )
-            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,reply_wave,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,reply_wave,detect_threshold, fsearchwindow_low, fsearchwindow_hi, retro_go);
             retro_single = single(retro_single * exp(1i*theta_rotate) * amplitude);
         end
          
