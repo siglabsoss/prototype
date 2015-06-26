@@ -164,7 +164,7 @@ end
 
 
 function [] = parse_feedback()
-    global udp_payload_size feedbackfifo feedback_socket udp_feedback_enable clock_comb_reply;
+    global udp_payload_size feedbackfifo feedback_socket udp_feedback_enable reply_wave;
 
     feedbackcount = o_fifo_avail(feedbackfifo);
 
@@ -174,10 +174,10 @@ function [] = parse_feedback()
     r0 = real(feedback);
     r1 = imag(feedback);
     
-    [xcr0, lag0] = xcorr(r0, real(clock_comb_reply));
+    [xcr0, lag0] = xcorr(r0, real(reply_wave));
     [a0, b0] =  max(abs(xcr0));
     
-    [xcr1, lag1] = xcorr(r1, real(clock_comb_reply));
+    [xcr1, lag1] = xcorr(r1, real(reply_wave));
     [a1, b1] =  max(abs(xcr1));
     
     disp(sprintf('delta samples at gnuradio %d', lag0(b0) - lag1(b1)));
@@ -248,25 +248,29 @@ fs = 1/srate;
 shift_ammount = 10E3;
 clock_comb_shift = freq_shift(clock_comb, fs, shift_ammount);
 
-global clock_comb_reply;
-% this is what we reply with
+global reply_wave;
+% this is what we reply with (index 0)
 clock_comb_reply = freq_shift(clock_comb, fs, -10E3);
 
 
-% or this
+% ------------------------ construct ramps ------------------------
 asize = 78127;
 amplitude_comb = freq_shift(ones(asize,1),fs,-10E3);
 
-if( radio == 0 )
-    % transmit increasing ramp
-    ramp = 0:1/(asize-1):1;
-else
-    % transming decreasing ramp
-    ramp = 1:-1/(asize-1):0;
-end
-    
-amplitude_comb = amplitude_comb .* ramp';
+% build increasing ramp
+rampup = 0:1/(asize-1):1;
 
+% build decreasing ramp
+rampdown = 1:-1/(asize-1):0;
+
+% (index 1)
+amplitude_ramp_up   = amplitude_comb .* rampup';
+
+% (index 2)
+amplitude_ramp_down = amplitude_comb .* rampdown';
+% ------------------------ end ramps ------------------------
+
+reply_wave = clock_comb_reply;
 
 detect_threshold = 3;
 
@@ -334,6 +338,7 @@ output_enable = 1;
 global udp_feedback_enable;
 udp_feedback_enable = 0;
 log_dump = 0;
+output_wave_index = 0;
 
 if( log_dump )
     logfilename = sprintf('%s-log-radio%d.dat', mat2str(round(time)), radio)
@@ -347,74 +352,61 @@ while 1
     
     chars = kbhit (1);    
     if( size(chars) ~= [0 0] )
+        disp('');
         switch(chars)
             % --- rx dump
             case 'A'
-                disp('');
                 disp('dump 1k rx buffer');
                 o_fifo_read(rxfifo, 1000);
             case 'S'
-                disp('');
                 disp('dump 100 rx buffer');
                 o_fifo_read(rxfifo, 100);
             case 'D'
-                disp('');
                 disp('dump 10 rx buffer');
                 o_fifo_read(rxfifo, 10);
             case 'F'
-                disp('');
                 disp('dump 1 rx buffer');
                 o_fifo_read(rxfifo, 1);
                 
             % --- tx insert
             case 'q'
-                disp('');
                 disp('inserting 100k into tx buffer');
                 o_fifo_write(txfifo,complex_to_raw(zero_zero_samples(100E3)));
                 
             % --- tx dump
             case 'a'
-                disp('');
                 disp('dump 1k tx buffer');
                 o_fifo_read(txfifo, 1000);
             case 's'
-                disp('');
                 disp('dump 100 tx buffer');
                 o_fifo_read(txfifo, 100);
             case 'd'
-                disp('');
                 disp('dump 10 tx buffer');
                 o_fifo_read(txfifo, 10);
             case 'f'
-                disp('');
                 disp('dump 1 tx buffer');
                 o_fifo_read(txfifo, 1);
 
             % --- theta rotate
             case 'r'
-                disp('');
                 disp('theta -= pi/8');
                 theta_rotate = theta_rotate - pi/8;
                 disp(theta_rotate);
             case 't'
-                disp('');
                 disp('theta -= pi/4');
                 theta_rotate = theta_rotate - pi/4;
                 disp(theta_rotate);
             case 'y'
-                disp('');
                 disp('theta += pi/4');
                 theta_rotate = theta_rotate + pi/4;
                 disp(theta_rotate);
             case 'u'
-                disp('');
                 disp('theta += pi/8');
                 theta_rotate = theta_rotate + pi/8;
                 disp(theta_rotate);
                 
             % --- Toggle output
             case 'p'
-                disp('');
                 output_enable = bitxor(output_enable, 1);
                 if( output_enable )
                     disp('Enabling output');
@@ -422,8 +414,25 @@ while 1
                     disp('Disabling output');
                 end
                 
+            % --- Waveform select
+            case 'w'
+                disp('Switching reply wave to:');
+                output_wave_index = output_wave_index + 1;
+                output_wave_index = mod(output_wave_index,3); % bounds to 0,1,2
+                switch(output_wave_index)
+                    case 0
+                        disp('Clock Comb');
+                        reply_wave = clock_comb_reply;
+                    case 1
+                        reply_wave = amplitude_ramp_up;
+                        disp('Ramp Up');
+                    case 2
+                        reply_wave = amplitude_ramp_down;
+                        disp('Ramp Down');
+                end
+                    
+                
             case 'o'
-                disp('');
                 global udp_feedback_enable;
                 udp_feedback_enable = bitxor(udp_feedback_enable, 1);
                 if( udp_feedback_enable )
@@ -440,7 +449,6 @@ while 1
                 
                 
             case 'm'
-                disp('');
                 disp('starting measure (make sure output is enabled)');
                 measure_rope = 1;
                 rope_start = o_fifo_written_lifetime(txfifo);
@@ -481,7 +489,7 @@ while 1
 
         numdatasets = 0;
         if( udp_feedback_enable == 0 )
-            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,clock_comb_reply,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
+            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,reply_wave,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
             retro_single = single(retro_single * exp(1i*theta_rotate));
         end
          
