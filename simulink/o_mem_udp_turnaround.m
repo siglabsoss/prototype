@@ -339,6 +339,7 @@ global udp_feedback_enable;
 udp_feedback_enable = 0;
 log_dump = 0;
 output_wave_index = 0;
+amplitude = 1;
 
 if( log_dump )
     logfilename = sprintf('%s-log-radio%d.dat', mat2str(round(time)), radio)
@@ -430,6 +431,18 @@ while 1
                         reply_wave = amplitude_ramp_down;
                         disp('Ramp Down');
                 end
+                
+            % --- Amplitude reduction
+            case '['
+                disp('Dropping amplitude 0.05');
+                amplitude = amplitude - 0.05;
+                amplitude = max(amplitude,0)
+                
+            case ']'
+                disp('Increasing amplitude 0.05');
+                amplitude = amplitude + 0.05;
+                amplitude = min(amplitude,1)
+            
                     
                 
             case 'o'
@@ -490,7 +503,7 @@ while 1
         numdatasets = 0;
         if( udp_feedback_enable == 0 )
             [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,reply_wave,detect_threshold, fsearchwindow_low, fsearchwindow_hi);
-            retro_single = single(retro_single * exp(1i*theta_rotate));
+            retro_single = single(retro_single * exp(1i*theta_rotate) * amplitude);
         end
          
 %         clear samples;
