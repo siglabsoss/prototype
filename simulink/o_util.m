@@ -1,9 +1,19 @@
 1;
 
 
+function [fid] = grcdata_save_with_padding(filename, data)
+    l = size(data);
+    a(37500:87500) = data;
+    a(125000) = 0;
+    fid = grcdata_save(filename, a');
+end
 
-
-
+function [fid] = grcdata_save(filename, data)
+    a = complex_to_raw(data);
+    fid = fopen(filename, "a+");
+    fwrite(fid, a, 'uint8');
+    fclose(fid);
+end
 
 function [floats] = raw_to_float(raw)
     [~,sz] = size(raw);
