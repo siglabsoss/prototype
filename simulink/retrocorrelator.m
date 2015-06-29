@@ -55,8 +55,8 @@ combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 %computing basic information
 datalength = size(rawdata,1);
 numdatasets = size(rawdata,2);
-timestamp = (0:srate:(datalength-1)*srate);
-timestamp_comb = 0:srate:(length(clock_comb)-1)*srate;
+timestamp = (0:srate:(datalength-1)*srate).'; %easier if these are columns
+timestamp_comb = (0:srate:(length(clock_comb)-1)*srate).'; %easier if these are columns
 fftlength = 2^(nextpow2(datalength)+power_padding);
 
 %take fft of data
@@ -103,51 +103,97 @@ if diag
     
 end
 
-%SELECTIVITY: Limiting the range of valid correlation
-fdata_index_low = floor((fftlength)/2) + round(fsearchwindow_low*srate*fftlength)+1;
-fdata_index_hi = ceil((fftlength)/2) + round(fsearchwindow_hi*srate*fftlength);
-fcomb_index_low = floor((fftlength)/2) + round(combwindow_low*srate*fftlength)+1;
-fcomb_index_hi = ceil((fftlength)/2) + round(combwindow_hi*srate*fftlength);
-fxcorr_index_low = fftlength-fcomb_index_hi+fdata_index_low;
-fxcorr_index_hi = fxcorr_index_low + fdata_index_hi - fcomb_index_low + fcomb_index_hi - fcomb_index_low;
-xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
+% %SELECTIVITY: Limiting the range of valid correlation
+% fdata_index_low = floor((fftlength)/2) + round(fsearchwindow_low*srate*fftlength)+1;
+% fdata_index_hi = ceil((fftlength)/2) + round(fsearchwindow_hi*srate*fftlength);
+% fcomb_index_low = floor((fftlength)/2) + round(combwindow_low*srate*fftlength)+1;
+% fcomb_index_hi = ceil((fftlength)/2) + round(combwindow_hi*srate*fftlength);
+% fxcorr_index_low = fftlength-fcomb_index_hi+fdata_index_low;
+% fxcorr_index_hi = fxcorr_index_low + fdata_index_hi - fcomb_index_low + fcomb_index_hi - fcomb_index_low;
+% xcorrfreqstamp = linspace(0,2/srate,fftlength*2-1)-1/srate;
+% 
+% %frequency mask comb and shift zero freq to center
+% comb_fmask = zeros(fftlength,1);
+% comb_fmask(fcomb_index_low:fcomb_index_hi,1) = 1; %mask according to freq limits
+% masked_comb_fft = fftshift(comb_fft).*comb_fmask;
+% 
+% %frequency mask data
+% data_fmask = zeros(fftlength,1);
+% data_fmask(fdata_index_low:fdata_index_hi,1) = 1; %mask according to freq limits
+% masked_data_fft = fftshift(data_fft).*(data_fmask*ones(1,numdatasets));
+% 
+% %cross-correlate abs of masked frequency spectra using fft
+% %fxcorr = ifft(fft(abs(masked_data_fft),fftlength*2).*(conj(fft(abs(masked_comb_fft),fftlength*2))*ones(1,numdatasets))); %perform correlation
+% %fxcorr = [fxcorr(end-fftlength+2:end,:);fxcorr(1:fftlength,:)]; %limit to original input length
+% for k = 1:1:numdatasets
+%     fxcorr(:,k) = xcorr(abs(masked_data_fft(:,k)),abs(masked_comb_fft));
+% end
+% 
+% %Sample ranking based on frequency-domain comb correlation
+% %operates column wise if input is a matrix
+% [fxcorr_max_val,fxcorr_max_id] = max(fxcorr(fxcorr_index_low:fxcorr_index_hi,:)); %limited to valid window
+% fxcorrsnr = abs(fxcorr_max_val)./rms(abs(fxcorr(fxcorr_index_low:fxcorr_index_hi,:))); %reduce to only valid window to make snr normalization correct
+% fxcorr_max_id = fxcorr_max_id + fxcorr_index_low - 1; %return to original index referenced to original fft
+% freqoffset = xcorrfreqstamp(fxcorr_max_id);
 
-%frequency mask comb and shift zero freq to center
-comb_fmask = zeros(fftlength,1);
-comb_fmask(fcomb_index_low:fcomb_index_hi,1) = 1; %mask according to freq limits
-masked_comb_fft = fftshift(comb_fft).*comb_fmask;
-
-%frequency mask data
-data_fmask = zeros(fftlength,1);
-data_fmask(fdata_index_low:fdata_index_hi,1) = 1; %mask according to freq limits
-masked_data_fft = fftshift(data_fft).*(data_fmask*ones(1,numdatasets));
-
-%cross-correlate abs of masked frequency spectra using fft
-fxcorr = ifft(fft(abs(masked_data_fft),fftlength*2).*(conj(fft(abs(masked_comb_fft),fftlength*2))*ones(1,numdatasets))); %perform correlation
-fxcorr = [fxcorr(end-fftlength+2:end,:);fxcorr(1:fftlength,:)]; %limit to original input length
+%START TESTING BLOCK
+fftlength_detect = fftlength;
+%SELECTIVITY: COMPUTATION REDUCTION: Limiting the range of valid correlation
+%note this assumes the comb window is narrower than the data window (this
+%should always be the case).
+fdata_index_low_detect = floor((fftlength_detect)/2) + round(fsearchwindow_low*srate*fftlength_detect)+1;
+fdata_index_hi_detect = ceil((fftlength_detect)/2) + round(fsearchwindow_hi*srate*fftlength_detect);
+fcomb_index_low_detect = floor((fftlength_detect)/2) + round(combwindow_low*srate*fftlength_detect)+1;
+fcomb_index_hi_detect = ceil((fftlength_detect)/2) + round(combwindow_hi*srate*fftlength_detect);
+padded_difference_detect = abs((fdata_index_hi_detect-fdata_index_low_detect+1)-(fcomb_index_hi_detect-fcomb_index_low_detect+1)); %matlab zero-pads the smaller of the two inputs to make them equal length.
+fstamp_index_low_detect =  (fftlength_detect - fcomb_index_hi_detect) - padded_difference_detect + (fdata_index_low_detect-1) + 1; %the freqindex offset is equal to the number of removed samples plus 1.
+fstamp_index_hi_detect = fstamp_index_low_detect + 2*(fdata_index_hi_detect-fdata_index_low_detect+1)-1-1; 
+xcorrfreqstamp_full_detect = linspace(0,2/srate,fftlength_detect*2-1)-1/srate;
+xcorrfreqstamp_detect = xcorrfreqstamp_full_detect(fstamp_index_low_detect:fstamp_index_hi_detect);
 
 %Sample ranking based on frequency-domain comb correlation
-%operates column wise if input is a matrix
-[fxcorr_max_val,fxcorr_max_id] = max(fxcorr);
-fxcorrsnr = abs(fxcorr_max_val)./rms(abs(fxcorr(fxcorr_index_low:fxcorr_index_hi))); %reduce to only valid window to make snr normalization correct
-freqoffset = xcorrfreqstamp(fxcorr_max_id(k));
+for k = 1:1:numdatasets
+    data_fftshift = fftshift(data_fft);
+    comb_fftshift = fftshift(comb_fft);
+    [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(data_fftshift(fdata_index_low_detect:fdata_index_hi_detect,k)),abs(comb_fftshift(fcomb_index_low_detect:fcomb_index_hi_detect)));
+    fxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/rms(abs(xcorr_freq(:,k)));
+    [val id] = max(xcorr_freq(:,k));
+    freqoffset(k) = xcorrfreqstamp_detect(id);
+end
 
-%index the good sets.
-goodsets = find(fxcorrsnr > detect_threshold); %select good sets
-numgoodsets = length(goodsets); %set a new numdatasets
-
-%DIAGNOSTICS: Print detection stats
-if diag 
-    
     figure
     for k=1:1:displaydatasets
         subplot(displaydatasets,1,k)
-        plot(xcorrfreqstamp(fxcorr_index_low:fxcorr_index_hi), abs(fxcorr(fxcorr_index_low:fxcorr_index_hi,k)))
+        plot(xcorrfreqstamp_detect, abs(xcorr_freq(:,k)))
         ylabel('Magnitude')
         xlabel('Freq [Hz]')
     end
     subplot(displaydatasets,1,1)
     title('First 10 Frequency-Domain Correlations for Freq Alignment (abs)')
+
+%END TESTING BLOCK
+
+%index the good sets.
+goodsets = find(fxcorrsnr > detect_threshold); %select good sets
+numgoodsets = length(goodsets); %set a new numdatasets
+
+%testing stuff
+%clear goodsets
+%load('hayward_goodsets.mat','goodsets')
+%numgoodsets = length(goodsets); %set a new numdatasets
+
+%DIAGNOSTICS: Print detection stats
+if diag 
+    
+%     figure
+%     for k=1:1:displaydatasets
+%         subplot(displaydatasets,1,k)
+%         plot(xcorrfreqstamp(fxcorr_index_low:fxcorr_index_hi), abs(fxcorr(fxcorr_index_low:fxcorr_index_hi,k)))
+%         ylabel('Magnitude')
+%         xlabel('Freq [Hz]')
+%     end
+%     subplot(displaydatasets,1,1)
+%     title('First 10 Frequency-Domain Correlations for Freq Alignment (abs)')
     
     figure
     subplot 211
@@ -179,6 +225,10 @@ end
 %perform fft-version time-domain clock_comb xcorrelation
 txcorr = ifft(freqalignedfft.*(conj(comb_fft*ones(1,numgoodsets)))); %note that fftlength has to be > 2*datalength for this to work
 txcorr = [txcorr(end-datalength+2:end,:);txcorr(1:datalength,:)]; %limit to original data length
+%for k = 1:1:numgoodsets
+%    txcorr(:,k) = xcorr(rawdata(:,goodsets(k)).*exp(i*2*pi*-freqoffset(goodsets(k))*timestamp), clock_comb);
+%end
+    
 [txcorr_max_val,txcorr_max_id] = max(txcorr); %find peak
 phaseoffset = angle(txcorr_max_val); %recover phase offset
 samplesoffset = txcorr_max_id - datalength; %recover time offset
@@ -189,7 +239,7 @@ stopindex = datalength+min([samplesoffset;zeros(1,numgoodsets)]);
 
 aligned_data = zeros(datalength,numgoodsets); %initialize aligned_data output matrix
 for k = 1:1:numgoodsets
-    aligned_data(:,k) = [zeros([-samplesoffset(k) 1]); rawdata(startindex:stopindex,goodsets(k)).*exp(i*2*pi*-freqoffset(goodsets(k))*timestamp(startindex:stopindex).');zeros([samplesoffset(k)-1 1])]./exp(i*(phaseoffset(k))); %remember freqoffset is numdatasets (not numgoodsets) wide.
+    aligned_data(:,k) = [zeros([-samplesoffset(k) 1]); rawdata(startindex(k):stopindex(k),goodsets(k)).*exp(i*2*pi*-freqoffset(goodsets(k))*timestamp(startindex(k):stopindex(k)));zeros([samplesoffset(k)-1 1])]./exp(i*(phaseoffset(k))); %remember freqoffset is numdatasets (not numgoodsets) wide.
 end
 
 %DIAGNOSTICS: display Freq-Correction and Time-Correction
@@ -204,7 +254,7 @@ if diag
     figure
     for k=1:1:displaydatasets
         subplot(displaydatasets,1,k)
-        plot(xcorrtimestamp, abs(xcorr_data(:,k)))
+        plot(xcorrtimestamp, abs(txcorr(:,k)))
         ylabel('Magnitude')
         xlabel('Time [s]')
     end
@@ -213,17 +263,17 @@ if diag
     
     figure
     subplot 311
-    plot(freqoffset,'o-')
+    plot(freqoffset(goodsets),'o-')
     title('Frequency Offset Correction Applied')
     ylabel('Freq [Hz]')
     xlabel('dataset')
     subplot 312
-    plot(recoveredphasexcorr,'o-')
+    plot(phaseoffset,'o-')
     title('Phase Offset Correction Applied')
     ylabel('Phase [rad]')
     xlabel('dataset')
     subplot 313
-    plot(samplesoffsetxcorr,'o-')
+    plot(samplesoffset,'o-')
     title('Time Offset Correction Applied')
     ylabel('Time [samples]')
     xlabel('dataset')
@@ -249,14 +299,15 @@ end
 retro = zeros([size(aligned_data,1)+1.5/srate numdatasets]);
 
 %time advance and phase conjugate the clock comb for each epoch
-for k=1:1:numdatasets
+for k=1:1:numgoodsets
     retro(samplesoffset(k)+1/srate:samplesoffset(k)+1/srate+length(clock_comb)-1,goodsets(k)) = clock_comb./exp(i*(phaseoffset(k)));
 end
 
 if diag
+    goodsets
     phaseoffset %print these out
     samplesoffset %print these out
-    freqoffset %print these out
+    freqoffset(goodsets) %print these out
     retro_time = 0:srate:(size(retro,1)-1)*srate;
     figure
     for k=1:1:displaydatasets

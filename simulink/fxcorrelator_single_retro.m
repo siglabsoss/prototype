@@ -137,7 +137,18 @@ end
 
 %DIAGNOSTICS: Print detection stats
 if diag 
-    close all
+    %print out detection correlations
+    
+     figure
+    for k=1:1:displaydatasets
+        subplot(displaydatasets,1,k)
+        plot(xcorrfreqstamp_detect, abs(xcorr_freq(:,k)))
+        ylabel('Magnitude')
+        xlabel('Freq [Hz]')
+    end
+    subplot(displaydatasets,1,1)
+    title('First 10 Frequency-Domain Correlations for Freq Alignment (abs)')
+    
     figure
     subplot 211
     plot(noisyxcorrsnr,'o')
@@ -222,6 +233,13 @@ if diag
     if displaydatasets > numdatasets
         displaydatasets = numdatasets;
     end
+    
+    %print these
+    goodsets
+    freqoffsetxcorr
+    samplesoffsetxcorr
+    recoveredphasexcorr
+    
     figure
     for k=1:1:displaydatasets
         subplot(displaydatasets,1,k)

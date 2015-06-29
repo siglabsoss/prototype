@@ -100,7 +100,9 @@ figure
 plot(abs(shiftcorr_abs))
 title('xcorr of abs of ffts of time shifted clock combs')
 
-
+%conclusions:
+%a multiplication in the time domain by a complex sine is circular shift in
+%the frequency domain
 
 
 

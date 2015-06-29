@@ -5,12 +5,12 @@ close all
 %========================
 
 %load('mar17pt2.mat','ruthandelcamino')
-%load('mar31e.mat', 'haywardcaltrainclock')
+load('mar31e.mat', 'haywardcaltrainclock')
 %load('mar31f.mat', 'haywardcaltrainclockgain20')
-load('mar31h.mat', 'sanmateocaltrainclock')
-load('mar31g.mat', 'sanmateocaltrainclockgain10')
-load('mar31g.mat', 'sanmateocaltrainclockgain20')
-rawdata = [sanmateocaltrainclock; sanmateocaltrainclockgain10; sanmateocaltrainclockgain20];
+%load('mar31h.mat', 'sanmateocaltrainclock')
+%load('mar31g.mat', 'sanmateocaltrainclockgain10')
+%load('mar31g.mat', 'sanmateocaltrainclockgain20')
+rawdata = haywardcaltrainclock;
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
