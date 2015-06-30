@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,diag)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag)
 
 pkg load signal;
 
@@ -73,10 +73,14 @@ retroend = -1;
 samplesoffset = -1;
 
 %short fft of raw data for detection %ADDED FFT SHIFT HERE for indexing
-for k=1:1:numdatasets
-    rnoisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*rawdata(:,k);zeros([fftlength_detect-datalength,1])]));
-    noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/o_rms(rnoisyfft(:,k));
-end
+% for k=1:1:numdatasets
+%     rnoisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*rawdata(:,k);zeros([fftlength_detect-datalength,1])]));
+%     noisyfftsnr(k) = abs(max(rnoisyfft(:,k)))/o_rms(rnoisyfft(:,k));
+% end
+%matrix version
+rnoisyfft = fftshift(fft(rawdata,fftlength_detect),1);
+noisyfftsnr = abs(max(rnoisyfft))./o_rms(rnoisyfft);
+
 
 service_all();
 % disp(sprintf('t1 %g', etime(clock,edwin_timer)));
@@ -136,13 +140,15 @@ fstamp_index_low = floor(fftlength_detect+1) + round(fsearchwindow_low*srate*fft
 fstamp_index_hi = ceil(fftlength_detect-1) + round(fsearchwindow_hi*srate*fftlength_detect) - round(combwindow_low*srate*fftlength_detect);
 xcorrfreqstamp = linspace(0,2/srate,fftlength_detect*2-1)-1/srate;
 xcorr_fstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
+freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 
 %Sample ranking based on frequency-domain comb correlation
-freqstamp_fsearch = xcorrfreqstamp(fstamp_index_low:fstamp_index_hi);
 for k = 1:1:numdatasets
     [xcorr_freq(:,k), lag(:,k)] = xcorr(abs(rnoisyfft(fsearch_index_low:fsearch_index_hi,k)),abs(comb_fft(combwindow_index_low:combwindow_index_hi)));
     noisyxcorrsnr(k) = abs(max(xcorr_freq(:,k)))/o_rms(xcorr_freq(:,k));
 end
+%matrix version: there is not an easy matrixification of xcorr, it can be
+%done with fft matrices after breaking down into ffts.
 
 service_all();
 % disp(sprintf('t3 %g', etime(clock,edwin_timer)));
@@ -150,6 +156,7 @@ service_all();
 rawdatasets = numdatasets; %preserve the number of raw datasets
 goodsets = find(noisyxcorrsnr > detect_threshold);
 numdatasets = length(goodsets);
+weighting = 1+weighting_factor*noisyxcorrsnr(goodsets)/mean(noisyxcorrsnr(goodsets));
 
 %diagnostics
 %{
@@ -220,9 +227,12 @@ service_all();
 % disp(sprintf('t6 %g', etime(clock,edwin_timer)));
 
 %long data fft of raw data for frequency alignment
-for k=1:1:numdatasets
-    noisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]));
-end
+% for k=1:1:numdatasets
+%     noisyfft(:,k) = fftshift(fft([window(windowtype,datalength).*noisydata(:,k);zeros([fftlength-datalength,1])]));
+% end
+%matrix version
+noisyfft = fftshift(fft(noisydata,fftlength),1);
+
 
 service_all();
 % disp(sprintf('t7 %g', etime(clock,edwin_timer)));
@@ -304,14 +314,15 @@ if numdatasets < 1
 end
 
 for k = 1:numdatasets
-    freqaligneddataxcorr(:,k) = freqaligneddataxcorr(:,goodsets(k));
+    freqaligneddataxcorr(:,k) = freqaligneddataxcorr(:,goodsets(k)); %yes, freqaligneddataxcorr is reused without clearing.  no, it doesn't matter.
 end
 samplesoffsetxcorr = samplesoffsetxcorr(goodsets);
 recoveredphasexcorr = recoveredphasexcorr(goodsets);
+weighting = weighting(goodsets)
 
 %time and phase align data
 for k = 1:1:numdatasets
-    aligned_data(:,k) = [zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(1i*(recoveredphasexcorr(k)));
+    aligned_data(:,k) = weighting(k)*[zeros([-samplesoffsetxcorr(k) 1]); freqaligneddataxcorr(max([samplesoffsetxcorr(k) 1]):end+min([samplesoffsetxcorr(k) 0]),k);zeros([samplesoffsetxcorr(k)-1 1])]./exp(1i*(recoveredphasexcorr(k)));
 end
 
 service_all();
