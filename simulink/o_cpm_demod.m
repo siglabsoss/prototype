@@ -64,6 +64,7 @@ for currentSampleIndex = 1:packetLenghtSamples
     sampleDiff = sampleAngle - demodPreviousSampleAngle;
 
     bufferIndex = mod(currentSampleIndex-1, demodSamplesPerSymbol) +1;
+    bufferIndex = floor(bufferIndex);
 
     demodPreviousBuffer(bufferIndex) = sampleDiff;
     
@@ -71,7 +72,7 @@ for currentSampleIndex = 1:packetLenghtSamples
     
 %     disp(sprintf('sam (%f %f) bufferIndex %d modee %d scaled %f', real(sample), imag(sample), bufferIndex, modee, scaledTimeIndex));
     
-    if( bufferIndex == demodSamplesPerSymbol )
+    if( bufferIndex == floor(demodSamplesPerSymbol) )
     
         % look at buffer and make our decision
         bit = -1;
