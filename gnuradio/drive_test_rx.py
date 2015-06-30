@@ -46,6 +46,7 @@ class top_block(grc_wxgui.top_block_gui):
         		channels=range(1),
         	),
         )
+        self.uhd_usrp_source_0_0.set_clock_source("external", 0)
         self.uhd_usrp_source_0_0.set_samp_rate(samp_rate)
         self.uhd_usrp_source_0_0.set_center_freq(samp_freq, 0)
         self.uhd_usrp_source_0_0.set_gain(all_rx_gain, 0)

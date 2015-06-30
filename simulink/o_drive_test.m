@@ -54,9 +54,10 @@ starttime = time; %datetime doesn't work in octave
 reply_data = clock_comb;
 fsearchwindow_low = -100;
 fsearchwindow_hi = 400;
+weighting_factor = 0;
 retro_go = 1;
-diag = 1;
-[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,diag);
+diag = 0;
+[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
 
 
 Correlation_completed_in = time-starttime

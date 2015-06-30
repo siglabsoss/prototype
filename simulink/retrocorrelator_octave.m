@@ -318,7 +318,7 @@ for k = 1:numdatasets
 end
 samplesoffsetxcorr = samplesoffsetxcorr(goodsets);
 recoveredphasexcorr = recoveredphasexcorr(goodsets);
-weighting = weighting(goodsets)
+weighting = weighting(goodsets);
 
 %time and phase align data
 for k = 1:1:numdatasets
