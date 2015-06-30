@@ -3,9 +3,9 @@ close all
 
 %START REAL DATA LOAD BLOCK
 %========================
-%{
-load('mar17pt2.mat','ruthandelcamino')
-rawdata = ruthandelcamino;
+
+load('mar31e.mat','haywardcaltrainclock')
+rawdata = haywardcaltrainclock;
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
@@ -20,39 +20,42 @@ rawtime = 0:srate:(length(rawdata)-1)*srate;
 for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
     rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
 end
-%}
+
 %END REAL DATA LOAD
 %=======================
 
 %START SIM DATA LOAD
 %=============================
-load('thursday.mat','clock_comb125k','idealdata','patternvec')
-clock_comb = clock_comb125k;
+% load('thursday.mat','clock_comb125k','idealdata','patternvec')
+% clock_comb = clock_comb125k;
+% 
+% srate = 1/125000;
+% detect_threshold = 2.5;
+% 
+% %set parameters for generating raw data
+% snr_awgn = -3;
+% epoch_repeat = 0.8; %in seconds, the repetition rate of epochs
+% maxdelay = 0.001; %in seconds, the max delay of any one epoch in its time slot of repetition. epoch time + maxdelay should not be greater that ideallength
+% maxLOphase = 2*pi; %max LO phase offset, in radians
+% maxFshift = 100; %max frequency shift, in Hz
+% numdatasets = 60; %number of epochs in the raw data
+% rdatalength = round(epoch_repeat/srate);
+% 
+% %make raw data
+% timestamp = 0:srate:(rdatalength-1)*srate;
+% for k = 1:1:numdatasets
+%     rnoisydata(:,k) = [idealdata; zeros([rdatalength-length(idealdata) 1])]; %place each epoch into a timeslot
+%     delaysamples(k) = round(maxdelay*rand()/srate);
+%     phaserotation(k) = maxLOphase*rand(); 
+%     Fshift(k) = maxFshift*rand();
+%     rnoisydata(:,k) = rnoisydata(:,k).*(exp(i*2*pi*Fshift(k)*timestamp)'); %frequency shift
+%     rnoisydata(:,k) = rnoisydata(:,k).*exp(i*phaserotation(k)); %LO phase shift
+%     rnoisydata(:,k) = [zeros(delaysamples(k),1);rnoisydata(1:end-delaysamples(k),k)]; %time shift
+%     %rnoisydata(:,k) = awgn(rnoisydata(:,k),snr_awgn); %add noise
+% end
 
-srate = 1/125000;
-detect_threshold = 2.5;
-
-%set parameters for generating raw data
-snr_awgn = -3;
-epoch_repeat = 0.8; %in seconds, the repetition rate of epochs
-maxdelay = 0.001; %in seconds, the max delay of any one epoch in its time slot of repetition. epoch time + maxdelay should not be greater that ideallength
-maxLOphase = 2*pi; %max LO phase offset, in radians
-maxFshift = 100; %max frequency shift, in Hz
-numdatasets = 60; %number of epochs in the raw data
-rdatalength = round(epoch_repeat/srate);
-
-%make raw data
-timestamp = 0:srate:(rdatalength-1)*srate;
-for k = 1:1:numdatasets
-    rnoisydata(:,k) = [idealdata; zeros([rdatalength-length(idealdata) 1])]; %place each epoch into a timeslot
-    delaysamples(k) = round(maxdelay*rand()/srate);
-    phaserotation(k) = maxLOphase*rand(); 
-    Fshift(k) = maxFshift*rand();
-    rnoisydata(:,k) = rnoisydata(:,k).*(exp(i*2*pi*Fshift(k)*timestamp)'); %frequency shift
-    rnoisydata(:,k) = rnoisydata(:,k).*exp(i*phaserotation(k)); %LO phase shift
-    rnoisydata(:,k) = [zeros(delaysamples(k),1);rnoisydata(1:end-delaysamples(k),k)]; %time shift
-    %rnoisydata(:,k) = awgn(rnoisydata(:,k),snr_awgn); %add noise
-end
+%END SIM DATA LOAD
+%=======================
 
 %plot incoherent sum
 datalength = length(rnoisydata(:,1));
@@ -65,18 +68,23 @@ title('Incoherent Sum')
 starttime = time; %datetime doesn't work in octave
 
 %matrix version
-%[aligned_data retro_data] = fxcorrelator_single_retro_octave(rnoisydata,srate,clock_comb,detect_threshold);
+reply_data = clock_comb;
+fsearchwindow_low = -100;
+fsearchwindow_hi = 200;
+retro_go = 1;
+diag = 1;
+[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,diag);
 
 %single version
-aligned_data = [];
-retro_data = [];
-for k=1:1:size(rnoisydata,2)
-    [aligned_data_single retro_single] = retrocorrelator_octave(rnoisydata(:,k),srate,clock_comb,detect_threshold);
-    if ~(sum(aligned_data_single)==0)
-        aligned_data = [aligned_data, aligned_data_single];
-        retro_data = [retro_data, retro_single];
-    end
-end
+% aligned_data = [];
+% retro_data = [];
+% for k=1:1:size(rnoisydata,2)
+%     [aligned_data_single retro_single] = retrocorrelator_octave(rnoisydata(:,k),srate,clock_comb,detect_threshold);
+%     if ~(sum(aligned_data_single)==0)
+%         aligned_data = [aligned_data, aligned_data_single];
+%         retro_data = [retro_data, retro_single];
+%     end
+% end
 
 Correlation_completed_in = time-starttime
 
@@ -87,10 +95,12 @@ plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
 xlabel('time [s]')
 title('Coherent Sum')
 
-%{
-expected_data = my_cpm_demod_offline(idealdata,srate,100,patternvec,1);
-BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data)
-%}
+%get BER
+expected_data = o_cpm_demod(idealdata,srate,100,patternvec,1);
+BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data)
+
+%get BER of single antenna
+BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data)
 
 displaydatasets = 5;
 
@@ -109,14 +119,14 @@ title('First 5 Retrodirective responses')
 xlabel('time [s]')
 
 %unwind retro signals
-for k = 1:1:size(retro_data,2)
-    retro_unwind(:,k) = retro_data(:,k).*exp(i*phaserotation(k));
-    retro_unwind(:,k) = [zeros(delaysamples(k),1);retro_unwind(1:end-delaysamples(k),k)]; %time shift
-end
-
-%sum the retro data
-retro_sum = retro_unwind*ones([size(retro_unwind,2) 1]);
-
-figure
-plot(0:srate:(size(retro_unwind,1)-1)*srate,retro_sum)
-title('Sum of received retro signal at mobile antenna')
+% for k = 1:1:size(retro_data,2)
+%     retro_unwind(:,k) = retro_data(:,k).*exp(i*phaserotation(k));
+%     retro_unwind(:,k) = [zeros(delaysamples(k),1);retro_unwind(1:end-delaysamples(k),k)]; %time shift
+% end
+% 
+% %sum the retro data
+% retro_sum = retro_unwind*ones([size(retro_unwind,2) 1]);
+% 
+% figure
+% plot(0:srate:(size(retro_unwind,1)-1)*srate,retro_sum)
+% title('Sum of received retro signal at mobile antenna')

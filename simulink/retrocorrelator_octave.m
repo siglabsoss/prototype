@@ -27,12 +27,12 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,diag)
 
 pkg load signal;
 
 %diagnostic functions
-diag = 0;
+%diag = 0;
 displaydatasets = 4;
 if diag
     close all
@@ -51,7 +51,7 @@ if size(clock_comb,2) > size(clock_comb,1)
 end
 
 %main knobs
-power_padding = 3; %amount of extra padding to apply to the fft
+power_padding = 1; %amount of extra padding to apply to the fft
 windowtype = @rectwin; %fft window type.  @triang, @rectwin, and @hamming work best
 % fsearchwindow_low = -200 + 10E3; %frequency search window low, in Hz
 % fsearchwindow_hi = 200 + 10E3; %frequency search window high, in Hz
@@ -175,8 +175,6 @@ if numdatasets < 1
     return
 end
 
-noisyxcorrsnr
-
 service_all();
 % disp(sprintf('t4 %g', etime(clock,edwin_timer)));
 
@@ -254,8 +252,7 @@ service_all();
 
 %frequency align data
 for k = 1:1:numdatasets
-    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(1i*2*pi*freqoffsetxcorr(k)*timestamp)');
-    freqoffsetxcorr(k)
+    freqaligneddataxcorr(:,k) = noisydata(:,k).*(exp(1i*2*pi*-freqoffsetxcorr(k)*timestamp).');
 end
 
 service_all();
@@ -295,6 +292,22 @@ title('Time offset in samples')
 ylabel('offset [samples]')
 xlabel('dataset')
 %}
+
+%reduce to just datasets with a full epoch
+clear goodsets
+goodsets = find(samplesoffsetxcorr > 0 & samplesoffsetxcorr < datalength - length(timestamp_comb));
+numdatasets = length(goodsets);
+if numdatasets < 1
+    aligned_data = zeros([datalength 1]);
+    retro = zeros([size(aligned_data,1)+silence_padding_factor/srate 1]);
+    return
+end
+
+for k = 1:numdatasets
+    freqaligneddataxcorr(:,k) = freqaligneddataxcorr(:,goodsets(k));
+end
+samplesoffsetxcorr = samplesoffsetxcorr(goodsets);
+recoveredphasexcorr = recoveredphasexcorr(goodsets);
 
 %time and phase align data
 for k = 1:1:numdatasets
