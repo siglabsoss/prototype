@@ -1,14 +1,13 @@
-% knobs
-demoddata = idealdata;
-patternVectorDialog = [1 1 0 2 1 0 2 2 1 0 0 1 1 1 0 2 2 0 2 2];
-patternVectorRepeatDialog = 1;
-demodSamplesPerSymbol = 100;
-demodRotationsPerSymbol = 1;
-fs = 125E3;
+%% 
+% largely copied from my_cpm_demod_offline / mycpm_demod
+function [ bitsout ] = o_cpm_demod( data, srate, samplesPerSymbol, vector, vectorRepeat )
+
+patternVectorDialog = vector; %[1 1 0 2 1 0 2 2 1 0 0 1 1 1 0 2 2 0 2 2];
+patternVectorRepeatDialog = vectorRepeat;
+demodSamplesPerSymbol = samplesPerSymbol;
 
 
-% fixed
-srate = 1/fs;
+fs = 1/srate;
 % fixed packet length in seconds
 packetLength = 0.4;
 packetLenghtSamples = round(packetLength * fs);
@@ -39,7 +38,7 @@ for currentSampleIndex = 1:packetLenghtSamples
 
     modee = patternVector(mod(scaledTimeIndex,pvSize)+1);
     
-    sample = demoddata(currentSampleIndex);
+    sample = data(currentSampleIndex);
     sampleAngle = angle(sample);
     
     if( currentSampleIndex == 1 )
@@ -83,16 +82,10 @@ for currentSampleIndex = 1:packetLenghtSamples
 
         % only output data if demodulating data
         if( modee == 0 )
-%             block.OutputPort(1).Data = bit;
-%             disp(bit);
             bitsout = [bitsout;bit];
-%             figure;
-%             plot(demodPreviousBuffer);
-% disp(sum(demodPreviousBuffer));
         else
             % output an unrealstic number so we can remove this samples later
 %             block.OutputPort(1).Data = -2;
-%             disp(-2);
         end
     end
     
@@ -105,11 +98,3 @@ for currentSampleIndex = 1:packetLenghtSamples
     demodPreviousSampleAngle = sampleAngle;
  
 end
-    
-    
-    
-
-
-% scaledTimeIndex = floor((currentTime / packetLength) * pvSize);
-% modee = patternVector(mod(scaledTimeIndex,pvSize)+1);
-
