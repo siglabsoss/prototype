@@ -15,12 +15,12 @@ clear rrrawdata;
 
 fs = 1e8/512;
 srate = 1/fs;
-detect_threshold = 2.4;
+detect_threshold = 2.3;
 samples_per_bit_at_fs = 156.25;  % (ratio of rx radio's fs to tx radio's fs times 100)
 
 
 
-load('clock_comb195k.mat','clock_comb195k','idealdata','patternvec');
+load('clock_comb195k.mat','clock_comb195k','patternvec','ideal_bits');
 clock_comb = clock_comb195k;
 
 
@@ -53,7 +53,7 @@ starttime = time; %datetime doesn't work in octave
 %matrix version
 reply_data = clock_comb;
 fsearchwindow_low = -200;
-fsearchwindow_hi = 400;
+fsearchwindow_hi = 200;
 weighting_factor = 0;
 retro_go = 1;
 diag = 1;
@@ -71,11 +71,10 @@ xlabel('time [s]')
 title('Coherent Sum')
 
 %get BER
-expected_data = o_cpm_demod(idealdata,1/125E3,100,patternvec,1);
-BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,samples_per_bit_at_fs,patternvec,1) == expected_data)/length(expected_data)
+BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 %get BER of single antenna
-BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == expected_data)/length(expected_data)
+BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 
 
