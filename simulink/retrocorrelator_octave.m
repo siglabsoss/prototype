@@ -108,9 +108,9 @@ if diag
     subplot(displaydatasets,1,1)
     title('First 4 chunks of received raw data (real)')
     
-    figure
-    plot(timestamp_comb, real(clock_comb))
-    title('Clock Comb (real)')
+%     figure
+%     plot(timestamp_comb, real(clock_comb))
+%     title('Clock Comb (real)')
     
     figure
     for k=1:1:displaydatasets
@@ -122,9 +122,9 @@ if diag
     subplot(displaydatasets,1,1)
     title('First 4 FFTs of received raw data (abs)')
     
-    figure
-    plot(freqindex, abs(comb_fft))
-    title('FFT of Clock Comb (abs)')
+%     figure
+%     plot(freqindex, abs(comb_fft))
+%     title('FFT of Clock Comb (abs)')
     
 end
 
@@ -176,11 +176,7 @@ subplot(2,1,1)
 title('Plot and Histogram of SNR used for Signal Detection')
 %}
 
-if numdatasets < 1
-    aligned_data = zeros([datalength 1]);
-    retro = zeros([size(aligned_data,1)+silence_padding_factor/srate 1]);
-    return
-end
+
 
 service_all();
 % disp(sprintf('t4 %g', etime(clock,edwin_timer)));
@@ -200,6 +196,12 @@ if diag
     ylabel('hit count')
     subplot(2,1,1)
     title('Plot and Histogram of SNR used for Signal Detection')
+end
+
+if numdatasets < 1
+    aligned_data = zeros([datalength 1]);
+    retro = zeros([size(aligned_data,1)+silence_padding_factor/srate 1]);
+    return
 end
 
 %CLEANUP: reduce to just the good datasets

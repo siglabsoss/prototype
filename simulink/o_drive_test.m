@@ -15,7 +15,7 @@ clear rrrawdata;
 
 fs = 1e8/512;
 srate = 1/fs;
-detect_threshold = 2.5;
+detect_threshold = 2.4;
 samples_per_bit_at_fs = 156.25;  % (ratio of rx radio's fs to tx radio's fs times 100)
 
 
@@ -52,11 +52,11 @@ starttime = time; %datetime doesn't work in octave
 
 %matrix version
 reply_data = clock_comb;
-fsearchwindow_low = -100;
+fsearchwindow_low = -200;
 fsearchwindow_hi = 400;
 weighting_factor = 0;
 retro_go = 1;
-diag = 0;
+diag = 1;
 [aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
 
 
