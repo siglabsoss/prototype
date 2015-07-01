@@ -4,15 +4,28 @@ o_util;
 function [] = service_all()
 end
 
-filename='../gnuradio/drive_test_200_previous.raw';
-filename2='../gnuradio/drive_test_202_previous.raw';
-
-fid = fopen(filename, 'r'); 
 pipe_type = 'uint8';
-[rrrawdata, rdcount] = fread(fid, 9E99, pipe_type);
-fclose(fid);
-rawdata = raw_to_complex(rrrawdata');
+
+filename200='../gnuradio/drive_test_200_previous.raw';
+filename202='../gnuradio/drive_test_202_previous.raw';
+
+fid200 = fopen(filename200, 'r'); 
+
+[rrrawdata, rdcount] = fread(fid200, 9E99, pipe_type);
+fclose(fid200);
+rawdata200 = raw_to_complex(rrrawdata');
 clear rrrawdata;
+
+fid202 = fopen(filename202, 'r'); 
+[rrrawdata, rdcount] = fread(fid202, 9E99, pipe_type);
+fclose(fid202);
+rawdata202 = raw_to_complex(rrrawdata');
+clear rrrawdata;
+
+
+
+% concat
+rawdata = [rawdata200;rawdata202];
 
 
 fs = 1e8/512;
