@@ -72,7 +72,14 @@ fsearchwindow_hi = 200;
 weighting_factor = 0;
 retro_go = 1;
 diag = 0;
-[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
+[aligned_data retro_data numdatasets retrostart retroend samplesoffset noisyxcorrsnr goodsets freqoffsetxcorr recoveredphasexcorr samplesoffsetxcorr] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
+
+%calculated stats
+cal_const = 1e-15; %placeholder
+E_te = 1.04e-16;
+single_antenna_strength = 10*log(cal_const*(((abs(aligned_data).').^2)*ones(size(aligned_data,1),1)./windowsize)./(E_te/windowsize));
+coherent_antenna_strength = 10*log(cal_const*(sum(abs((aligned_data*ones([size(aligned_data,2) 1]))).^2)/windowsize)/(E_te/windowsize));
+
 
 
 Correlation_completed_in = time-starttime
@@ -92,7 +99,7 @@ BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),sra
 BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 % save any calculated data to dashboard
-save('drive_dash_data.mat', 'BER_coherent', 'BER_single');
+save('drive_dash_data.mat', 'BER_coherent', 'BER_single', 'noisyxcorrsnr', 'goodsets', 'single_antenna_strength', 'coherent_antenna_strength', 'freqoffsetxcorr', 'recoveredphasexcorr', 'samplesoffsetxcorr');
 
 % touch lock file which lets dashboard know we are done
 lockfid = fopen('dashboard_lock', 'a+'); 

@@ -27,7 +27,7 @@
 % delayed exactly 1s from the starting epoch of the input signal.  Right
 % now it just returns the clock comb with conjugated phase.
 
-function [aligned_data retro numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag)
+function [aligned_data retro numdatasets retrostart retroend samplesoffset noisyxcorrsnr goodsets freqoffsetxcorr recoveredphasexcorr samplesoffsetxcorr] = retrocorrelator_octave(rawdata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag)
 
 pkg load signal;
 

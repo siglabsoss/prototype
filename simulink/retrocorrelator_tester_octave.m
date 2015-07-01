@@ -15,7 +15,7 @@ detect_threshold = 2.5;
 
 %chunk the data
 windowsize = 0.8; % size of chunked data
-timestep = 0.3; %time stepping of data chunks.  should be < windowsize - time length of rf packet
+timestep = 0.4; %time stepping of data chunks.  should be < windowsize - time length of rf packet
 rawtime = 0:srate:(length(rawdata)-1)*srate;
 for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
     rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
@@ -73,7 +73,8 @@ fsearchwindow_low = -100;
 fsearchwindow_hi = 200;
 retro_go = 1;
 diag = 1;
-[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,diag);
+weighting_factor = 5000;
+[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
 
 %single version
 % aligned_data = [];
