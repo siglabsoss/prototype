@@ -4,7 +4,8 @@ o_util;
 function [] = service_all()
 end
 
-filename='../gnuradio/drive_test.raw';
+filename='../gnuradio/drive_test_200_previous.raw';
+filename2='../gnuradio/drive_test_202_previous.raw';
 
 fid = fopen(filename, 'r'); 
 pipe_type = 'uint8';
@@ -16,7 +17,7 @@ clear rrrawdata;
 
 fs = 1e8/512;
 srate = 1/fs;
-detect_threshold = 2.2;
+detect_threshold = 1.9;
 samples_per_bit_at_fs = 156.25;  % (ratio of rx radio's fs to tx radio's fs times 100)
 
 
@@ -42,12 +43,12 @@ end
 
 
 %plot incoherent sum
-datalength = length(rnoisydata(:,1));
-timestamp = 0:srate:(datalength-1)*srate;
-figure
-plot(timestamp,real(rnoisydata*ones([size(rnoisydata,2) 1])))
-xlabel('time [s]')
-title('Incoherent Sum')
+% datalength = length(rnoisydata(:,1));
+% timestamp = 0:srate:(datalength-1)*srate;
+% figure
+% plot(timestamp,real(rnoisydata*ones([size(rnoisydata,2) 1])))
+% xlabel('time [s]')
+% title('Incoherent Sum')
 
 starttime = time; %datetime doesn't work in octave
 
@@ -57,7 +58,7 @@ fsearchwindow_low = -200;
 fsearchwindow_hi = 200;
 weighting_factor = 0;
 retro_go = 1;
-diag = 1;
+diag = 0;
 [aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
 
 
@@ -65,17 +66,26 @@ Correlation_completed_in = time-starttime
 
 number_of_good_datasets = size(aligned_data,2)
 
-
-figure
-plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
-xlabel('time [s]')
-title('Coherent Sum')
+% 
+% figure
+% plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
+% xlabel('time [s]')
+% title('Coherent Sum')
 
 %get BER
 BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 %get BER of single antenna
 BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
+
+% save any calculated data to dashboard
+save('drive_dash_data.mat', 'BER_coherent', 'BER_single');
+
+% touch lock file which lets dashboard know we are done
+lockfid = fopen('dashboard_lock', 'a+'); 
+pipe_type = 'uint8';
+wrcount = fwrite(lockfid, [0], pipe_type);
+fclose(lockfid);
 
 
 

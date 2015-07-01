@@ -115,12 +115,16 @@ rx_pipe = o_pipe_open(rx_pipe_path);
 % o_pipe_flush(rx_pipe); % dump samples
 % sleep(2);
 
-payload_size = 1024*8;
+payload_size = 1024*16;
 fs = 1E8/512;
 
 rxcount = 0;
 
 tx_timer = clock;
+
+magic_timer = clock;
+flag1 = 0;
+flag2 = 0;
 
 sentSamples = 0;
 
@@ -145,6 +149,35 @@ while 1
         
         sin_samples = sin_out_cont(ones(payload_size/8,1))  .* 0.8;
         cos_samples = cos_out_cont(ones(payload_size/8,1))  .* 0.8;
+        
+%         sin_samples = (sin_samples .* 0) .+ 1.0;
+%         cos_samples = (cos_samples .* 0) .+ 1.0;
+
+
+
+        if( etime(clock,magic_timer) > 1 && flag1 == 0 )
+            % switch to rx
+            sin_samples(1:10) = 1;
+            cos_samples(1:10) = 1;
+            
+            flag1 = 1;
+            disp('trig1');
+        end
+        
+%         if( flag1 == 1 && flag2 == 0 )
+%             sin_samples = (sin_samples .* 0);
+%             cos_samples = (cos_samples .* 0);
+% %             disp('z');
+%         end
+        
+         
+        if( etime(clock,magic_timer) > 15 && flag2 == 0 )
+            % switch to tx
+            sin_samples(1:10) = -1;
+            cos_samples(1:10) = -1;
+            flag2 = 1;
+            disp('trig2');
+        end
         
         vec2 = complex(cos_samples, sin_samples);
         vec2_bytes = complex_to_raw(vec2);
