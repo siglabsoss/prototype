@@ -154,7 +154,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     tb = top_block()
     tb.start(True)
-    time.sleep(15)
+    time.sleep(30)
     tb.stop()
     tb.wait()
 

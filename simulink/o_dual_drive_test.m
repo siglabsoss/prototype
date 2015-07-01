@@ -24,13 +24,50 @@ clear rrrawdata;
 
 
 
+
+
+
+
+% default value for knobs (used incase correlator_knobs.mat is missing)
+detect_threshold = 1.9;
+fsearchwindow_low = -200;
+fsearchwindow_hi = 200;
+concat_mode = 0;
+
+% optionally load settings from dashboard hotkeys
+statval = stat('correlator_knobs.mat');
+if( size(statval) == [0 0] )
+   disp('warning no dash settings found');
+else
+    load('correlator_knobs.mat');
+    disp('updated to');
+    detect_threshold
+    fsearchwindow_low
+    fsearchwindow_hi
+    concat_mode
+end
+
+
 % concat
-rawdata = [rawdata200;rawdata202];
+switch(concat_mode)
+    case 0
+        rawdata = [rawdata200;rawdata202];
+    case 1
+        rawdata = rawdata200;
+    case 2
+        rawdata = rawdata202;
+end
 
 
+
+
+
+
+
+
+% pretty much fixed
 fs = 1e8/512;
 srate = 1/fs;
-detect_threshold = 1.9;
 samples_per_bit_at_fs = 156.25;  % (ratio of rx radio's fs to tx radio's fs times 100)
 
 
@@ -55,20 +92,11 @@ end
 
 
 
-%plot incoherent sum
-% datalength = length(rnoisydata(:,1));
-% timestamp = 0:srate:(datalength-1)*srate;
-% figure
-% plot(timestamp,real(rnoisydata*ones([size(rnoisydata,2) 1])))
-% xlabel('time [s]')
-% title('Incoherent Sum')
 
 starttime = time; %datetime doesn't work in octave
 
 %matrix version
 reply_data = clock_comb;
-fsearchwindow_low = -200;
-fsearchwindow_hi = 200;
 weighting_factor = 0;
 retro_go = 1;
 diag = 0;
@@ -86,11 +114,6 @@ Correlation_completed_in = time-starttime
 
 number_of_good_datasets = size(aligned_data,2)
 
-% 
-% figure
-% plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
-% xlabel('time [s]')
-% title('Coherent Sum')
 
 %get BER
 BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
