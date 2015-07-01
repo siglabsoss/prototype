@@ -97,7 +97,7 @@ while 1
         
         %calc theoretical data rate
         num_antennas = 100;
-        delta_f = 1e4;
+        delta_f = 26e6; %ISM band
         theoretical_data_rate_single = delta_f*log2(1+10^(mean(single_antenna_strength)/10));
         theoretical_data_rate_coherent = delta_f*log2(1+10^(coherent_antenna_strength/10));
         theoretical_data_rate_10k = delta_f*log2(1+(1e4/num_antennas)*(10^(coherent_antenna_strength)/10));
@@ -114,7 +114,7 @@ while 1
         figure(1)
         plot(time_accumulator,BER_coherent_accumulator,'bo-')
         hold on
-        plot(time_accumulator,BER_single_accumulator,'ro-')
+        plot(time_accumulator,BER_single_accumulator,'rx-')
         hold off
         legend('Coherent','Single Antenna','Location','NorthWest')
         xlabel('Time [s]','FontSize',14)
@@ -131,7 +131,7 @@ while 1
         legend('Coherent Epoch','Single Antenna Epoch','Location','NorthWest')
         xlabel('Antenna Epoch','FontSize',14)
         ylabel('Epoch Strength (dB)','FontSize',14)
-        %ylim([0 0.6])
+        ylim([-20 100])
         title('Current: Antenna Strength (Signal / Thermal Energy) for Coherent and Single','FontSize',14)
         
         %Rank Plot

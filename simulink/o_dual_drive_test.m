@@ -103,8 +103,8 @@ diag = 0;
 [aligned_data retro_data numdatasets retrostart retroend samplesoffset noisyxcorrsnr goodsets freqoffsetxcorr recoveredphasexcorr samplesoffsetxcorr] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
 
 %calculated stats
-cal_const = 1e-15; %placeholder
-E_te = 1.04e-16;
+cal_const = 1.18e-12; %calculated from thermal noise measurements
+E_te = 1.04e-16; %thermal energy for 10kHz band for windowsize of time.
 single_antenna_strength = 10*log(cal_const*(((abs(aligned_data).').^2)*ones(size(aligned_data,1),1)./windowsize)./(E_te/windowsize));
 coherent_antenna_strength = 10*log(cal_const*(sum(abs((aligned_data*ones([size(aligned_data,2) 1]))).^2)/windowsize)/(E_te/windowsize));
 
