@@ -93,6 +93,9 @@ while 1
         
         % load data
         load('drive_dash_data.mat');
+        
+        BER_coherent
+        BER_single
 
         
         %calc theoretical data rate
