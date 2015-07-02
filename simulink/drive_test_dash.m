@@ -104,7 +104,7 @@ while 1
         bandwidth_factor_db = 10*log10(10e3/delta_f);
         theoretical_data_rate_single = delta_f*log2(1+10^((median(single_antenna_strength)+bandwidth_factor_db)/10));
         theoretical_data_rate_coherent = delta_f*log2(1+10^((coherent_antenna_strength+bandwidth_factor_db)/10));
-        theoretical_data_rate_10k = delta_f*log2(1+(1e4/num_antennas)*(10^(coherent_antenna_strength+bandwidth_factor_db)/10));
+        theoretical_data_rate_10k = delta_f*log2(1+(1e4/num_antennas)*(10^((coherent_antenna_strength+bandwidth_factor_db)/10)));
         
         %hoarder
         thistime = time-starttime;
@@ -182,13 +182,17 @@ while 1
         figure(6)
         clf
         axis off
-        text(0.1,0.75,'Theoretical Data Rate Single Antenna: ','FontSize',16);
-        text(0.1,0.65,[num2str(theoretical_data_rate_single,3) ' bit/s'],'FontSize',18,'Color','r');
-        text(0.1,0.50,'Theoretical Data Rate Coherent Antenna: ','FontSize',16);
-        text(0.1,0.40,[num2str(theoretical_data_rate_coherent,3) ' bit/s'],'FontSize',18,'Color','b');
-        text(0.1,0.25,'Theoretical Data Rate 10k Coherent Antennas: ','FontSize',16);
-        text(0.1,0.15,[num2str(theoretical_data_rate_10k,3) ' bit/s'],'FontSize',18,'Color','g');
+        text(0.1,0.85,'Theoretical Data Rate Single Antenna: ','FontSize',16);
+        text(0.1,0.75,[num2str(theoretical_data_rate_single,3) ' bit/s'],'FontSize',18,'Color','r');
+        text(0.1,0.60,'Theoretical Data Rate Coherent Antenna: ','FontSize',16);
+        text(0.1,0.50,[num2str(theoretical_data_rate_coherent,3) ' bit/s'],'FontSize',18,'Color','b');
+        text(0.1,0.35,'Theoretical Data Rate 10k Coherent Antennas: ','FontSize',16);
+        text(0.1,0.25,[num2str(theoretical_data_rate_10k,3) ' bit/s'],'FontSize',18,'Color','g');
         title('Shannon-Hartley Data Rate for Antenna SNR','FontSize',18)
+        text(0.1,0.05,'Single Antenna BER','FontSize',16)
+        text(0.2,0.0,num2str(BER_single,3),'FontSize',18,'Color','r')
+        text(0.5,0.05,'Coherent Antenna BER','FontSize',16)
+        text(0.6,0.0,num2str(BER_coherent,3),'FontSize',18,'Color','b')
         
         
         
