@@ -101,9 +101,10 @@ while 1
         %calc theoretical data rate
         num_antennas = 100;
         delta_f = 26e6; %ISM band
-        theoretical_data_rate_single = delta_f*log2(1+10^(mean(single_antenna_strength)/10));
-        theoretical_data_rate_coherent = delta_f*log2(1+10^(coherent_antenna_strength/10));
-        theoretical_data_rate_10k = delta_f*log2(1+(1e4/num_antennas)*(10^(coherent_antenna_strength)/10));
+        bandwidth_factor_db = 10*log10(10e3/delta_f);
+        theoretical_data_rate_single = delta_f*log2(1+10^((median(single_antenna_strength)+bandwidth_factor_db)/10));
+        theoretical_data_rate_coherent = delta_f*log2(1+10^((coherent_antenna_strength+bandwidth_factor_db)/10));
+        theoretical_data_rate_10k = delta_f*log2(1+(1e4/num_antennas)*(10^(coherent_antenna_strength+bandwidth_factor_db)/10));
         
         %hoarder
         thistime = time-starttime;
@@ -123,6 +124,7 @@ while 1
         xlabel('Time [s]','FontSize',14)
         ylabel('Bit Error Rate (BER)','FontSize',14)
         ylim([0 0.6])
+        grid on
         title('Time History: Bit Error Rate of Coherent and Single Antennas','FontSize',14)
         
         %Antenna Power Plot
@@ -186,6 +188,7 @@ while 1
         text(0.1,0.40,[num2str(theoretical_data_rate_coherent,3) ' bit/s'],'FontSize',18,'Color','b');
         text(0.1,0.25,'Theoretical Data Rate 10k Coherent Antennas: ','FontSize',16);
         text(0.1,0.15,[num2str(theoretical_data_rate_10k,3) ' bit/s'],'FontSize',18,'Color','g');
+        title('Shannon-Hartley Data Rate for Antenna SNR','FontSize',18)
         
         
         
