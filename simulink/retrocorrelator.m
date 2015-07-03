@@ -9,14 +9,14 @@
 %
 % OPTIONAL INPUTS:
 % 
-%       [aligned_data retro] = retrocorrelator(rawdata,srate,clock_comb,diag,detect_threshold,reply_data,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor);
+%       [aligned_data retro] = retrocorrelator(rawdata,srate,clock_comb,detect_threshold,reply_data,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor);
 %
 % OPTIONAL OUTPUTS:
 %       
-%       [aligned_data retro numgoodsets retrostart retroend samplesoffset noisyxcorrsnr goodsets freqoffsetxcorr recoveredphasexcorr samplesoffsetxcorr] = retrocorrelator(rawdata,srate,clock_comb);
+%       [aligned_data retro retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator(rawdata,srate,clock_comb);
 % 
 % detect_threshold,reply_data,fsearchwindow_low,fsearchwindow_hi,retro_go,
-% weighting_factor, and diag are optional.  Defaults will be used if not 
+% weighting_factor are optional.  Defaults will be used if not 
 % specified.
 %
 % rawdata is a single-dimensional array of data samples at srate.
@@ -40,7 +40,7 @@
 % now it just returns the clock comb with conjugated phase.
 
 
-function [aligned_data retro numgoodsets retrostart retroend samplesoffset noisyxcorrsnr goodsets freqoffsetxcorr recoveredphasexcorr samplesoffsetxcorr] = retrocorrelator(rawdata,srate,clock_comb,varargin)
+function [aligned_data retro retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator(rawdata,srate,clock_comb,varargin)
 
 %convenience: input handling
 %assign defaults
@@ -50,39 +50,30 @@ fsearchwindow_low = -100; %frequency search window low, in Hz
 fsearchwindow_hi = 200; %frequency search window high, in Hz
 retro_go = 1;
 weighting_factor = 0;
-diag = 0;
 
 %serve optional arguments
 switch nargin
     case 4
-        diag = varargin{1};
-    case 5
-        diag = varargin{1};
         detect_threshold = varargin{2};
-    case 6
-        diag = varargin{1};
+    case 5
         detect_threshold = varargin{2};
         reply_data = varargin{3};
-    case 7
-        diag = varargin{1};
+    case 6
         detect_threshold = varargin{2};
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
-    case 8
-        diag = varargin{1};
+    case 7
         detect_threshold = varargin{2};
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
         fsearchwindow_hi = varargin{5};
-    case 9
-        diag = varargin{1};
+    case 8
         detect_threshold = varargin{2};
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
         fsearchwindow_hi = varargin{5};
         retro_go = varargin{6};
-    case 10
-        diag = varargin{1};
+    case 9
         detect_threshold = varargin{2};
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
@@ -91,12 +82,6 @@ switch nargin
         weighting_factor = varargin{7};       
 end
         
-%diagnostic functions
-displaydatasets = 10;
-if diag
-    close all
-end
-
 %check for rawdata and comb to be in column form
 if size(rawdata,2) > size(rawdata,1)
     rawdata = rawdata';
@@ -123,44 +108,6 @@ data_fft = fft(rawdata, fftlength); %operates column wise if input is a matrix
 
 %take fft of clock_comb
 comb_fft = fft(clock_comb,fftlength);
-
-%DIAGNOSTICS: Display incoming Raw Data
-if diag
-    if displaydatasets > numdatasets
-        displaydatasets = numdatasets;
-    end
-    
-    freqindex = linspace(0,1/srate,fftlength)-1/srate/2;
-    
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(timestamp, real(rawdata(:,k)))
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 chunks of received raw data (real)')
-    
-    figure
-    plot(timestamp_comb, real(clock_comb))
-    title('Clock Comb (real)')
-    
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(freqindex, abs(fftshift(data_fft(:,k))))
-        ylabel('Magnitude')
-        xlabel('Freq [Hz]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 FFTs of received raw data (abs)')
-    
-    figure
-    plot(freqindex, abs(fftshift(comb_fft)))
-    title('FFT of Clock Comb (abs)')
-    
-end
 
 %SELECTIVITY: Limiting the range of valid correlation
 fdata_index_low = floor((fftlength)/2) + round(fsearchwindow_low*srate*fftlength)+1;
@@ -196,34 +143,6 @@ freqoffset = xcorrfreqstamp(fxcorr_max_id);
 goodsets = find(fxcorrsnr > detect_threshold); %select good sets
 numgoodsets = length(goodsets); %set a new numdatasets
 
-%DIAGNOSTICS: Print detection stats
-if diag 
-    
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(xcorrfreqstamp(fxcorr_index_low:fxcorr_index_hi), abs(fxcorr(fxcorr_index_low:fxcorr_index_hi,k)))
-        ylabel('Magnitude')
-        xlabel('Freq [Hz]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 Frequency-Domain Correlations for Freq Alignment (abs)')
-    
-    figure
-    subplot 211
-    plot(fxcorrsnr,'o')
-    hold on
-    plot(goodsets,fxcorrsnr(goodsets),'mo')
-    xlabel('Data Chunk Index')
-    ylabel('Comb Correlation SNR')
-    subplot 212
-    histogram(fxcorrsnr,20)
-    xlabel('xcorr SNR value')
-    ylabel('hit count')
-    subplot 211
-    title('Plot and Histogram of SNR used for Signal Detection')
-end
-
 %if no good datasets found, return empty zeros
 if numgoodsets < 1
     aligned_data = zeros([datalength 1]);
@@ -253,53 +172,6 @@ for k = 1:1:numgoodsets
     aligned_data(:,k) = [zeros([-samplesoffset(k) 1]); rawdata(startindex(k):stopindex(k),goodsets(k)).*exp(i*2*pi*-freqoffset(goodsets(k))*timestamp(startindex(k):stopindex(k)));zeros([samplesoffset(k)-1 1])]./exp(i*(phaseoffset(k))); %remember freqoffset is numdatasets (not numgoodsets) wide.
 end
 
-%DIAGNOSTICS: display Freq-Correction and Time-Correction
-%Cross-Correlations, Corrections and corrected data
-if diag
-    if displaydatasets > numgoodsets
-        displaydatasets = numgoodsets;
-    end
-    
-    xcorrtimestamp = [flip(-timestamp,1);timestamp(2:end)]; %zero in the middle
-    
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(xcorrtimestamp, abs(txcorr(:,k)))
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 Time-Domain Correlations for Time/Phase Alignment')
-    
-    figure
-    subplot 311
-    plot(freqoffset(goodsets),'o-')
-    title('Frequency Offset Correction Applied')
-    ylabel('Freq [Hz]')
-    xlabel('dataset')
-    subplot 312
-    plot(phaseoffset,'o-')
-    title('Phase Offset Correction Applied')
-    ylabel('Phase [rad]')
-    xlabel('dataset')
-    subplot 313
-    plot(samplesoffset,'o-')
-    title('Time Offset Correction Applied')
-    ylabel('Time [samples]')
-    xlabel('dataset')
-    
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(timestamp, real(aligned_data(:,k)))
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 Frequency-, Time-, and Phase-Aligned Datasets (real)')
-end
-
 %===========================================
 %create retro-directive transmit signal
 %===========================================
@@ -308,7 +180,6 @@ end
 %this creates the zero padding as well as makes the retro output of
 %non-detected epochs zero.
 retro = zeros([size(aligned_data,1)+round(silence_padding_factor/srate) numdatasets]);
-
 
 %time advance and phase conjugate the clock comb for each epoch
 retrostart = samplesoffset+round(1/srate);
@@ -319,20 +190,6 @@ for k=1:1:numgoodsets
     else
         retro(retrostart(k):retroend(k),goodsets(k)) = reply_data;
     end
-end
-
-if diag
-    freqoffset(goodsets) %print these out
-    retro_time = 0:srate:(size(retro,1)-1)*srate;
-    figure
-    for k=1:1:displaydatasets
-        subplot(displaydatasets,1,k)
-        plot(retro_time, real(retro(:,k)),'r')
-        ylabel('Magnitude')
-        xlabel('Time [s]')
-    end
-    subplot(displaydatasets,1,1)
-    title('First 10 Retrodirective Return Signals (real)')
 end
 
 end
