@@ -30,7 +30,7 @@ class top_block(grc_wxgui.top_block_gui):
         ##################################################
         self.udp_payload_size = udp_payload_size = 1024*30
         self.samp_rate = samp_rate = 1E8/512
-        self.samp_freq = samp_freq = 910e6
+        self.samp_freq = samp_freq = 910.25e6
         self.r01_feedback_port = r01_feedback_port = 1300
         self.operator_ip = operator_ip = "127.0.0.1"
         self.all_tx_gain = all_tx_gain = 0

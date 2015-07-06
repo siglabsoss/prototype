@@ -29,7 +29,7 @@ clear rrrawdata;
 
 
 % default value for knobs (used incase correlator_knobs.mat is missing)
-detect_threshold = 1.9;
+detect_threshold = 2.4;
 fsearchwindow_low = -200;
 fsearchwindow_hi = 200;
 concat_mode = 0;
