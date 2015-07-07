@@ -354,6 +354,8 @@ log_dump = 0;
 output_wave_index = 0;
 amplitude = 1;
 retro_go = 1;
+retro_diags = 0;
+retro_weight_factor = 0;
 
 if( log_dump )
     logfilename = sprintf('%s-log-radio%d.dat', mat2str(round(time)), radio)
@@ -539,7 +541,7 @@ while 1
 
         numdatasets = 0;
         if( udp_feedback_enable == 0 )
-            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset] = retrocorrelator_octave(double(samples),srate,clock_comb,reply_wave,detect_threshold, fsearchwindow_low, fsearchwindow_hi, retro_go);
+            [~, retro_single, numdatasets, retrostart, retroend, samplesoffset, ~, ~, ~, ~, ~] = retrocorrelator_octave(double(samples),srate,clock_comb,reply_wave,detect_threshold, fsearchwindow_low, fsearchwindow_hi, retro_go, retro_weight_factor, retro_diags);
             retro_single = single(retro_single * exp(1i*theta_rotate) * amplitude);
         end
          

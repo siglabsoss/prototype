@@ -156,7 +156,6 @@ service_all();
 rawdatasets = numdatasets; %preserve the number of raw datasets
 goodsets = find(noisyxcorrsnr > detect_threshold);
 numdatasets = length(goodsets);
-weighting = 1+weighting_factor*noisyxcorrsnr(goodsets)/mean(noisyxcorrsnr(goodsets));
 
 %diagnostics
 %{
@@ -203,6 +202,9 @@ if numdatasets < 1
     retro = zeros([size(aligned_data,1)+silence_padding_factor/srate 1]);
     return
 end
+
+weighting = 1+weighting_factor*noisyxcorrsnr(goodsets)/mean(noisyxcorrsnr(goodsets));
+
 
 %CLEANUP: reduce to just the good datasets
 for k = 1:numdatasets
