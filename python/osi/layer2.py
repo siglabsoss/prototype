@@ -55,7 +55,9 @@ def switch_zmq_message(m):
 
     # print ord(m[0])
 
-    print 'switch message with len', len(m)
+    length = len(m)
+
+    print 'switch message with len', length
     print ''
     # print pickle.dumps(m)
     print ''
@@ -73,8 +75,22 @@ def switch_zmq_message(m):
         print "radio id", data, "booted"
 
     if( command == 10001 ):
-        print "got packet"
+        print "got packet from", data
+        c2 = raw_to_complex(m[8:16])
+        offset = real(c2)
 
+        header = 2 # how many complex floats for header?
+        data_length = (length/8) - header
+
+        data = [None] * data_length # allocate empty list http://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+
+        # this loop skips the header and loops every 8 count
+        for i in range(8*header,length,8):
+            # this backs out the header so data(0) will be the first sample
+            data[(i/8)-header] = raw_to_complex(m[i:i+8])
+            # print(raw_to_complex(m[i:i+8]))
+
+        print data
 
 
 def poll_zmq():

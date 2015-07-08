@@ -9,6 +9,8 @@ o_util;
 o_include_zmq_commands;
 
 
+% load some data
+load('clock_comb195k.mat','clock_comb195k','idealdata','patternvec');
 
 radio = 1;
 
@@ -27,3 +29,4 @@ i = 0;
 
 zmq_octave_hello(zmq_to_python, radio);
 
+zmq_octave_packet_rx(zmq_to_python, radio, clock_comb195k, 9392920);
