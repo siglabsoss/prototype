@@ -38,6 +38,13 @@ class SigSource(object):
             return self.zsock.recv()
         return False
 
+    def get_pyobj(self):
+        socks = dict(self.poller.poll(0))
+        if self.zsock in socks and socks[self.zsock] == zmq.POLLIN:
+            return self.zsock.recv_pyobj()
+        return False
+
+
     def change(self, hz):
         if hz > 928E6:
             raise RuntimeError('Frequency too high.')

@@ -15,3 +15,6 @@ class SigSink(object):
 
     def send(self, data):
         self.zsock.send(data)
+
+    def send_pyobj(self, data):
+        self.zsock.send_pyobj(data)
