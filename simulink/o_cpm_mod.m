@@ -1,4 +1,4 @@
-function [ dataout ] = o_cpm_mod( bits, bitsrate, srate, samplesPerSymbol, rotationsPerSymbol, vector, vectorRepeat )
+function [ dataout, clock_comb ] = o_cpm_mod( bits, bitsrate, srate, samplesPerSymbol, rotationsPerSymbol, vector, vectorRepeat )
 %O_CPM_MOD Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,6 +13,7 @@ clockFrequency = 100;
 dinFilterLength = 3;
 
 dataout = [];
+clock_comb = [];
 
 
 % init
@@ -55,14 +56,14 @@ end
 
 [sz,~] = size(bitVector);
 
-for currentSampleIndex = [1:sz]
+for currentTime = [0:srate:packetLength]
     din = sum(dinFilterr)/dinFilterLength;
 
     filterIndex = mod(totalSamples, dinFilterLength) + 1;
     dinFilterr(filterIndex) = bitVector(j); % fill into filter
     
-    currentTime = (currentSampleIndex-1) * srate;
-    mat2str(currentTime)
+%     currentTime = (currentSampleIndex-1) * srate;
+%     mat2str(currentTime)
     scaledTimeIndex = floor((currentTime / packetLength) * pvSize);
     
     
@@ -134,8 +135,8 @@ for currentSampleIndex = [1:sz]
     
     
     
-%     dataout = [dataout; complex(trout,tiout)];
-    dataout = [dataout; complex(crout,ciout)];
+     dataout = [dataout; complex(trout,tiout)];
+     clock_comb = [clock_comb; complex(crout,ciout)];
 
 
     totalSamples = totalSamples + 1;
