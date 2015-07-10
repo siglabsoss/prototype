@@ -3,7 +3,7 @@ function [ dataout, clock_comb ] = o_cpm_mod( bits, bitsrate, srate, samplesPerS
 %   Detailed explanation goes here
 
 
-rateRatio = bitsrate/srate 
+rateRatio = bitsrate/srate; 
 patternVectorDialog = vector; %[1 1 0 2 1 0 2 2 1 0 0 1 1 1 0 2 2 0 2 2];
 patternVectorRepeatDialog = vectorRepeat;
 demodSamplesPerSymbol = samplesPerSymbol;
@@ -56,11 +56,17 @@ end
 
 [sz,~] = size(bitVector);
 
-for currentTime = [0:srate:packetLength]
-    din = sum(dinFilterr)/dinFilterLength;
+j = 1;
 
-    filterIndex = mod(totalSamples, dinFilterLength) + 1;
-    dinFilterr(filterIndex) = bitVector(j); % fill into filter
+for currentTime = [0:srate:packetLength]
+
+%% these three lines filter the data only       
+%     din = sum(dinFilterr)/dinFilterLength;
+%     filterIndex = mod(totalSamples, dinFilterLength) + 1;
+%     dinFilterr(filterIndex) = bitVector(j); % fill into filter
+
+%% for now turn filter off, seems to be more clean this way
+    din = bitVector(j);
     
 %     currentTime = (currentSampleIndex-1) * srate;
 %     mat2str(currentTime)
@@ -141,6 +147,10 @@ for currentTime = [0:srate:packetLength]
 
     totalSamples = totalSamples + 1;
 
+    % only advance bit pattern when in the right mode
+    if( modee == 0 )
+        j = j + 1;
+    end
 
 end
 
