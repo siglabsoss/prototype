@@ -19,9 +19,9 @@
 % weighting_factor are optional.  Defaults will be used if not 
 % specified.
 %
-% rawdata is a single-dimensional array of data samples at srate.
-% rawdata must be longer than clock_comb.  If rawdata is an array, each
-% chunk of rawdata show be in column form.
+% rawdata is complex input data at srate.  rawdata must be longer than 
+% clock_comb.  If rawdata is an array, each chunk of rawdata should be in
+% column form.
 %
 % srate is equal to the time value of each sample, i.e. 125kHz data has
 % srate = 1/125000
@@ -36,8 +36,8 @@
 % each sequence of aligned data will occupy one column of the ouput.
 % 
 % retro is the return transmission signal.  It is padded with zeros and
-% delayed exactly 1s from the starting epoch of the input signal.  Right
-% now it just returns the clock comb with conjugated phase.
+% delayed exactly 1s from the starting epoch of the input signal.  By
+% default it returns the clock comb with conjugated phase.
 
 
 function [aligned_data retro retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator(rawdata,srate,clock_comb,varargin)
@@ -57,24 +57,29 @@ switch nargin
         detect_threshold = varargin{2};
     case 5
         detect_threshold = varargin{2};
+        clear reply_data;
         reply_data = varargin{3};
     case 6
         detect_threshold = varargin{2};
+        clear reply_data;
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
     case 7
         detect_threshold = varargin{2};
+        clear reply_data;
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
         fsearchwindow_hi = varargin{5};
     case 8
         detect_threshold = varargin{2};
+        clear reply_data;
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
         fsearchwindow_hi = varargin{5};
         retro_go = varargin{6};
     case 9
         detect_threshold = varargin{2};
+        clear reply_data;
         reply_data = varargin{3};
         fsearchwindow_low = varargin{4};
         fsearchwindow_hi = varargin{5};
