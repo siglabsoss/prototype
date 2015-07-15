@@ -8,17 +8,42 @@ load('mar31e.mat','haywardcaltrainclock')
 rawdata = haywardcaltrainclock;
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
-
-%settings
+samples_per_bit_at_fs = 100;
 srate = 1/125000;
 detect_threshold = 2.5;
+ideal_bits = o_cpm_demod(idealdata,srate,100,patternvec,1);
+
+%RAW DATA BLOCK
+%=========================
+% load('clock_comb195k.mat','clock_comb195k','patternvec','ideal_bits');
+% clock_comb = clock_comb195k;
+% 
+% o_util;
+% pipe_type = 'uint8';
+% filename200='./SanMateoSouthAndGumArray.raw';
+% fid200 = fopen(filename200, 'r'); 
+% [rrrawdata, rdcount] = fread(fid200, 9E99, pipe_type);
+% fclose(fid200);
+% rawdata200 = raw_to_complex(rrrawdata');
+% clear rrrawdata;
+% rawdata = double(rawdata200(end/2:end));
+% fs = 1e8/512;
+% srate = 1/fs;
+% samples_per_bit_at_fs = 156.25;
+% 
+% detect_threshold = 2;
+%END RAW DATA BLOCK
+%=============================
+
+
 
 %chunk the data
 windowsize = 0.8; % size of chunked data
-timestep = 0.4; %time stepping of data chunks.  should be < windowsize - time length of rf packet
+timestep = 0.3; %time stepping of data chunks.  should be < windowsize - time length of rf packet
 rawtime = 0:srate:(length(rawdata)-1)*srate;
-for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
-    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
+timestepsamples = round(windowsize/srate);
+for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)-1
+    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate)+timestepsamples);
 end
 
 %END REAL DATA LOAD
@@ -72,15 +97,19 @@ reply_data = clock_comb;
 fsearchwindow_low = -100;
 fsearchwindow_hi = 200;
 retro_go = 1;
-diag = 1;
-weighting_factor = 5000;
-[aligned_data retro_data numdatasets retrostart retroend samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
+weighting_factor = 0;
+[aligned_data retro_data retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator_octave(rnoisydata,srate,clock_comb,detect_threshold,clock_comb,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor);
 
 %single version
+% reply_data = clock_comb;
+% fsearchwindow_low = -100;
+% fsearchwindow_hi = 200;
+% retro_go = 1;
+% weighting_factor = 0;
 % aligned_data = [];
 % retro_data = [];
 % for k=1:1:size(rnoisydata,2)
-%     [aligned_data_single retro_single] = retrocorrelator_octave(rnoisydata(:,k),srate,clock_comb,detect_threshold);
+%     [aligned_data_single retro_single retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator_octave(rnoisydata(:,k),srate,clock_comb,detect_threshold,clock_comb,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor);
 %     if ~(sum(aligned_data_single)==0)
 %         aligned_data = [aligned_data, aligned_data_single];
 %         retro_data = [retro_data, retro_single];
@@ -91,17 +120,66 @@ Correlation_completed_in = time-starttime
 
 number_of_good_datasets = size(aligned_data,2)
 
-figure
-plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
-xlabel('time [s]')
-title('Coherent Sum')
+%DIAGNOSTIC PLOTS (only works with matrix version)
+%         cal_const = 1.18e-12; %calculated from thermal noise measurements
+%         E_te = 1.04e-16; %thermal energy for 10kHz band for windowsize of time.
+%         single_antenna_strength = 10*log10(cal_const*(((abs(aligned_data).').^2)*ones(size(aligned_data,1),1)./windowsize)./(E_te/windowsize));
+%         coherent_antenna_strength = 10*log10(cal_const*(sum(abs((aligned_data*ones([size(aligned_data,2) 1]))).^2)/windowsize)/(E_te/windowsize));
+%         
+%         %Antenna Power Plot
+%         figure
+%         bar([zeros(length(single_antenna_strength)+1,1);coherent_antenna_strength],'b')
+%         hold on
+%         bar([single_antenna_strength;0],'r')
+%         hold off
+%         legend('Coherent Epoch','Single Antenna Epoch','Location','NorthWest')
+%         xlabel('Antenna Epoch','FontSize',14)
+%         ylabel('Epoch Strength (dB)','FontSize',14)
+%         ylim([-20 100])
+%         title('Current: Antenna Strength (Signal / Thermal Energy) for Coherent and Single','FontSize',14)
+%         
+%         %Rank Plot
+%         figure
+%         subplot(2,1,1)
+%         plot(fxcorrsnr,'o')
+%         xlabel('Data Chunk Index','FontSize',14)
+%         ylabel('Comb Correlation SNR','FontSize',14)
+%         subplot(2,1,2)
+%         hist(fxcorrsnr,20)
+%         xlabel('xcorr SNR value','FontSize',14)
+%     	ylabel('hit count','FontSize',14)
+%         subplot(2,1,1)
+%         title('Current: Plot and Histogram of SNR used for Signal Detection','FontSize',14)
+%         
+%         %corrections plot
+%         figure
+%         subplot(3,1,1)
+%         plot(freqoffset,'o-')
+%         title('Current: Frequency Offset Correction Applied','FontSize',14)
+%         ylabel('Freq [Hz]','FontSize',14)
+%         xlabel('dataset','FontSize',14)
+%         subplot(3,1,2)
+%         plot(phaseoffset,'o-')
+%         title('Current: Phase Offset Correction Applied','FontSize',14)
+%         ylabel('Phase [rad]','FontSize',14)
+%         xlabel('dataset','FontSize',14)
+%         subplot(3,1,3)
+%         plot(samplesoffset,'o-')
+%         title('Current: Time Offset Correction Applied','FontSize',14)
+%         ylabel('Time [samples]','FontSize',14)
+%         xlabel('dataset','FontSize',14)
+% 
+%         %coherent sum plot
+%         figure
+%         plot(timestamp,real(aligned_data*ones([size(aligned_data,2) 1])))
+%         xlabel('time [s]')
+%         title('Coherent Sum')
 
 %get BER
-expected_data = o_cpm_demod(idealdata,srate,100,patternvec,1);
-BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,100,patternvec,1) == expected_data)/length(expected_data)
+BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 %get BER of single antenna
-BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,100,patternvec,1) == expected_data)/length(expected_data)
+BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 displaydatasets = 5;
 
