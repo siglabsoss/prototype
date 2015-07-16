@@ -3,7 +3,7 @@ function [ dataout, clock_comb ] = o_cpm_mod( bits, bitsrate, srate, samplesPerS
 %   Detailed explanation goes here
 
 
-rateRatio = bitsrate/srate; 
+rateRatio = bitsrate/srate;
 patternVectorDialog = vector; %[1 1 0 2 1 0 2 2 1 0 0 1 1 1 0 2 2 0 2 2];
 patternVectorRepeatDialog = vectorRepeat;
 demodSamplesPerSymbol = samplesPerSymbol;
@@ -35,6 +35,8 @@ patternVector = zeros(0);
 for j = 1:patternVectorRepeatDialog
     patternVector = [patternVector patternVectorDialog];
 end
+[~,sz] = size(patternVector);
+dataDutyCycle = sum(patternVector == 0)/sz;
 
 % save the full size
 [~,pvSize] = size(patternVector);
@@ -45,6 +47,17 @@ dinFilterr = zeros(dinFilterLength,1);
 
 
 [sz,~] = size(bits);
+
+expectedBitLength = round( (1/bitsrate)*packetLength*dataDutyCycle );
+
+if( sz ~= expectedBitLength )
+    disp('warning: bit vector is the wrong size');
+end
+
+if( sz < expectedBitLength )
+    bits(expectedBitLength) = -1;
+    [sz,~] = size(bits);
+end
 
 bitVector = [];
 

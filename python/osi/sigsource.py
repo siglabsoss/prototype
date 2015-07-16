@@ -44,13 +44,5 @@ class SigSource(object):
             return self.zsock.recv_pyobj()
         return False
 
-
-    def change(self, hz):
-        if hz > 928E6:
-            raise RuntimeError('Frequency too high.')
-        if hz < 902E6:
-            raise RuntimeError('Frequency too low.')
-        self.hz = hz
-
     def connect(self, sink):
         self.zsock.connect('tcp://127.0.0.1:%d' % sink.port)
