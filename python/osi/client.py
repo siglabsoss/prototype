@@ -14,6 +14,7 @@ from sigsink import *
 from enum import Enum
 import sigproto
 from channel import Channel
+from radio import Radio
 import json
 
 
@@ -24,48 +25,16 @@ class FSM(Enum):
 
 
 
-
-class Client(Channel):
+class Client(Channel, Radio):
     def __init__(self, port, octave=None):
         self.port = port
 
-        super(Client, self).__init__('1')
+        # this is annoying
+        super(Client, self).__init__('1')           # this is the constructor for Channel
+        super(Channel, self).__init__(port, octave) # this is the constructor for Radio
 
-        self.tx = SigSink(self.port)
-        self.rx = SigSource()
         self.state = FSM.boot
         self.message = None
-
-        if( octave ):
-            self.octave = octave
-        else:
-            self.octave = oct2py.Oct2Py()
-            self.octave.addpath('../../simulink')
-
-    def send(self, bits):
-        signal = cpm_mod(bits, self.octave)
-        return signal
-
-    def demod(self, data):
-        bits = cpm_demod(data, self.octave)
-        return bits
-
-    def pack_send(self, message):
-        obj = {}
-        obj['hz'] = self.hz
-
-        str = json.dumps(message, separators=(',',':'))  # pack json
-        bits = str_to_bits(str)  # convert to list of 0,1
-        bits = np.array(bits)    # convert to numpy vec of 0,1
-        bits = bits[:,np.newaxis] # convert to columnar vec
-        bits = (bits * 2) - 1     # convert to -1,1
-
-        # modulate into cpm
-        obj['data'] = cpm_mod(bits, self.octave)
-
-        # send over the "air"
-        self.tx.send_pyobj(obj)
-
 
     def send_hello(self):
         message = {}

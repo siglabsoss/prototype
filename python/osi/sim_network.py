@@ -37,9 +37,12 @@ if __name__ == '__main__':
     c.rx.connect(b.tx)
     b.rx.connect(c.tx)
 
-    for i in range(1,100):
+    tick_max = 4
+
+    for i in range(1,tick_max):
         c.tick()
         b.tick()
+        time.sleep(0.001)
 
     # print c.get_state()
     # c.tick()

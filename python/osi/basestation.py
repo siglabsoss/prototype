@@ -11,25 +11,40 @@ from sigsource import *
 from sigsink import *
 from enum import Enum
 import sigproto
+from channel import Channel
+from radio import Radio
+from datetime import datetime
 
 
 class BFSM(Enum):
-    boot = 1
-    connecting = 2
-    connected = 3
+    connecting = 1
+    connected = 2
+
+
+# class Radio(Channel):
+#     def __init__(self):
+#         super(Radio, self).__init__('1')           # this is the constructor for Channel
+#         self.first_contact = None
+#         self.last_contact = None
 
 
 
 
-class Basestation(object):
-    def __init__(self, port):
+class Basestation(Channel, Radio):
+    def __init__(self, port, octave=None):
         self.port = port
 
-        self.tx = SigSink(self.port)
-        self.rx = SigSource()
-        self.state = BFSM.boot
+        # this is annoying
+        super(Basestation, self).__init__('basestation1')           # this is the constructor for Channel
+        super(Channel, self).__init__(port, octave) # this is the constructor for Radio
 
-    state = BFSM.boot
+        # self.state = BFSM.boot
+        self.message = None
+
+        self.radios = {}
+
+
+
 
     def tick(self):
 
@@ -37,10 +52,16 @@ class Basestation(object):
 
         if( self.rx.waiting() ):
             raw = self.rx.get_pyobj()
-            print raw
+            if( raw and 'data' in raw ):
+                obj = self.unpack_data(raw['data'])
+                self.message = obj
+                print obj
+            else:
+                print 'warning bs got malformed packet'
+            # print raw
 
-        if( self.state == BFSM.boot ):
-            self.state = BFSM.connecting
+        # if( self.state == BFSM.boot ):
+        #     self.state = BFSM.connecting
 
     def get_state(self):
         return self.state

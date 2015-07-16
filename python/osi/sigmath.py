@@ -1,6 +1,7 @@
 import struct
 import numpy
 import sigproto
+import collections
 
 # converts string types to complex
 def raw_to_complex(str):
@@ -52,3 +53,13 @@ def bits_to_str(bits):
         byte = bits[b*8:(b+1)*8]
         chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
     return ''.join(chars)
+
+def all_to_ascii(data):
+    if isinstance(data, basestring):
+        return str(data)
+    elif isinstance(data, collections.Mapping):
+        return dict(map(all_to_ascii, data.iteritems()))
+    elif isinstance(data, collections.Iterable):
+        return type(data)(map(all_to_ascii, data))
+    else:
+        return data
