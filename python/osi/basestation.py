@@ -35,6 +35,10 @@ class Basestation(object):
 
         print ('tick')
 
+        if( self.rx.waiting() ):
+            raw = self.rx.get_pyobj()
+            print raw
+
         if( self.state == BFSM.boot ):
             self.state = BFSM.connecting
 

@@ -13,6 +13,8 @@ from sigsource import *
 from sigsink import *
 from enum import Enum
 import sigproto
+from channel import Channel
+import json
 
 
 class FSM(Enum):
@@ -23,30 +25,53 @@ class FSM(Enum):
 
 
 
-class Client(object):
-    def __init__(self, port):
+class Client(Channel):
+    def __init__(self, port, octave=None):
         self.port = port
+
+        super(Client, self).__init__('1')
 
         self.tx = SigSink(self.port)
         self.rx = SigSource()
         self.state = FSM.boot
         self.message = None
 
-
-        logging.basicConfig(level=logging.DEBUG)
-        # use one or the other
-        # self.octave = oct2py.Oct2Py(logger=logging.getLogger())
-        self.octave = oct2py.Oct2Py()
-        self.octave.addpath('../../simulink')
+        if( octave ):
+            self.octave = octave
+        else:
+            self.octave = oct2py.Oct2Py()
+            self.octave.addpath('../../simulink')
 
     def send(self, bits):
-        signal = self.octave.o_cpm_mod(bits, 1/125E1, 1/125E3, 100, 1, sigproto.pattern_vec, 1)
+        signal = cpm_mod(bits, self.octave)
         return signal
-        # data = o_cpm_mod(ideal_bits, 1/1000, 1/125E3, 100, 1, patternvec, 1);
 
     def demod(self, data):
-        bits = self.octave.o_cpm_demod(data, 1/125E3, 100, sigproto.pattern_vec, 1)
+        bits = cpm_demod(data, self.octave)
         return bits
+
+    def pack_send(self, message):
+        obj = {}
+        obj['hz'] = self.hz
+
+        str = json.dumps(message, separators=(',',':'))  # pack json
+        bits = str_to_bits(str)  # convert to list of 0,1
+        bits = np.array(bits)    # convert to numpy vec of 0,1
+        bits = bits[:,np.newaxis] # convert to columnar vec
+        bits = (bits * 2) - 1     # convert to -1,1
+
+        # modulate into cpm
+        obj['data'] = cpm_mod(bits, self.octave)
+
+        # send over the "air"
+        self.tx.send_pyobj(obj)
+
+
+    def send_hello(self):
+        message = {}
+        message['m'] = 'hi'
+        message['p'] = self.id
+        self.pack_send(message)
 
 
     def tick(self):
@@ -58,6 +83,7 @@ class Client(object):
 
 
         if( self.state == FSM.boot ):
+            self.send_hello()
             self.state = FSM.connecting
 
     def get_state(self):
@@ -68,11 +94,24 @@ class Client(object):
 
 if __name__ == '__main__':
     c = Client(4000)
-    bits = np.array([1, -1, -1, 1, 1, -1, -1, 1])
-    data = c.send(bits[:,np.newaxis])
-    demod_bits = c.demod(data)
-    print demod_bits
 
-    # print c.get_state()
-    # c.tick()
-    # print c.get_state()
+
+
+    # str = json.dumps(message, separators=(',',':'))
+    # print str
+    # bits = str_to_bits(str)
+    # bits = np.array(bits)
+    #
+    # print bits
+
+    # c.pack_send(message)
+
+    if False: # test mod/demod
+        bits = np.array([1, -1, -1, 1, 1, -1, -1, 1])
+        bits = bits[:,np.newaxis]
+        print 'mod'
+        data = c.send(bits)
+        print 'demod'
+        demod_bits = c.demod(data)
+        print 'result'
+        print bits[0:8] == demod_bits[0:8]
