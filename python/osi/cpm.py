@@ -6,9 +6,10 @@ from itertools import repeat
 import oct2py #delme
 import time
 from sigmath import *
+import timeit
 
-def cpm_mod2(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, rotationsPerSymbol = 1, patternVector = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]):
-    print bitsrate
+def cpm_mod(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, rotationsPerSymbol = 1, patternVector = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]):
+    # print bitsrate
 
     rateRatio = bitsrate/srate
     demodSamplesPerSymbol = samplesPerSymbol
@@ -38,7 +39,7 @@ def cpm_mod2(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, 
 
     expectedBitLength = int(round( (1/bitsrate)*packetLength*dataDutyCycle ))
 
-    print expectedBitLength
+    # print expectedBitLength
 
     if sz != expectedBitLength:
         print('warning: bit vector is the wrong size');
@@ -53,12 +54,12 @@ def cpm_mod2(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, 
     # mulitply up like simulink does, this could be our biggest savings
     bitVector = [x for item in bits for x in repeat(item, int(rateRatio))]
 
-    print "rateRatio", rateRatio
-    print "sampprsym", samplesPerSymbol
-    print "srate", srate
-    print "fs", fs
-    print "expectedBitLength", expectedBitLength
-    print "len bitvector", len(bitVector)
+    # print "rateRatio", rateRatio
+    # print "sampprsym", samplesPerSymbol
+    # print "srate", srate
+    # print "fs", fs
+    # print "expectedBitLength", expectedBitLength
+    # print "len bitvector", len(bitVector)
 
     dataout = [None] * int(packetLength/srate)
 
@@ -130,20 +131,81 @@ def cpm_mod2(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, 
 
 
 
+def cpm_demod(data, srate = 1/125E3, samplesPerSymbol = 100, patternVector = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]):
+    dif = np.diff(unroll_angle(np.angle(data)))
+
+    # init
+    fs = 1/srate
+
+    # fixed packet length in seconds
+    packetLength = 0.4
+    sz = len(data)
+    pvSize = len(patternVector)
+    dataDutyCycle = float(patternVector.count(0))/pvSize
+    expectedBitLength = int(round( sz / samplesPerSymbol * dataDutyCycle))
+
+    period = (fs * packetLength) / pvSize # how many samples per pattern period
+
+    # pre allocate output
+    bits = [None] * expectedBitLength
+
+    # count for output
+    count = 0
+
+    for i in range(0,pvSize):
+
+        # skip clock parts of data vector
+        if patternVector[i] != 0:
+            continue
+
+        # start and end of the bit period
+        start = int(i*period)
+        end = int((i+1)*period)
+
+        for j in range(start,end,samplesPerSymbol):
+            s = sum(dif[j:j+samplesPerSymbol])
+            bit = 1 if s > 0 else -1
+            bits[count] = bit
+            count += 1
+
+    return bits
+
 
 if __name__ == '__main__':
 
-    bits = [-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1]    # convert to numpy vec of 0,1
-    # bits = bits[:,np.newaxis] # convert to columnar vec
+    bits = [-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1]
 
-    data = cpm_mod2(bits)
+    data = cpm_mod(bits)
 
-    print 'starting octave'
-    octave = oct2py.Oct2Py()
-    octave.addpath('../../simulink')
-    octave.plot(octave.imag(data))
+    res = cpm_demod(data)
 
+    res = [(b*2)-1 for b in res]
 
+    print bits[0:15] == res[0:15]
+    print bits[0:15]
+    print res[0:15]
 
-    time.sleep(500)
+    # res = timeit.timeit('cpm_mod([-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1])', 'from __main__ import cpm_mod', number=19)
+    # print "total", res, "each", res/19
+
+    # print 'starting octave'
+    # octave = oct2py.Oct2Py()
+    # # octave.addpath('../../simulink')
+    # # # octave.plot(octave.imag(data))
+    # #
+    # octave.plot(res)
+    # time.sleep(500)
+    #
+    #
+    # bits_out = cpm_demod(data, octave)
+    #
+    # bits_out = bits_out.transpose()[0]  # back to a row vector
+    #
+    # bits_out = [int(b) for b in bits_out]  # convert to ints
+    # print bits_out
+    # print bits
+    # # print bits
+    #
+    #
+    # time.sleep(500)
 
