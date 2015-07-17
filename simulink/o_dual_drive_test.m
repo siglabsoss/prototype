@@ -58,7 +58,18 @@ switch(concat_mode)
         rawdata = rawdata202;
 end
 
-
+%overwrite rawdata test block
+%==============================
+clear rawdata;
+filename200='./300_el_cerrito_ave_hillsborough.raw';
+fid200 = fopen(filename200, 'r'); 
+[rrrawdata, rdcount] = fread(fid200, 9E99, pipe_type);
+fclose(fid200);
+rawdata200 = raw_to_complex(rrrawdata');
+clear rrrawdata;
+rawdata = double(rawdata200(end/2:end));
+detect_threshold = 1.6;
+%==============================
 
 
 
@@ -82,12 +93,13 @@ clock_comb = clock_comb195k;
 
 %chunk the data
 windowsize = 0.8; % size of chunked data
-timestep = 0.4; %time stepping of data chunks.  should be < windowsize - time length of rf packet
+timestep = 0.3; %time stepping of data chunks.  should be < windowsize - time length of rf packet
 rawtime = 0:srate:(length(rawdata)-1)*srate;
 clear rnoisydata;
 
+timestepsteps = round(windowsize/srate);
 for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)-1
-    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
+    rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate)+timestepsteps);
 end
 
 
@@ -100,7 +112,7 @@ reply_data = clock_comb;
 weighting_factor = 0;
 retro_go = 1;
 diag = 0;
-[aligned_data retro_data numdatasets retrostart retroend samplesoffset noisyxcorrsnr goodsets freqoffsetxcorr recoveredphasexcorr samplesoffsetxcorr] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,reply_data,detect_threshold,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor,diag);
+[aligned_data retro_data retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator_octave(double(rnoisydata),srate,clock_comb,detect_threshold,reply_data,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor);
 
 %calculated stats
 cal_const = 1.18e-12; %calculated from thermal noise measurements
@@ -122,7 +134,7 @@ BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),sra
 BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
 
 % save any calculated data to dashboard
-save('drive_dash_data.mat', 'BER_coherent', 'BER_single', 'noisyxcorrsnr', 'goodsets', 'single_antenna_strength', 'coherent_antenna_strength', 'freqoffsetxcorr', 'recoveredphasexcorr', 'samplesoffsetxcorr');
+save('drive_dash_data.mat', 'BER_coherent', 'BER_single', 'fxcorrsnr', 'goodsets', 'single_antenna_strength', 'coherent_antenna_strength', 'freqoffset', 'phaseoffset', 'samplesoffset');
 
 % touch lock file which lets dashboard know we are done
 lockfid = fopen('dashboard_lock', 'a+'); 
