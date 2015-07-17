@@ -21,22 +21,22 @@ class BFSM(Enum):
     connected = 2
 
 
-# class Radio(Channel):
-#     def __init__(self):
-#         super(Radio, self).__init__('1')           # this is the constructor for Channel
-#         self.first_contact = None
-#         self.last_contact = None
+class RadioClient(Channel):
+    def __init__(self):
+        super(RadioClient, self).__init__('1')           # this is the constructor for Channel
+        self.first_contact = None
+        self.last_contact = None
 
 
 
 
-class Basestation(Channel, Radio):
+class Basestation(Radio):
     def __init__(self, port, octave=None):
         self.port = port
 
         # this is annoying
-        super(Basestation, self).__init__('basestation1')           # this is the constructor for Channel
-        super(Channel, self).__init__(port, octave) # this is the constructor for Radio
+        # super(Basestation, self).__init__('basestation1')           # this is the constructor for Channel
+        super(Basestation, self).__init__(port, octave) # this is the constructor for Radio
 
         # self.state = BFSM.boot
         self.message = None
@@ -58,7 +58,11 @@ class Basestation(Channel, Radio):
                 print obj
             else:
                 print 'warning bs got malformed packet'
-            # print raw
+
+            if( obj['p'] in self.radios ):
+                print 'there'
+            else:
+                print 'not there'
 
         # if( self.state == BFSM.boot ):
         #     self.state = BFSM.connecting

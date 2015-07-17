@@ -16,10 +16,10 @@ from basestation import Basestation
 
 
 if __name__ == '__main__':
-    print "making octave"
-
-    octave = oct2py.Oct2Py()
-    octave.addpath('../../simulink')
+    # print "making octave"
+    #
+    # octave = oct2py.Oct2Py()
+    # octave.addpath('../../simulink')
 
     # logging.basicConfig(level=logging.DEBUG)
     # use one or the other
@@ -30,9 +30,9 @@ if __name__ == '__main__':
     print "making objects"
 
 
-    c = Client(4000, octave)
+    c = Client(4000, 1)
     print "connecting network"
-    b = Basestation(4001)
+    b = Basestation(4001, 1)
 
     c.rx.connect(b.tx)
     b.rx.connect(c.tx)

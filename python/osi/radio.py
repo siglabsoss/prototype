@@ -15,6 +15,7 @@ from enum import Enum
 import sigproto
 from channel import Channel
 import json
+from cpm import *
 
 
 
@@ -39,23 +40,18 @@ class Radio(object):
 
         str = json.dumps(message, separators=(',',':'))  # pack json
         bits = str_to_bits(str)  # convert to list of 0,1
-        bits = np.array(bits)    # convert to numpy vec of 0,1
-        bits = bits[:,np.newaxis] # convert to columnar vec
-        bits = (bits * 2) - 1     # convert to -1,1
+        bits = [(b*2)-1 for b in bits] # convert to -1,1
 
         # modulate into cpm
-        obj['data'] = cpm_mod(bits, self.octave)
+        obj['data'] = cpm_mod(bits)
 
         # send over the "air"
         self.tx.send_pyobj(obj)
 
     def unpack_data(self, data):
-        bits = cpm_demod(data, self.octave)
-        bits = bits.transpose()[0]  # back to a row vector
-        bits = (bits + 1) / 2       # back to 0,1
-        bits = bits.tolist()        # convert from ndarray back to a list
-        bits = [int(b) for b in bits]  # convert to ints
-        str = bits_to_str(bits)
+        bits = cpm_demod(data)
+        bits = [int((b+1)/2) for b in bits]  # convert to ints with range of 0,1
+        str = bits_to_str(bits)     # convert to string
         obj = json.loads(str)       # load from json (but all keys and values are in unicode)
         obj = all_to_ascii(obj)     # strip unicode
         return obj

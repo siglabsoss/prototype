@@ -29,11 +29,11 @@ def print_dec(str):
     for b in str:
         print ' ', ord(b)
 
-def cpm_mod(bits, octave):
+def o_cpm_mod(bits, octave):
     signal = octave.o_cpm_mod(bits, 1/125E1, 1/125E3, 100, 1, sigproto.pattern_vec, 1)
     return signal
 
-def cpm_demod(data, octave):
+def o_cpm_demod(data, octave):
     bits = octave.o_cpm_demod(data, 1/125E3, 100, sigproto.pattern_vec, 1)
     return bits
 
@@ -69,4 +69,30 @@ def drange(start, stop, step):
     while r < stop:
         yield r
         r += step
+
+
+def unroll_angle(input):
+    thresh = np.pi
+
+    adjust = 0
+
+    sz = len(input)
+
+    output = [None]*sz
+
+    output[0] = input[0]
+
+    for index in range(1,sz):
+        samp = input[index]
+        prev = input[index-1]
+
+        if(abs(samp-prev) > thresh):
+            direction = 1
+            if( samp > prev ):
+                direction = -1
+            adjust = adjust + 2*np.pi*direction
+
+        output[index] = input[index] + adjust
+
+    return output
 
