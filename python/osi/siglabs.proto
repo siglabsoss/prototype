@@ -1,0 +1,20 @@
+
+
+message Packet {
+    enum Type { ACK = 0; HELLO = 1; CHANGE = 2; }
+
+    required int32 sequence = 1;
+    required Type  type = 2;
+    optional int64 radio = 3;
+    optional int32 ack = 4;
+    optional int32 change_param = 5;
+    optional int32 change_val = 6;
+}
+
+
+message PacketB {
+  required int64 radio = 1;
+  required int32 sequence = 2;
+}
+
+
