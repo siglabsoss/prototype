@@ -1,5 +1,5 @@
 import struct
-import numpy
+import numpy as np
 import sigproto
 import collections
 
@@ -63,3 +63,10 @@ def all_to_ascii(data):
         return type(data)(map(all_to_ascii, data))
     else:
         return data
+
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step
+
