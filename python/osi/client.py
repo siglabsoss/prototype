@@ -16,6 +16,8 @@ import sigproto
 from channel import Channel
 from radio import Radio
 import json
+from sigmath import *
+from siglabs_pb2 import *
 
 
 class FSM(Enum):
@@ -30,17 +32,28 @@ class Client(Channel, Radio):
         self.port = port
 
         # this is annoying
-        super(Client, self).__init__('1')           # this is the constructor for Channel
+        super(Client, self).__init__(1)           # this is the constructor for Channel
         super(Channel, self).__init__(port, octave) # this is the constructor for Radio
 
         self.state = FSM.boot
         self.message = None
+        self.sequence = 0
+
+    def seq(self):
+        ret = self.sequence
+        self.sequence += 1
+        return ret
+
 
     def send_hello(self):
-        message = {}
-        message['m'] = 'hi'
-        message['p'] = self.id
-        self.pack_send(message)
+        p = Packet()
+        p.sequence = self.seq()
+        p.radio = self.id
+        p.type = Packet.HELLO
+        # message = {}
+        # message['m'] = 'hi'
+        # message['p'] = self.id
+        self.pack_send(p.SerializeToString())
 
 
     def tick(self):

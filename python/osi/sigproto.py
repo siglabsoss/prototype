@@ -14,17 +14,20 @@ def encode_varint(val):
 
     return str
 
-def decode_varint(str):
-
+def size_varint(str):
     # loop looking for msbit set in each char
     for valid in range(0,len(str)):
         if not ord(str[valid]) & 0x80:
             break
 
-    # sm.print_hex(str[0:valid+1])
+    return valid+1
+
+def decode_varint(str):
+
+    valid = size_varint(str)
 
     # truncate string so ProtoBuf keeps it's cool
-    str = str[0:valid+1]
+    str = str[0:valid]
 
     # field type is 0x08 for VarIntPacker.  This is covered by the test incase it changes
     str = chr(0x08) + str

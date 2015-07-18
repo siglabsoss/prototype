@@ -13,7 +13,7 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='siglabs.proto',
   package='',
-  serialized_pb='\n\rsiglabs.proto\"\xa4\x01\n\x06Packet\x12\x10\n\x08sequence\x18\x01 \x02(\x05\x12\x1a\n\x04type\x18\x02 \x02(\x0e\x32\x0c.Packet.Type\x12\r\n\x05radio\x18\x03 \x01(\x03\x12\x0b\n\x03\x61\x63k\x18\x04 \x01(\x05\x12\x14\n\x0c\x63hange_param\x18\x05 \x01(\x05\x12\x12\n\nchange_val\x18\x06 \x01(\x05\"&\n\x04Type\x12\x07\n\x03\x41\x43K\x10\x00\x12\t\n\x05HELLO\x10\x01\x12\n\n\x06\x43HANGE\x10\x02\"*\n\x07PacketB\x12\r\n\x05radio\x18\x01 \x02(\x03\x12\x10\n\x08sequence\x18\x02 \x02(\x05')
+  serialized_pb='\n\rsiglabs.proto\"\xa4\x01\n\x06Packet\x12\x10\n\x08sequence\x18\x01 \x02(\x05\x12\x1a\n\x04type\x18\x02 \x02(\x0e\x32\x0c.Packet.Type\x12\r\n\x05radio\x18\x03 \x01(\x03\x12\x0b\n\x03\x61\x63k\x18\x04 \x01(\x05\x12\x14\n\x0c\x63hange_param\x18\x05 \x01(\x05\x12\x12\n\nchange_val\x18\x06 \x01(\x05\"&\n\x04Type\x12\x07\n\x03\x41\x43K\x10\x00\x12\t\n\x05HELLO\x10\x01\x12\n\n\x06\x43HANGE\x10\x02\"*\n\x07PacketB\x12\r\n\x05radio\x18\x01 \x02(\x03\x12\x10\n\x08sequence\x18\x02 \x02(\x05\"\x1b\n\x0cVarIntPacker\x12\x0b\n\x03val\x18\x01 \x01(\x03')
 
 
 
@@ -141,10 +141,39 @@ _PACKETB = _descriptor.Descriptor(
   serialized_end=226,
 )
 
+
+_VARINTPACKER = _descriptor.Descriptor(
+  name='VarIntPacker',
+  full_name='VarIntPacker',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='val', full_name='VarIntPacker.val', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  serialized_start=228,
+  serialized_end=255,
+)
+
 _PACKET.fields_by_name['type'].enum_type = _PACKET_TYPE
 _PACKET_TYPE.containing_type = _PACKET;
 DESCRIPTOR.message_types_by_name['Packet'] = _PACKET
 DESCRIPTOR.message_types_by_name['PacketB'] = _PACKETB
+DESCRIPTOR.message_types_by_name['VarIntPacker'] = _VARINTPACKER
 
 class Packet(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
@@ -157,6 +186,12 @@ class PacketB(_message.Message):
   DESCRIPTOR = _PACKETB
 
   # @@protoc_insertion_point(class_scope:PacketB)
+
+class VarIntPacker(_message.Message):
+  __metaclass__ = _reflection.GeneratedProtocolMessageType
+  DESCRIPTOR = _VARINTPACKER
+
+  # @@protoc_insertion_point(class_scope:VarIntPacker)
 
 
 # @@protoc_insertion_point(module_scope)

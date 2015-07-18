@@ -12,10 +12,11 @@ from switch import *
 from sigsource import *
 from sigsink import *
 from enum import Enum
-import sigproto
+from sigproto import *
 from channel import Channel
 import json
 from cpm import *
+from sigmath import *
 
 
 
@@ -34,11 +35,20 @@ class Radio(object):
             self.octave = oct2py.Oct2Py()
             self.octave.addpath('../../simulink')
 
-    def pack_send(self, message):
+    def pack_send(self, str, ch=None):
         obj = {}
-        obj['hz'] = self.hz
+        if ch == None:
+            obj['hz'] = self.hz
+        else:
+            obj['hz'] = ch.hz
 
-        str = json.dumps(message, separators=(',',':'))  # pack json
+
+        # build a varint with the size of the following message
+        sizestr = encode_varint(len(str))
+
+        # slap it on the beginning
+        str = sizestr + str
+
         bits = str_to_bits(str)  # convert to list of 0,1
         bits = [(b*2)-1 for b in bits] # convert to -1,1
 
@@ -52,9 +62,15 @@ class Radio(object):
         bits = cpm_demod(data)
         bits = [int((b+1)/2) for b in bits]  # convert to ints with range of 0,1
         str = bits_to_str(bits)     # convert to string
-        obj = json.loads(str)       # load from json (but all keys and values are in unicode)
-        obj = all_to_ascii(obj)     # strip unicode
-        return obj
+
+        # calc out the length of the message to follow
+        length = decode_varint(str)
+
+        # calc the number of bytes that it took to represent 'length' as a varing
+        varint_length = size_varint(str)
+
+        # print_hex(str[varint_length:length+varint_length])
+        return str[varint_length:length+varint_length]
 
 
 

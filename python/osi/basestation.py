@@ -14,6 +14,7 @@ import sigproto
 from channel import Channel
 from radio import Radio
 from datetime import datetime
+from siglabs_pb2 import *
 
 
 class BFSM(Enum):
@@ -21,11 +22,13 @@ class BFSM(Enum):
     connected = 2
 
 
+# our best idea of where the radio is
 class RadioClient(Channel):
-    def __init__(self):
-        super(RadioClient, self).__init__('1')           # this is the constructor for Channel
+    def __init__(self, radio):
+        super(RadioClient, self).__init__(radio)           # this is the constructor for Channel
         self.first_contact = None
         self.last_contact = None
+        self.sequence = 0
 
 
 
@@ -53,16 +56,31 @@ class Basestation(Radio):
         if( self.rx.waiting() ):
             raw = self.rx.get_pyobj()
             if( raw and 'data' in raw ):
-                obj = self.unpack_data(raw['data'])
-                self.message = obj
-                print obj
+                str = self.unpack_data(raw['data'])
+                p = Packet()
+                p.ParseFromString(str)
+                print p.__str__()
+
             else:
                 print 'warning bs got malformed packet'
 
-            if( obj['p'] in self.radios ):
+            if p.radio in self.radios:
                 print 'there'
             else:
                 print 'not there'
+                self.radios[p.radio] = RadioClient(p.radio)
+                r = self.radios[p.radio]  # this is a reference to the array elements
+                # print self.radios[str(p.radio)]
+                r.sequence = p.sequence
+
+            # make ack
+            ack = Packet()
+            ack.type = Packet.ACK
+            ack.radio = r.id
+            ack.sequence = r.sequence
+            self.pack_send(ack.SerializeToString(), r)
+
+            print ack.__str__()
 
         # if( self.state == BFSM.boot ):
         #     self.state = BFSM.connecting

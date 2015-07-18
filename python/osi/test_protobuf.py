@@ -4,31 +4,33 @@ from sigsink import *
 from time import sleep
 from siglabs_pb2 import *
 from sigmath import *
+from sigproto import *
 
 class BasicConnection(unittest.TestCase):
     def runTest(self):
         a = Packet()
         a.radio = 12345
-        a.sequence = 1
-        a.type = 0
+        a.sequence = 127
+        a.type = Packet.HELLO
 
-        # assert a.IsInitialized()
+        assert a.IsInitialized()
 
-        print a.__str__()
+        # print a.__str__()
 
         str =  a.SerializeToString()
-        print "len", len(str), ' ',str
-        print_dec(str)
-
-
-        # b = PacketB()
-        # b.radio = 12345
-        # b.sequence = 1
-        #
-        #
-        # str =  b.SerializeToString()
         # print "len", len(str), ' ',str
         # print_dec(str)
+
+        b = Packet()
+
+        b.ParseFromString(str)
+
+        # print "----"
+        # print a.__str__()
+        # print "----"
+        # print b.__str__()
+
+        assert a == b
 
 
 

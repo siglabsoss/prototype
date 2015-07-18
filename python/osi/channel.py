@@ -9,7 +9,7 @@ class Channel(object):
 
         print 'setting id to', self.id
 
-    def change(self, hz):
+    def changehz(self, hz):
         if hz > 928E6:
             raise RuntimeError('Frequency too high.')
         if hz < 902E6:
@@ -21,5 +21,5 @@ class Channel(object):
 
 if __name__ == '__main__':
     c = Channel('123')
-    c.change(912.4E6)
+    c.changehz(912.4E6)
     print c.hz

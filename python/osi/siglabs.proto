@@ -18,3 +18,7 @@ message PacketB {
 }
 
 
+// we use this for packing unpacking varints
+message VarIntPacker {
+    optional int64 val = 1;
+}
