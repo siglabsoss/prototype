@@ -1,7 +1,7 @@
 
 
 message Packet {
-    enum Type { ACK = 0; HELLO = 1; CHANGE = 2; }
+    enum Type { ACK = 0; HELLO = 1; CHANGE = 2; POLL = 3; }
 
     required int32 sequence = 1;
     required Type  type = 2;

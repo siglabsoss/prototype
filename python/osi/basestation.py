@@ -51,9 +51,9 @@ class Basestation(Radio):
 
     def tick(self):
 
-        print ('tick')
+        # print ('bs tick')
 
-        if( self.rx.waiting() ):
+        if self.rx.waiting():
             raw = self.rx.get_pyobj()
             if( raw and 'data' in raw ):
                 str = self.unpack_data(raw['data'])
@@ -66,12 +66,14 @@ class Basestation(Radio):
 
             if p.radio in self.radios:
                 print 'there'
+                r = self.radios[p.radio]
             else:
                 print 'not there'
                 self.radios[p.radio] = RadioClient(p.radio)
                 r = self.radios[p.radio]  # this is a reference to the array elements
                 # print self.radios[str(p.radio)]
-                r.sequence = p.sequence
+
+            r.sequence = p.sequence
 
             # make ack
             ack = Packet()

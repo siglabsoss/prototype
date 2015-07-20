@@ -71,12 +71,13 @@ end
 
 j = 1;
 
-for currentTime = [0:srate:packetLength]
 
-%% these three lines filter the data only       
-%     din = sum(dinFilterr)/dinFilterLength;
-%     filterIndex = mod(totalSamples, dinFilterLength) + 1;
-%     dinFilterr(filterIndex) = bitVector(j); % fill into filter
+% pre allocate
+dataout = zeros(round(packetLength/srate) + 1,1);
+
+#time = clock;
+
+for currentTime = [0:srate:packetLength]
 
 %% for now turn filter off, seems to be more clean this way
     din = bitVector(j);
@@ -84,6 +85,8 @@ for currentTime = [0:srate:packetLength]
 %     currentTime = (currentSampleIndex-1) * srate;
 %     mat2str(currentTime)
     scaledTimeIndex = floor((currentTime / packetLength) * pvSize);
+    
+%     disp(sprintf('ct %f sti %d', currentTime, scaledTimeIndex));
     
     
     % gives us a ms index
@@ -154,7 +157,7 @@ for currentTime = [0:srate:packetLength]
     
     
     
-     dataout = [dataout; complex(trout,tiout)];
+     dataout(totalSamples+1) = complex(trout,tiout);
      clock_comb = [clock_comb; complex(crout,ciout)];
 
 
@@ -167,6 +170,7 @@ for currentTime = [0:srate:packetLength]
 
 end
 
+#etime(clock,time)
 
 
 
