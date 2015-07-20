@@ -40,7 +40,10 @@ class Radio(object):
         if ch == None:
             obj['hz'] = self.hz
         else:
-            obj['hz'] = ch.hz
+            if isinstance(ch, Channel):
+                obj['hz'] = ch.hz
+            else:
+                obj['hz'] = ch
 
 
         # build a varint with the size of the following message

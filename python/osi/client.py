@@ -23,9 +23,8 @@ import logging
 
 class FSM(Enum):
     boot = 1
-    connecting = 2
-    contacted = 3
-    connected = 4
+    contacted = 2
+    connected = 3
 
 
 
@@ -48,13 +47,17 @@ class Client(Channel, Radio):
         # add ch to logger
         self.log.addHandler(lch)
 
+        self.poll_time = 0.6 # low number for simulation
+
         self.state = FSM.boot
         self.message = None
-        self.sequence = 0
+        self.sequence = 42
         self.first_contact = None
         self.last_contact = None
+        self.last_poll = datetime.now() - timedelta(seconds=self.poll_time)  # start off with our most recent poll in the past
         self.waiting_ack = -1
         self.waiting_ack_fsm = -1
+
 
         self.changehz(sigproto.bringup)
 
@@ -67,7 +70,7 @@ class Client(Channel, Radio):
         p = Packet()
         p.sequence = self.seq()
         self.waiting_ack = p.sequence
-        self.waiting_ack_fsm = FSM.connecting
+        # self.waiting_ack_fsm = FSM.connecting
         p.radio = self.id
         p.type = Packet.HELLO
         # message = {}
@@ -80,57 +83,69 @@ class Client(Channel, Radio):
         p.sequence = self.seq()
         p.radio = self.id
         p.type = Packet.POLL
-
         self.waiting_ack = p.sequence
 
         self.pack_send(p.SerializeToString())
 
+    def debounce_hello(self):
+        if (datetime.now() - self.last_poll).total_seconds() > self.poll_time:
+            self.last_poll = datetime.now()
+            self.send_hello()
+
+    def debounce_poll(self):
+        if (datetime.now() - self.last_poll).total_seconds() > self.poll_time:
+            self.last_poll = datetime.now()
+            self.send_poll()
+
+    # check if the packet is good do a few bookkeeping stuffs
+    def _parse_check_packet(self, raw):
+        if raw and 'data' in raw and 'hz' in raw:
+            p = Packet()
+            p.ParseFromString(self.unpack_data(raw['data']))
+            if raw['hz'] == self.hz:
+                self.log.info('rx: ' + p.__str__())
+                self.last_contact = datetime.now()
+                return p
+            else:
+                self.log.warning('packet on wrong hz %s' % p.type)
+                return None
+        else:
+            self.log.warning('warning client got malformed packet')
+            return None
+        return None
 
     def tick(self):
 
         # print ('c tick')
         ack_good = 0
 
+        nextstate = self.state
+
         if self.rx.waiting():
-            raw = self.rx.get_pyobj()
-            if raw and 'data' in raw:
-                str = self.unpack_data(raw['data'])
-                p = Packet()
-                p.ParseFromString(str)
-                self.log.info('rx: ' + p.__str__())
-                self.last_contact = datetime.now()
+            # theres an incomming packet
+            p = self._parse_check_packet(self.rx.get_pyobj())
+            if p is not None:
+                if p.type == Packet.BACK:
+                    if p.radio == self.id and p.ack == self.waiting_ack:
+                        ack_good = 1
+                        # self.log.info('ack good')
 
-                if p.sequence == self.waiting_ack and p.radio == self.id:
-                    self.log.info('got correct ack %d' % self.waiting_ack)
-                    self.waiting_ack = -1
-                    ack_good = 1
+                for case in switch(self.state):
+                    if case(FSM.boot):
+                        if ack_good:
+                            nextstate = FSM.contacted
+                    if case(FSM.contacted):
+                        self.log.info('contacted')
+        else:
+            # there's no packet, we are just ticking
+            if self.state == FSM.boot:
+                self.debounce_hello()
 
-                if self.state == FSM.connecting:
-                    if self.waiting_ack_fsm == FSM.connecting and ack_good:
-                        self.state = FSM.contacted
-                        self.log.info('first contact with bs')
-                        self.first_contact = datetime.now()
-                        self.send_poll() # poll right now
-
-                if self.state == FSM.contacted:
-                    if p.type == Packet.CHANGE and self.hz == sigproto.bringup:
-                        self.state == FSM.connected
-
-                if p.type == Packet.CHANGE:
-                    if p.change_param == Packet.CHANNEL:
-                        self.log.info('switching to channel %d as instructed' % p.change_val)
-                        self.changehz(p.change_val)
-
-            else:
-                self.log.warning('warning client got malformed packet')
+            if self.state == FSM.contacted or self.state == FSM.connected:
+                self.debounce_poll()
 
 
-        if self.state == FSM.boot:
-            self.send_hello()
-            self.state = FSM.connecting
-
-
-
+        self.state = nextstate # always set the state after each tick
 
 
 

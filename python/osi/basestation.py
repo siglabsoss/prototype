@@ -25,8 +25,9 @@ class RadioClient(Channel):
         super(RadioClient, self).__init__(radio)           # this is the constructor for Channel
         self.first_contact = None
         self.last_contact = None
-        self.sequence = 0
+        self.sequence = 0     # the sequence # that the client is using.  this is auto overwritten with every packet
         self.state = FSM.boot
+        self.bs_sequence = 7  # the sequence # that the basestation is using to talk to the radio
 
 
 
@@ -57,6 +58,39 @@ class Basestation(Radio):
         self.radios = {}
 
 
+    def _parse_check_packet(self, raw):
+        if raw and 'data' in raw and 'hz' in raw:
+            p = Packet()
+            p.ParseFromString(self.unpack_data(raw['data']))
+            self.log.info('rx: ' + p.__str__())
+            return p
+        else:
+            self.log.warning('warning bs got malformed packet')
+            return None
+        return None
+
+    def _find_or_create_radio(self, p, raw):
+        if p.radio in self.radios:
+            self.log.info('there')
+            r = self.radios[p.radio]
+        else:
+            self.log.info('not there')
+            self.radios[p.radio] = RadioClient(p.radio)
+            r = self.radios[p.radio]  # this is a reference to the array elements
+            r.changehz(raw['hz'])
+            r.state = FSM.boot
+
+        # now that r is set, update the sequence
+        r.sequence = p.sequence
+        return r
+
+    def build_ack(self, r):
+        ack = Packet()
+        ack.type = Packet.BACK
+        ack.radio = r.id
+        ack.ack = r.sequence # we are acknowledging the sequence id of the packet we just received in this 'ack' field
+        ack.sequence = r.bs_sequence   # we are using our own sequence number here
+        return ack
 
 
     def tick(self):
@@ -65,47 +99,46 @@ class Basestation(Radio):
 
         if self.rx.waiting():
             raw = self.rx.get_pyobj()
-            if( raw and 'data' in raw ):
-                str = self.unpack_data(raw['data'])
-                p = Packet()
-                p.ParseFromString(str)
-                self.log.info('rx: ' + p.__str__())
+            p = self._parse_check_packet(raw)
+            if p is None:
+                return
 
-            else:
-                self.log.warning('warning bs got malformed packet')
+            # this will set the sequence # of the client
+            r = self._find_or_create_radio(p, raw)
 
-            if p.radio in self.radios:
-                self.log.info('there')
-                r = self.radios[p.radio]
-            else:
-                self.log.info('not there')
-                self.radios[p.radio] = RadioClient(p.radio)
-                r = self.radios[p.radio]  # this is a reference to the array elements
-                r.changehz(raw['hz'])
-                r.state = FSM.contacted
-                # print self.radios[str(p.radio)]
-
-            r.sequence = p.sequence
-
-            if r.state == FSM.contacted:
-                if r.hz == sigproto.bringup:
-                    # here is where we pick a smart channel
-                    out = Packet()
-                    out.type = Packet.CHANGE
-                    out.radio = r.id
-                    out.sequence = r.sequence
-                    out.change_param = Packet.CHANNEL
-                    out.change_val = int(sigproto.channel1)
-                    self.pack_send(out.SerializeToString(), r)
-                    r.state = FSM.connected
+            for case in switch(r.state):
+                if case(FSM.boot):
+                    if p.type == Packet.HELLO:
+                        ack = self.build_ack(r)
+                        # self.log.info(ack.__str__())
+                        self.pack_send(ack.SerializeToString(), r)
+                        r.bs_sequence += 1
+                        r.state = FSM.contacted
 
 
-            # make ack
-            ack = Packet()
-            ack.type = Packet.ACK
-            ack.radio = r.id
-            ack.sequence = r.sequence
-            self.pack_send(ack.SerializeToString(), r)
+            # if r.state == FSM.connected:
+            #     if p.type == Packet.POLL:
+            #         self.log.info('got poll from client on new %d' % raw['hz'])
+            #
+            # if r.state == FSM.contacted:
+            #     if r.hz == sigproto.bringup:
+            #         # here is where we pick a smart channel
+            #         out = Packet()
+            #         out.type = Packet.CHANGE
+            #         out.radio = r.id
+            #         out.sequence = r.sequence
+            #         out.change_param = Packet.CHANNEL
+            #         out.change_val = int(sigproto.channel1)
+            #         self.pack_send(out.SerializeToString(), r)
+            #         r.state = FSM.connected
+            #
+            #
+            # # make ack
+            # ack = Packet()
+            # ack.type = Packet.BACK
+            # ack.radio = r.id
+            # ack.sequence = r.sequence
+            # self.pack_send(ack.SerializeToString(), r)
 
             # print ack.__str__()
 
