@@ -13,14 +13,10 @@ from enum import Enum
 import sigproto
 from channel import Channel
 from radio import Radio
+from client import FSM
 from datetime import datetime
 from siglabs_pb2 import *
 import logging
-
-
-class BFSM(Enum):
-    connecting = 1
-    connected = 2
 
 
 # our best idea of where the radio is
@@ -30,6 +26,7 @@ class RadioClient(Channel):
         self.first_contact = None
         self.last_contact = None
         self.sequence = 0
+        self.state = FSM.boot
 
 
 
@@ -84,9 +81,24 @@ class Basestation(Radio):
                 self.log.info('not there')
                 self.radios[p.radio] = RadioClient(p.radio)
                 r = self.radios[p.radio]  # this is a reference to the array elements
+                r.changehz(raw['hz'])
+                r.state = FSM.contacted
                 # print self.radios[str(p.radio)]
 
             r.sequence = p.sequence
+
+            if r.state == FSM.contacted:
+                if r.hz == sigproto.bringup:
+                    # here is where we pick a smart channel
+                    out = Packet()
+                    out.type = Packet.CHANGE
+                    out.radio = r.id
+                    out.sequence = r.sequence
+                    out.change_param = Packet.CHANNEL
+                    out.change_val = int(sigproto.channel1)
+                    self.pack_send(out.SerializeToString(), r)
+                    r.state = FSM.connected
+
 
             # make ack
             ack = Packet()

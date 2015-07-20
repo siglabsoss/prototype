@@ -56,6 +56,8 @@ class Client(Channel, Radio):
         self.waiting_ack = -1
         self.waiting_ack_fsm = -1
 
+        self.changehz(sigproto.bringup)
+
     def seq(self):
         ret = self.sequence
         self.sequence += 1
@@ -103,6 +105,22 @@ class Client(Channel, Radio):
                     self.waiting_ack = -1
                     ack_good = 1
 
+                if self.state == FSM.connecting:
+                    if self.waiting_ack_fsm == FSM.connecting and ack_good:
+                        self.state = FSM.contacted
+                        self.log.info('first contact with bs')
+                        self.first_contact = datetime.now()
+                        self.send_poll() # poll right now
+
+                if self.state == FSM.contacted:
+                    if p.type == Packet.CHANGE and self.hz == sigproto.bringup:
+                        self.state == FSM.connected
+
+                if p.type == Packet.CHANGE:
+                    if p.change_param == Packet.CHANNEL:
+                        self.log.info('switching to channel %d as instructed' % p.change_val)
+                        self.changehz(p.change_val)
+
             else:
                 self.log.warning('warning client got malformed packet')
 
@@ -110,13 +128,6 @@ class Client(Channel, Radio):
         if self.state == FSM.boot:
             self.send_hello()
             self.state = FSM.connecting
-
-        if self.state == FSM.connecting:
-            if self.waiting_ack_fsm == FSM.connecting and ack_good:
-                self.state = FSM.contacted
-                self.log.info('first contact with bs')
-                self.first_contact = datetime.now()
-                self.send_poll() # poll right now
 
 
 

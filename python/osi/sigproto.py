@@ -2,6 +2,7 @@ from siglabs_pb2 import *
 import sigmath as sm
 
 bringup = 909E6
+channel1 = 908.25E6
 pattern_vec = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]
 
 

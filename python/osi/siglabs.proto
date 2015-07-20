@@ -2,12 +2,13 @@
 
 message Packet {
     enum Type { ACK = 0; HELLO = 1; CHANGE = 2; POLL = 3; }
+    enum Change { CHANNEL = 0; CLK_DUTY = 1; BITRATE = 2; }
 
     required int32 sequence = 1;
     required Type  type = 2;
     optional int64 radio = 3;
     optional int32 ack = 4;
-    optional int32 change_param = 5;
+    optional Change change_param = 5;
     optional int32 change_val = 6;
 }
 
