@@ -37,9 +37,16 @@ class Client(Channel, Radio):
         super(Client, self).__init__(1)           # this is the constructor for Channel
         super(Channel, self).__init__(port, octave) # this is the constructor for Radio
 
-        logging.basicConfig(format='Client: %(message)s')
         self.log = logging.getLogger('client')
         self.log.setLevel(logging.INFO)
+        # create console handler and set level to debug
+        lch = logging.StreamHandler()
+        lch.setLevel(logging.INFO)
+        lfmt = logging.Formatter('Client: %(message)s')
+        # add formatter to channel
+        lch.setFormatter(lfmt)
+        # add ch to logger
+        self.log.addHandler(lch)
 
         self.state = FSM.boot
         self.message = None
@@ -88,16 +95,16 @@ class Client(Channel, Radio):
                 str = self.unpack_data(raw['data'])
                 p = Packet()
                 p.ParseFromString(str)
-                print p.__str__()
+                self.log.info('rx: ' + p.__str__())
                 self.last_contact = datetime.now()
 
-                if p.sequence == self.waiting_ack:
-                    print 'got correct ack', self.waiting_ack
+                if p.sequence == self.waiting_ack and p.radio == self.id:
+                    self.log.info('got correct ack %d' % self.waiting_ack)
                     self.waiting_ack = -1
                     ack_good = 1
 
             else:
-                print 'warning bs got malformed packet'
+                self.log.warning('warning client got malformed packet')
 
 
         if self.state == FSM.boot:

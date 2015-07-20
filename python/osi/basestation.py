@@ -42,9 +42,17 @@ class Basestation(Radio):
         # super(Basestation, self).__init__('basestation1')           # this is the constructor for Channel
         super(Basestation, self).__init__(port, octave) # this is the constructor for Radio
 
-        logging.basicConfig(format='BStaton: %(message)s')
         self.log = logging.getLogger('basestation')
         self.log.setLevel(logging.INFO)
+        # create console handler and set level to debug
+        lch = logging.StreamHandler()
+        lch.setLevel(logging.INFO)
+        lfmt = logging.Formatter('BStatn: %(message)s')
+        # add formatter to channel
+        lch.setFormatter(lfmt)
+        # add ch to logger
+        self.log.addHandler(lch)
+
 
         # self.state = BFSM.boot
         self.message = None
@@ -64,7 +72,7 @@ class Basestation(Radio):
                 str = self.unpack_data(raw['data'])
                 p = Packet()
                 p.ParseFromString(str)
-                self.log.info(p.__str__())
+                self.log.info('rx: ' + p.__str__())
 
             else:
                 self.log.warning('warning bs got malformed packet')
@@ -87,7 +95,7 @@ class Basestation(Radio):
             ack.sequence = r.sequence
             self.pack_send(ack.SerializeToString(), r)
 
-            print ack.__str__()
+            # print ack.__str__()
 
         # if( self.state == BFSM.boot ):
         #     self.state = BFSM.connecting
