@@ -15,6 +15,7 @@ from channel import Channel
 from radio import Radio
 from datetime import datetime
 from siglabs_pb2 import *
+import logging
 
 
 class BFSM(Enum):
@@ -41,6 +42,10 @@ class Basestation(Radio):
         # super(Basestation, self).__init__('basestation1')           # this is the constructor for Channel
         super(Basestation, self).__init__(port, octave) # this is the constructor for Radio
 
+        logging.basicConfig(format='BStaton: %(message)s')
+        self.log = logging.getLogger('basestation')
+        self.log.setLevel(logging.INFO)
+
         # self.state = BFSM.boot
         self.message = None
 
@@ -59,16 +64,16 @@ class Basestation(Radio):
                 str = self.unpack_data(raw['data'])
                 p = Packet()
                 p.ParseFromString(str)
-                print p.__str__()
+                self.log.info(p.__str__())
 
             else:
-                print 'warning bs got malformed packet'
+                self.log.warning('warning bs got malformed packet')
 
             if p.radio in self.radios:
-                print 'there'
+                self.log.info('there')
                 r = self.radios[p.radio]
             else:
-                print 'not there'
+                self.log.info('not there')
                 self.radios[p.radio] = RadioClient(p.radio)
                 r = self.radios[p.radio]  # this is a reference to the array elements
                 # print self.radios[str(p.radio)]

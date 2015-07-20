@@ -19,6 +19,7 @@ import json
 from sigmath import *
 from siglabs_pb2 import *
 from datetime import *
+import logging
 
 class FSM(Enum):
     boot = 1
@@ -35,6 +36,10 @@ class Client(Channel, Radio):
         # this is annoying
         super(Client, self).__init__(1)           # this is the constructor for Channel
         super(Channel, self).__init__(port, octave) # this is the constructor for Radio
+
+        logging.basicConfig(format='Client: %(message)s')
+        self.log = logging.getLogger('client')
+        self.log.setLevel(logging.INFO)
 
         self.state = FSM.boot
         self.message = None
@@ -102,7 +107,7 @@ class Client(Channel, Radio):
         if self.state == FSM.connecting:
             if self.waiting_ack_fsm == FSM.connecting and ack_good:
                 self.state = FSM.contacted
-                print 'first contact with bs'
+                self.log.info('first contact with bs')
                 self.first_contact = datetime.now()
                 self.send_poll() # poll right now
 

@@ -7,7 +7,7 @@ class Channel(object):
         self.id = id
         self.hz = 910E6
 
-        print 'setting id to', self.id
+        # print 'setting id to', self.id
 
     def changehz(self, hz):
         if hz > 928E6:
