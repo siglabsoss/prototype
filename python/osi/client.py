@@ -97,12 +97,33 @@ class Client(Channel, Radio):
             self.last_poll = datetime.now()
             self.send_poll()
 
+    # pass a change packet here
+    def change_radio(self, p):
+        if p.type != Packet.CHANGE:
+            self.log.warning('change_radio did not get the right type of packet, doing nothing')
+            return
+        if p.change_param == Packet.CHANNEL:
+            self.log.info('switching to channel %d as instructed' % p.change_val)
+            self.changehz(p.change_val)
+
+    def build_ack(self, p):
+        ack = Packet()
+        ack.type = Packet.CACK
+        ack.radio = self.id
+        ack.ack = p.sequence  # ack the packet we just got from bs
+        ack.sequence = self.seq()
+        return ack
+
+
     # check if the packet is good do a few bookkeeping stuffs
     def _parse_check_packet(self, raw):
         if raw and 'data' in raw and 'hz' in raw:
             p = Packet()
             p.ParseFromString(self.unpack_data(raw['data']))
             if raw['hz'] == self.hz:
+                if p.radio != self.id:
+                    self.log.warning('got packet for wrong radio')
+                    return None
                 self.log.info('rx: ' + p.__str__())
                 self.last_contact = datetime.now()
                 return p
@@ -116,7 +137,7 @@ class Client(Channel, Radio):
 
     def tick(self):
 
-        # print ('c tick')
+        # self.log.info('c tick')
         ack_good = 0
 
         nextstate = self.state
@@ -133,9 +154,20 @@ class Client(Channel, Radio):
                 for case in switch(self.state):
                     if case(FSM.boot):
                         if ack_good:
+                            self.first_contact = datetime.now()
                             nextstate = FSM.contacted
+                        break
                     if case(FSM.contacted):
-                        self.log.info('contacted')
+                        if p.type == Packet.CHANGE:
+                            self.change_radio(p)
+                            ack = self.build_ack(p)
+                            self.pack_send(ack.SerializeToString())
+                            nextstate = FSM.connected
+                        break
+                    if case(FSM.connected):
+                        if p.type == Packet.CHANGE:
+                            self.change_radio(p)
+                        break
         else:
             # there's no packet, we are just ticking
             if self.state == FSM.boot:

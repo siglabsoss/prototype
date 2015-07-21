@@ -62,7 +62,7 @@ class Basestation(Radio):
         if raw and 'data' in raw and 'hz' in raw:
             p = Packet()
             p.ParseFromString(self.unpack_data(raw['data']))
-            self.log.info('rx: ' + p.__str__())
+            self.log.info('rx: ' + '(' + str(raw['hz']/1E6) + ') ' + p.__str__())
             return p
         else:
             self.log.warning('warning bs got malformed packet')
@@ -71,10 +71,10 @@ class Basestation(Radio):
 
     def _find_or_create_radio(self, p, raw):
         if p.radio in self.radios:
-            self.log.info('there')
+            # self.log.info('there')
             r = self.radios[p.radio]
         else:
-            self.log.info('not there')
+            # self.log.info('not there')
             self.radios[p.radio] = RadioClient(p.radio)
             r = self.radios[p.radio]  # this is a reference to the array elements
             r.changehz(raw['hz'])
@@ -114,33 +114,26 @@ class Basestation(Radio):
                         self.pack_send(ack.SerializeToString(), r)
                         r.bs_sequence += 1
                         r.state = FSM.contacted
+                    break
+                if case(FSM.contacted):
+                    if r.hz == sigproto.bringup:
+                        # here is where we pick a smart channel
+                        out = Packet()
+                        out.type = Packet.CHANGE
+                        out.radio = r.id
+                        out.sequence = r.sequence
+                        out.change_param = Packet.CHANNEL
+                        out.change_val = int(sigproto.channel1)
+                        self.pack_send(out.SerializeToString(), r)
+                        r.state = FSM.connected
+                    break
 
 
             # if r.state == FSM.connected:
             #     if p.type == Packet.POLL:
             #         self.log.info('got poll from client on new %d' % raw['hz'])
             #
-            # if r.state == FSM.contacted:
-            #     if r.hz == sigproto.bringup:
-            #         # here is where we pick a smart channel
-            #         out = Packet()
-            #         out.type = Packet.CHANGE
-            #         out.radio = r.id
-            #         out.sequence = r.sequence
-            #         out.change_param = Packet.CHANNEL
-            #         out.change_val = int(sigproto.channel1)
-            #         self.pack_send(out.SerializeToString(), r)
-            #         r.state = FSM.connected
-            #
-            #
-            # # make ack
-            # ack = Packet()
-            # ack.type = Packet.BACK
-            # ack.radio = r.id
-            # ack.sequence = r.sequence
-            # self.pack_send(ack.SerializeToString(), r)
 
-            # print ack.__str__()
 
         # if( self.state == BFSM.boot ):
         #     self.state = BFSM.connecting

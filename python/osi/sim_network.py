@@ -37,7 +37,7 @@ if __name__ == '__main__':
     c.rx.connect(b.tx)
     b.rx.connect(c.tx)
 
-    tick_max = 10
+    tick_max = 250
 
     for i in range(1,tick_max):
         c.tick()
