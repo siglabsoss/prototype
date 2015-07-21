@@ -4,7 +4,7 @@ import sigmath as sm
 bringup = 909E6
 channel1 = 908.25E6
 pattern_vec = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]
-
+defaultCpmSettings = {'fs': 125E3, 'samplesPerSymbol': 100, 'rotationsPerSymbol': 1, 'patternVector': [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]}
 
 
 def encode_varint(val):

@@ -1,24 +1,57 @@
 import struct
-import numpy as np
-import sigproto
+from sigproto import defaultCpmSettings
 import collections
 from itertools import repeat
-import oct2py #delme
 import time
 from sigmath import *
 import timeit
 
-def cpm_mod(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, rotationsPerSymbol = 1, patternVector = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]):
-    # print bitsrate
+
+def cpm_bits_per_packet(**kwargs):
+    #http://stackoverflow.com/a/1552420/836450
+    args = dict(defaultCpmSettings, **kwargs)
+
+    # unload arguments from args dictionary
+    fs = args['fs']
+    samplesPerSymbol = args['samplesPerSymbol']
+    patternVector = args['patternVector']
+
+    packetLength = 0.4
+    srate = 1/fs
+
+
+    bitsrate = srate * samplesPerSymbol
+
+    pvSize = len(patternVector)
+    dataDutyCycle = float(patternVector.count(0))/pvSize
+
+    expectedBitLength = int(round( (1/bitsrate)*packetLength*dataDutyCycle ))
+
+    return expectedBitLength
+
+
+
+
+def cpm_mod(bits, **kwargs):
+    #http://stackoverflow.com/a/1552420/836450
+    args = dict(defaultCpmSettings, **kwargs)
+
+    # unload arguments from args dictionary
+    fs = args['fs']
+    samplesPerSymbol = args['samplesPerSymbol']
+    rotationsPerSymbol = args['rotationsPerSymbol']
+    patternVector = args['patternVector']
+
+    srate = 1/fs
+    bitsrate = srate * samplesPerSymbol
+    # print "\n bitsrate = ", bitsrate
 
     rateRatio = bitsrate/srate
-    demodSamplesPerSymbol = samplesPerSymbol
     outSampleTime = srate
 
     clockFrequency = 100
     dinFilterLength = 3
 
-    dataout = []
     clock_comb = []
 
     # init
@@ -27,8 +60,6 @@ def cpm_mod(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, r
     clockUpInt = 0.0
     clockDownInt = 0.0
 
-    # more init
-    fs = 1/srate
     # fixed packet length in seconds
     packetLength = 0.4
 
@@ -37,12 +68,14 @@ def cpm_mod(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, r
 
     sz = len(bits)
 
-    expectedBitLength = int(round( (1/bitsrate)*packetLength*dataDutyCycle ))
+    expectedBitLength = cpm_bits_per_packet(**kwargs)
+
+    # expectedBitLength = int(round( (1/bitsrate)*packetLength*dataDutyCycle ))
 
     # print expectedBitLength
 
-    if sz != expectedBitLength:
-        print('warning: bit vector is the wrong size');
+    # if sz != expectedBitLength:
+    #     print('warning: bit vector is the wrong size');
 
     if sz < expectedBitLength:
         delta = expectedBitLength - sz
@@ -131,11 +164,19 @@ def cpm_mod(bits, bitsrate = 1/125E1, srate = 1/125E3, samplesPerSymbol = 100, r
 
 
 
-def cpm_demod(data, srate = 1/125E3, samplesPerSymbol = 100, patternVector = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]):
+def cpm_demod(data, **kwargs):
+    #http://stackoverflow.com/a/1552420/836450
+    args = dict(defaultCpmSettings, **kwargs)
+
+    # unload arguments from args dictionary
+    fs = args['fs']
+    samplesPerSymbol = args['samplesPerSymbol']
+    patternVector = args['patternVector']
+
     dif = np.diff(unroll_angle(np.angle(data)))
 
     # init
-    fs = 1/srate
+    srate = 1/fs
 
     # fixed packet length in seconds
     packetLength = 0.4
@@ -169,43 +210,3 @@ def cpm_demod(data, srate = 1/125E3, samplesPerSymbol = 100, patternVector = [1,
             count += 1
 
     return bits
-
-
-if __name__ == '__main__':
-
-    bits = [-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1]
-
-    data = cpm_mod(bits)
-
-    res = cpm_demod(data)
-
-    res = [(b*2)-1 for b in res]
-
-    print bits[0:15] == res[0:15]
-    print bits[0:15]
-    print res[0:15]
-
-    # res = timeit.timeit('cpm_mod([-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1,-1,1,1,-1])', 'from __main__ import cpm_mod', number=19)
-    # print "total", res, "each", res/19
-
-    # print 'starting octave'
-    # octave = oct2py.Oct2Py()
-    # # octave.addpath('../../simulink')
-    # # # octave.plot(octave.imag(data))
-    # #
-    # octave.plot(res)
-    # time.sleep(500)
-    #
-    #
-    # bits_out = cpm_demod(data, octave)
-    #
-    # bits_out = bits_out.transpose()[0]  # back to a row vector
-    #
-    # bits_out = [int(b) for b in bits_out]  # convert to ints
-    # print bits_out
-    # print bits
-    # # print bits
-    #
-    #
-    # time.sleep(500)
-
