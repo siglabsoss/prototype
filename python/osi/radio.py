@@ -45,9 +45,13 @@ class Radio(object):
             else:
                 obj['hz'] = ch
 
+        length = len(str)
+
+        if length == 0:
+            print "Warning: 0 length in pack_send"
 
         # build a varint with the size of the following message
-        sizestr = encode_varint(len(str))
+        sizestr = encode_varint(length)
 
         # slap it on the beginning
         str = sizestr + str
@@ -68,6 +72,9 @@ class Radio(object):
 
         # calc out the length of the message to follow
         length = decode_varint(str)
+        if length == 0:
+            print "Warning: 0 length in unpack_data"
+            print_hex(str)
 
         # calc the number of bytes that it took to represent 'length' as a varing
         varint_length = size_varint(str)

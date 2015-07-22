@@ -20,6 +20,7 @@ from sigmath import *
 from siglabs_pb2 import *
 from datetime import *
 import logging
+from copy import *
 
 class FSM(Enum):
     boot = 1
@@ -57,6 +58,7 @@ class Client(Channel, Radio):
         self.last_poll = datetime.now() - timedelta(seconds=self.poll_time)  # start off with our most recent poll in the past
         self.waiting_ack = -1
         self.waiting_ack_fsm = -1
+        self.modulation = deepcopy(sigproto.defaultCpmSettings)
 
 
         self.changehz(sigproto.bringup)
@@ -103,8 +105,11 @@ class Client(Channel, Radio):
             self.log.warning('change_radio did not get the right type of packet, doing nothing')
             return
         if p.change_param == Packet.CHANNEL:
-            self.log.info('switching to channel %d as instructed' % p.change_val)
+            self.log.info('switching to channel %gM as instructed' % (p.change_val / 1E6))
             self.changehz(p.change_val)
+        if p.change_param == Packet.BPS:
+            self.log.info('switching to %d bits per sample as instructed' % p.change_val)
+            self.modulation['bitsPerSample'] = p.change_val
 
     def build_ack(self, p):
         ack = Packet()
@@ -122,9 +127,9 @@ class Client(Channel, Radio):
             p.ParseFromString(self.unpack_data(raw['data']))
             if raw['hz'] == self.hz:
                 if p.radio != self.id:
-                    self.log.warning('got packet for wrong radio')
+                    self.log.warning('got packet for wrong radio %d, expected %d', p.radio, self.id)
                     return None
-                self.log.info('rx: ' + p.__str__())
+                self.log.info('rx:\n' + p.__str__() + '--\n')
                 self.last_contact = datetime.now()
                 return p
             else:
@@ -167,6 +172,8 @@ class Client(Channel, Radio):
                     if case(FSM.connected):
                         if p.type == Packet.CHANGE:
                             self.change_radio(p)
+                            ack = self.build_ack(p)
+                            self.pack_send(ack.SerializeToString())
                         break
         else:
             # there's no packet, we are just ticking

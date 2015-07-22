@@ -17,6 +17,7 @@ from client import FSM
 from datetime import datetime
 from siglabs_pb2 import *
 import logging
+from copy import *
 
 
 # our best idea of where the radio is
@@ -28,6 +29,11 @@ class RadioClient(Channel):
         self.sequence = 0     # the sequence # that the client is using.  this is auto overwritten with every packet
         self.state = FSM.boot
         self.bs_sequence = 7  # the sequence # that the basestation is using to talk to the radio
+        self.modulation = deepcopy(sigproto.defaultCpmSettings)
+    def bseq(self):
+        ret = self.bs_sequence
+        self.bs_sequence += 1
+        return ret
 
 
 
@@ -62,7 +68,7 @@ class Basestation(Radio):
         if raw and 'data' in raw and 'hz' in raw:
             p = Packet()
             p.ParseFromString(self.unpack_data(raw['data']))
-            self.log.info('rx: ' + '(' + str(raw['hz']/1E6) + ') ' + p.__str__())
+            self.log.info('rx: ' + '(' + str(raw['hz']/1E6) + 'M):\n' + p.__str__() + '--\n')
             return p
         else:
             self.log.warning('warning bs got malformed packet')
@@ -89,7 +95,7 @@ class Basestation(Radio):
         ack.type = Packet.BACK
         ack.radio = r.id
         ack.ack = r.sequence # we are acknowledging the sequence id of the packet we just received in this 'ack' field
-        ack.sequence = r.bs_sequence   # we are using our own sequence number here
+        ack.sequence = r.bseq()   # we are using our own sequence number here
         return ack
 
 
@@ -110,9 +116,7 @@ class Basestation(Radio):
                 if case(FSM.boot):
                     if p.type == Packet.HELLO:
                         ack = self.build_ack(r)
-                        # self.log.info(ack.__str__())
                         self.pack_send(ack.SerializeToString(), r)
-                        r.bs_sequence += 1
                         r.state = FSM.contacted
                     break
                 if case(FSM.contacted):
@@ -121,12 +125,30 @@ class Basestation(Radio):
                         out = Packet()
                         out.type = Packet.CHANGE
                         out.radio = r.id
-                        out.sequence = r.sequence
+                        out.sequence = r.bseq()      # the packet is originating from the bs, so we use our sequence number specifically for that radio
                         out.change_param = Packet.CHANNEL
                         out.change_val = int(sigproto.channel1)
                         self.pack_send(out.SerializeToString(), r)
                         r.state = FSM.connected
+                        r.changehz(sigproto.channel1) # update our records so we expect radio on new channel
                     break
+                if case(FSM.connected):
+                    if r.hz != raw['hz']:
+                        self.log.warn('Radio %d on wrong channel %g, expected %g', r.id, raw['hz']/1E6, r.hz/1E6)
+
+                    if r.modulation['samplesPerSymbol'] == 100: # bang bang way of ramping up modulation
+                        self.log.info('telling radio to switch to fast rate')
+                        # request fukin fast bits per symbol
+                        bitsPerSample = 4
+
+                        out = Packet()
+                        out.type = Packet.CHANGE
+                        out.radio = r.id
+                        out.sequence = r.bseq()
+                        out.change_param = Packet.BPS
+                        out.change_val = bitsPerSample  # pretty fuckin fast
+                        self.pack_send(out.SerializeToString(), r)
+                        r.modulation['samplesPerSymbol'] = bitsPerSample # update our record so we will demodulate correctly
 
 
             # if r.state == FSM.connected:

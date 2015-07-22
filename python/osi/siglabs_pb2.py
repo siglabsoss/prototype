@@ -13,7 +13,7 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='siglabs.proto',
   package='',
-  serialized_pb='\n\rsiglabs.proto\"\xfb\x01\n\x06Packet\x12\x10\n\x08sequence\x18\x01 \x02(\x05\x12\x1a\n\x04type\x18\x02 \x02(\x0e\x32\x0c.Packet.Type\x12\r\n\x05radio\x18\x03 \x01(\x03\x12\x0b\n\x03\x61\x63k\x18\x04 \x01(\x05\x12$\n\x0c\x63hange_param\x18\x05 \x01(\x0e\x32\x0e.Packet.Change\x12\x12\n\nchange_val\x18\x06 \x01(\x05\";\n\x04Type\x12\x08\n\x04\x43\x41\x43K\x10\x00\x12\x08\n\x04\x42\x41\x43K\x10\x01\x12\t\n\x05HELLO\x10\x02\x12\n\n\x06\x43HANGE\x10\x03\x12\x08\n\x04POLL\x10\x04\"0\n\x06\x43hange\x12\x0b\n\x07\x43HANNEL\x10\x00\x12\x0c\n\x08\x43LK_DUTY\x10\x01\x12\x0b\n\x07\x42ITRATE\x10\x02\"*\n\x07PacketB\x12\r\n\x05radio\x18\x01 \x02(\x03\x12\x10\n\x08sequence\x18\x02 \x02(\x05\"\x1b\n\x0cVarIntPacker\x12\x0b\n\x03val\x18\x01 \x01(\x03')
+  serialized_pb='\n\rsiglabs.proto\"\xf7\x01\n\x06Packet\x12\x10\n\x08sequence\x18\x01 \x02(\x05\x12\x1a\n\x04type\x18\x02 \x02(\x0e\x32\x0c.Packet.Type\x12\r\n\x05radio\x18\x03 \x01(\x03\x12\x0b\n\x03\x61\x63k\x18\x04 \x01(\x05\x12$\n\x0c\x63hange_param\x18\x05 \x01(\x0e\x32\x0e.Packet.Change\x12\x12\n\nchange_val\x18\x06 \x01(\x05\";\n\x04Type\x12\x08\n\x04\x43\x41\x43K\x10\x00\x12\x08\n\x04\x42\x41\x43K\x10\x01\x12\t\n\x05HELLO\x10\x02\x12\n\n\x06\x43HANGE\x10\x03\x12\x08\n\x04POLL\x10\x04\",\n\x06\x43hange\x12\x0b\n\x07\x43HANNEL\x10\x00\x12\x0c\n\x08\x43LK_DUTY\x10\x01\x12\x07\n\x03\x42PS\x10\x02\"*\n\x07PacketB\x12\r\n\x05radio\x18\x01 \x02(\x03\x12\x10\n\x08sequence\x18\x02 \x02(\x05\"\x1b\n\x0cVarIntPacker\x12\x0b\n\x03val\x18\x01 \x01(\x03')
 
 
 
@@ -65,14 +65,14 @@ _PACKET_CHANGE = _descriptor.EnumDescriptor(
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='BITRATE', index=2, number=2,
+      name='BPS', index=2, number=2,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
   serialized_start=221,
-  serialized_end=269,
+  serialized_end=265,
 )
 
 
@@ -137,7 +137,7 @@ _PACKET = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=18,
-  serialized_end=269,
+  serialized_end=265,
 )
 
 
@@ -171,8 +171,8 @@ _PACKETB = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=271,
-  serialized_end=313,
+  serialized_start=267,
+  serialized_end=309,
 )
 
 
@@ -199,8 +199,8 @@ _VARINTPACKER = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=315,
-  serialized_end=342,
+  serialized_start=311,
+  serialized_end=338,
 )
 
 _PACKET.fields_by_name['type'].enum_type = _PACKET_TYPE

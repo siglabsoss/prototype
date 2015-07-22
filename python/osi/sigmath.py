@@ -2,6 +2,7 @@ import struct
 import numpy as np
 import sigproto
 import collections
+import oct2py
 
 # converts string types to complex
 def raw_to_complex(str):
@@ -96,3 +97,26 @@ def unroll_angle(input):
 
     return output
 
+def bits_cpm_range(bits):
+    bits = [(b*2)-1 for b in bits] # convert to -1,1
+    return bits
+
+def bits_binary_range(bits):
+    bits = [int((b+1)/2) for b in bits]  # convert to ints with range of 0,1
+    return bits
+
+
+octave = None
+
+def oplot(mod):
+    global octave
+
+    if octave is None:
+        print 'starting octave'
+        octave = oct2py.Oct2Py()
+        octave.addpath('../../simulink')
+
+    octave.figure
+    octave.plot(octave.imag(mod))
+    octave.push('m', mod)
+    octave.eval("fplot(m', 125E3)")
