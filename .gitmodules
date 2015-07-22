@@ -1,0 +1,4 @@
+[submodule "python-osi"]
+	path = python/osi
+	url = https://github.com/siglabs/python-osi.git
+	branch = master
