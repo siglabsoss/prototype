@@ -35,7 +35,7 @@ class Radio(object):
             self.octave = oct2py.Oct2Py()
             self.octave.addpath('../../simulink')
 
-    def pack_send(self, str, ch=None):
+    def pack_send(self, str, ch=None, modulation=None):
         obj = {}
         if ch == None:
             obj['hz'] = self.hz
@@ -60,13 +60,13 @@ class Radio(object):
         bits = [(b*2)-1 for b in bits] # convert to -1,1
 
         # modulate into cpm
-        obj['data'] = cpm_mod(bits)
+        obj['data'] = cpm_mod(bits, **modulation)
 
         # send over the "air"
         self.tx.send_pyobj(obj)
 
-    def unpack_data(self, data):
-        bits = cpm_demod(data)
+    def unpack_data(self, data, modulation):
+        bits = cpm_demod(data, **modulation)
         bits = [int((b+1)/2) for b in bits]  # convert to ints with range of 0,1
         str = bits_to_str(bits)     # convert to string
 
@@ -76,7 +76,7 @@ class Radio(object):
             print "Warning: 0 length in unpack_data"
             print_hex(str)
 
-        # calc the number of bytes that it took to represent 'length' as a varing
+        # calc the number of bytes that it took to represent 'length' as a varint
         varint_length = size_varint(str)
 
         # print_hex(str[varint_length:length+varint_length])

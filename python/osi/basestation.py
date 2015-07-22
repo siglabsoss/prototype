@@ -11,7 +11,7 @@ from sigsource import *
 from sigsink import *
 from enum import Enum
 import sigproto
-from channel import Channel
+from channel import *
 from radio import Radio
 from client import FSM
 from datetime import datetime
@@ -57,6 +57,9 @@ class Basestation(Radio):
         # add ch to logger
         self.log.addHandler(lch)
 
+        # integer indexed map of assigned channels
+        self.channel_map = [None]*channel_count()
+
 
         # self.state = BFSM.boot
         self.message = None
@@ -64,10 +67,20 @@ class Basestation(Radio):
         self.radios = {}
 
 
-    def _parse_check_packet(self, raw):
+    def unused_channel(self):
+
+        for i in range(0, channel_count()):
+            if i in self.channel_map:
+                continue
+            return i
+
+
+
+
+    def _parse_check_packet(self, raw, modulation):
         if raw and 'data' in raw and 'hz' in raw:
             p = Packet()
-            p.ParseFromString(self.unpack_data(raw['data']))
+            p.ParseFromString(self.unpack_data(raw['data'], modulation))
             self.log.info('rx: ' + '(' + str(raw['hz']/1E6) + 'M):\n' + p.__str__() + '--\n')
             return p
         else:
@@ -90,6 +103,23 @@ class Basestation(Radio):
         r.sequence = p.sequence
         return r
 
+    def radio_by_hz(self, hz):
+        # print self.radios
+        for chnum in range(0, channel_count()):
+            if self.channel_map[chnum] is not None:
+                # print "found chnum", chnum
+                # print "map", self.channel_map[chnum]
+
+                radioid = self.channel_map[chnum]
+
+                for ddd in self.radios:
+                    # print "ddd",ddd
+                    # print "radio", self.radios[ddd]
+                    return self.radios[ddd]
+                # if self.radios[self.channel_map[chnum]].hz == hz:
+                #     return self.radios[self.channel_map[chnum]]
+        return None
+
     def build_ack(self, r):
         ack = Packet()
         ack.type = Packet.BACK
@@ -105,7 +135,16 @@ class Basestation(Radio):
 
         if self.rx.waiting():
             raw = self.rx.get_pyobj()
-            p = self._parse_check_packet(raw)
+
+            # ok so we got a packet. now we need to decide what settings to use when we demodulate
+            # so if it's on a bringup channel we use the defaults
+            if raw['hz'] == sigproto.bringup:
+                settings = deepcopy(sigproto.defaultCpmSettings)
+            else:
+                settings = self.radio_by_hz(raw['hz']).modulation
+
+
+            p = self._parse_check_packet(raw, settings)
             if p is None:
                 return
 
@@ -116,21 +155,28 @@ class Basestation(Radio):
                 if case(FSM.boot):
                     if p.type == Packet.HELLO:
                         ack = self.build_ack(r)
-                        self.pack_send(ack.SerializeToString(), r)
+                        self.pack_send(ack.SerializeToString(), r, r.modulation)
                         r.state = FSM.contacted
                     break
                 if case(FSM.contacted):
                     if r.hz == sigproto.bringup:
                         # here is where we pick a smart channel
+                        chnum = self.unused_channel()
+                        chhz = channel_center(chnum)
+
                         out = Packet()
                         out.type = Packet.CHANGE
                         out.radio = r.id
                         out.sequence = r.bseq()      # the packet is originating from the bs, so we use our sequence number specifically for that radio
                         out.change_param = Packet.CHANNEL
-                        out.change_val = int(sigproto.channel1)
-                        self.pack_send(out.SerializeToString(), r)
+                        out.change_val = int(chhz)
+                        self.pack_send(out.SerializeToString(), r, r.modulation)
+
                         r.state = FSM.connected
-                        r.changehz(sigproto.channel1) # update our records so we expect radio on new channel
+                        r.changehz(chhz) # update our records so we expect radio on new channel
+                        self.channel_map[chnum] = r.id # update the channel map so we remember where this new radio is living
+
+
                     break
                 if case(FSM.connected):
                     if r.hz != raw['hz']:
@@ -145,9 +191,9 @@ class Basestation(Radio):
                         out.type = Packet.CHANGE
                         out.radio = r.id
                         out.sequence = r.bseq()
-                        out.change_param = Packet.BPS
+                        out.change_param = Packet.SPS
                         out.change_val = bitsPerSample  # pretty fuckin fast
-                        self.pack_send(out.SerializeToString(), r)
+                        self.pack_send(out.SerializeToString(), r, r.modulation)
                         r.modulation['samplesPerSymbol'] = bitsPerSample # update our record so we will demodulate correctly
 
 

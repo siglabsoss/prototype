@@ -6,6 +6,12 @@ channel1 = 908.25E6
 pattern_vec = [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]
 defaultCpmSettings = {'fs': 125E3, 'samplesPerSymbol': 100, 'rotationsPerSymbol': 1, 'patternVector': [1,1,0,2,1,0,2,2,1,0,0,1,1,1,0,2,2,0,2,2]}
 
+# frequency stuff
+unlicensed_min = 902E6
+unlicensed_max = 928E6
+channel_size = 25E3
+channel_spacing = 2
+
 
 def encode_varint(val):
     v = VarIntPacker()

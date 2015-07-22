@@ -9,7 +9,6 @@ def channel_count():
     mmax = sigproto.unlicensed_max
     ssize = sigproto.channel_size
     spacing = sigproto.channel_spacing
-
     delta = ssize + spacing
 
     calc_count = int((mmax-mmin) / delta)
@@ -38,7 +37,6 @@ def channel_index(index):
     mmax = sigproto.unlicensed_max
     ssize = sigproto.channel_size
     spacing = sigproto.channel_spacing
-
     delta = ssize + spacing
 
     start = delta*index + mmin
@@ -47,8 +45,25 @@ def channel_index(index):
 
     return [start,end,center]
 
+
 def channel_center(index):
     return channel_index(index)[2]
+
+def channel_by_hz(hz):
+    mmin = sigproto.unlicensed_min
+    mmax = sigproto.unlicensed_max
+    ssize = sigproto.channel_size
+    spacing = sigproto.channel_spacing
+    delta = ssize + spacing
+
+    start = hz - ssize/2
+
+    index = (start - mmin) / delta
+
+    return int(round(index))
+
+
+
 
 
 class Channel(object):
@@ -65,6 +80,6 @@ class Channel(object):
     def changehz(self, hz):
         if hz > sigproto.unlicensed_max:
             raise RuntimeError('Frequency too high.')
-        if hz < sigproto.unlicensed_max:
+        if hz < sigproto.unlicensed_min:
             raise RuntimeError('Frequency too low.')
         self.hz = hz

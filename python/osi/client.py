@@ -48,7 +48,7 @@ class Client(Channel, Radio):
         # add ch to logger
         self.log.addHandler(lch)
 
-        self.poll_time = 0.6 # low number for simulation
+        self.poll_time = 2 # low number for simulation
 
         self.state = FSM.boot
         self.message = None
@@ -78,7 +78,7 @@ class Client(Channel, Radio):
         # message = {}
         # message['m'] = 'hi'
         # message['p'] = self.id
-        self.pack_send(p.SerializeToString())
+        self.pack_send(p.SerializeToString(), self, self.modulation)
 
     def send_poll(self):
         p = Packet()
@@ -87,7 +87,7 @@ class Client(Channel, Radio):
         p.type = Packet.POLL
         self.waiting_ack = p.sequence
 
-        self.pack_send(p.SerializeToString())
+        self.pack_send(p.SerializeToString(), self, self.modulation)
 
     def debounce_hello(self):
         if (datetime.now() - self.last_poll).total_seconds() > self.poll_time:
@@ -107,9 +107,9 @@ class Client(Channel, Radio):
         if p.change_param == Packet.CHANNEL:
             self.log.info('switching to channel %gM as instructed' % (p.change_val / 1E6))
             self.changehz(p.change_val)
-        if p.change_param == Packet.BPS:
-            self.log.info('switching to %d bits per sample as instructed' % p.change_val)
-            self.modulation['bitsPerSample'] = p.change_val
+        if p.change_param == Packet.SPS:
+            self.log.info('switching to %d samples per symbol as instructed' % p.change_val)
+            self.modulation['samplesPerSymbol'] = p.change_val
 
     def build_ack(self, p):
         ack = Packet()
@@ -124,7 +124,7 @@ class Client(Channel, Radio):
     def _parse_check_packet(self, raw):
         if raw and 'data' in raw and 'hz' in raw:
             p = Packet()
-            p.ParseFromString(self.unpack_data(raw['data']))
+            p.ParseFromString(self.unpack_data(raw['data'], self.modulation))
             if raw['hz'] == self.hz:
                 if p.radio != self.id:
                     self.log.warning('got packet for wrong radio %d, expected %d', p.radio, self.id)
@@ -166,14 +166,14 @@ class Client(Channel, Radio):
                         if p.type == Packet.CHANGE:
                             self.change_radio(p)
                             ack = self.build_ack(p)
-                            self.pack_send(ack.SerializeToString())
+                            self.pack_send(ack.SerializeToString(), self, self.modulation)
                             nextstate = FSM.connected
                         break
                     if case(FSM.connected):
                         if p.type == Packet.CHANGE:
                             self.change_radio(p)
                             ack = self.build_ack(p)
-                            self.pack_send(ack.SerializeToString())
+                            self.pack_send(ack.SerializeToString(), self, self.modulation)
                         break
         else:
             # there's no packet, we are just ticking
@@ -190,30 +190,3 @@ class Client(Channel, Radio):
 
     def get_state(self):
         return self.state
-
-
-
-
-if __name__ == '__main__':
-    c = Client(4000)
-
-
-
-    # str = json.dumps(message, separators=(',',':'))
-    # print str
-    # bits = str_to_bits(str)
-    # bits = np.array(bits)
-    #
-    # print bits
-
-    # c.pack_send(message)
-
-    if False: # test mod/demod
-        bits = np.array([1, -1, -1, 1, 1, -1, -1, 1])
-        bits = bits[:,np.newaxis]
-        print 'mod'
-        data = c.send(bits)
-        print 'demod'
-        demod_bits = c.demod(data)
-        print 'result'
-        print bits[0:8] == demod_bits[0:8]
