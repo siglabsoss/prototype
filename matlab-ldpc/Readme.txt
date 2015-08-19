@@ -19,6 +19,35 @@ spy(G);
 
 
 
+
+
+== Actual working example ==
+
+Start with H:
+
+  H = [0 1 0 1 0 1 1 1 0 0 0 1;1 0 1 1 0 0 0 0 1 0 0 0;0 1 0 0 1 0 1 0 0 0 0 1;1 0 0 1 0 0 0 0 0 1 1 0;0 0 1 0 1 1 0 0 0 1 0 0;1 0 1 0 0 0 1 1 0 0 1 0;0 1 0 0 0 1 0 1 1 1 0 0;0 0 0 0 1 0 0 0 1 0 1 1];
+  G = ldpcpar2gen(H);
+ 
+H is a 8 by 12 matrix.  This means that 4 bits of cw.  Make a random user message (u) of 4 bits:
+
+  u = (rand(1,4) - 0.5) > 0
+
+Encode into a code word (v or cw or c) which we actually tansmit
+  cw = ldpcencode( G, u );
+
+
+Check that the transmission is ok:
+
+ldpccheck(H,cw)
+
+
+
+
+
+
+
+== Also ==
+
 Make a parity check matrix from generator.  This is a standard form for H
 
 H = gen2par(G);
