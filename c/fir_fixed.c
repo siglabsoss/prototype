@@ -11,9 +11,9 @@ using namespace std;
  
 // maximum number of inputs that can be handled
 // in one function call
-#define MAX_INPUT_LEN   80
+#define MAX_INPUT_LEN   40
 // maximum length of filter than can be handled
-#define MAX_FLT_LEN     63
+#define MAX_FLT_LEN     3
 // buffer to hold all of the input samples
 #define BUFFER_LEN      (MAX_FLT_LEN - 1 + MAX_INPUT_LEN)
  

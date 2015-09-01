@@ -11,8 +11,8 @@ b = int32(b);
 % foil
 %c = real(a)*real(b) + real(a)*imag(b)*1i + imag(a)*real(b)*1i + imag(a)*imag(b)*-1
 
-cr = real(a)*real(b) - imag(a)*imag(b);
-ci = real(a)*imag(b) + imag(a)*real(b);
+cr = real(a).*real(b) - imag(a).*imag(b);
+ci = real(a).*imag(b) + imag(a).*real(b);
 
 % ben needs to cast to double here because no fixed point license for his matlab
 cr = bitsra(double(cr),float_scale_pow);
