@@ -12,7 +12,7 @@ function [ dout ] = tone_gen( sz, fs, hz )
 
 
 sampleInc = 1/fs * 2 * pi * hz;
-endSample = (sz/fs) * 2 * pi * hz - sampleInc;
+endSample = double(sz)/fs * 2 * pi * hz - sampleInc;
 tvec = 0:sampleInc:endSample;
 shiftTone = complex(sin(tvec),cos(tvec))';
 
