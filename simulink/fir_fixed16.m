@@ -5,7 +5,7 @@ float_scale = 32768;
 din = double(din) ./ float_scale;
 
 
-dout = filter(coefficients,1,din);
+dout = filter(double(coefficients),1,din);
 
 dout = int16(dout);
 
