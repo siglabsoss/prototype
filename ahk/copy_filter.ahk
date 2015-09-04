@@ -15,7 +15,7 @@ WinWaitActive, Filter Visualization Tool - Figure 1: Filter Coefficients,
 ; clear clipboard
 clipboard =
 
-Loop, 51
+Loop, 501
 {
 ; copy the line
 Send, {DOWN}{CTRLDOWN}c{CTRLUP}
@@ -26,7 +26,7 @@ val = %val%`r`n%clipboard%
 ; clear out clipboard (so ClipWait will work correctly)
 clipboard =
 ; Sleep so it looks better
-sleep, 5
+;sleep, 5
 }
 
 
