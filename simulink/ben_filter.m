@@ -13,7 +13,7 @@
 
 
     fs = 250E6;
-    time = 0.004;
+    time = 0.001;
     samples = round(fs*time);
     
     
