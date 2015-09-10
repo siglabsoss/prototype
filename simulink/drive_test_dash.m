@@ -120,15 +120,15 @@ while 1
         end
         
         if size(BER_single_accumulator,1) > accumulator_length
-            BER_single_accumulator = BER_single_accumulator(1:accumulator_length,1);
+            BER_single_accumulator = BER_single_accumulator(end-accumulator_length+1:end,1);
         end
         
         if size(time_accumulator,1) > accumulator_length
-            time_accumulator = time_accumulator(1:accumulator_length,1);
+            time_accumulator = time_accumulator(end-accumulator_length+1:end,1);
         end
         
         if size(numgoodsets_accumulator,1) > accumulator_length
-            numgoodsets_accumulator = numgoodsets_accumulator(1:accumulator_length,1);
+            numgoodsets_accumulator = numgoodsets_accumulator(end-accumulator_length+1:end,1);
         end
         
         relative_time = time_accumulator - time_accumulator(1,1);
