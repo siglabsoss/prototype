@@ -145,3 +145,14 @@
     
     
     
+% Write out data for david
+
+% csvwrite('input_250M.csv',data);
+% csvwrite('after_final_recursive_sum_250M.csv',pre_filter3);
+% dlmwrite('after_first_cic_3_9M.csv',int64(round(double(second_data))),'delimiter',',','precision',100);
+% dlmwrite('after_fir_3_9M.csv',channel_filtered,'delimiter',',','precision',100);
+% dlmwrite('output_after_cic_30k.csv',int64(round(double(critical_channel_data))),'delimiter',',','precision',100);
+
+
+    
+    
