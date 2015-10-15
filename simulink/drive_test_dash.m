@@ -3,6 +3,8 @@ more off
 clear all
 close all
 
+accumulator_length = 20;
+
 BER_coherent_accumulator = [];
 BER_single_accumulator = [];
 time_accumulator = [];
@@ -113,12 +115,29 @@ while 1
         BER_single_accumulator = [BER_single_accumulator;BER_single];
         time_accumulator = [time_accumulator;thistime];
         numgoodsets_accumulator = [numgoodsets_accumulator; number_of_good_datasets];
+        if size(BER_coherent_accumulator,1) > accumulator_length
+            BER_coherent_accumulator = BER_coherent_accumulator(1:accumulator_length,1);
+        end
+        
+        if size(BER_single_accumulator,1) > accumulator_length
+            BER_single_accumulator = BER_single_accumulator(end-accumulator_length+1:end,1);
+        end
+        
+        if size(time_accumulator,1) > accumulator_length
+            time_accumulator = time_accumulator(end-accumulator_length+1:end,1);
+        end
+        
+        if size(numgoodsets_accumulator,1) > accumulator_length
+            numgoodsets_accumulator = numgoodsets_accumulator(end-accumulator_length+1:end,1);
+        end
+        
+        relative_time = time_accumulator - time_accumulator(1,1);
         
         %Bit Error Rate Plot
         figure(1)
-        plot(time_accumulator,BER_coherent_accumulator,'bo-')
+        plot(relative_time,BER_coherent_accumulator,'bo-')
         hold on
-        plot(time_accumulator,BER_single_accumulator,'rx-')
+        plot(relative_time,BER_single_accumulator,'rx-')
         hold off
         legend('Coherent','Single Antenna','Location','NorthWest')
         xlabel('Time [s]','FontSize',14)
@@ -172,7 +191,7 @@ while 1
         
         %numgoodsets plot
         figure(5)
-        plot(time_accumulator,numgoodsets_accumulator,'bo-')
+        plot(relative_time,numgoodsets_accumulator,'bo-')
         title('Time History: Number of Good Datasets','FontSize',14)
         ylabel('Number','FontSize',14)
         xlabel('Time [s]','FontSize',14)
