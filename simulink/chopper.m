@@ -7,7 +7,7 @@ for i = 1:length(vec)
 %     find where the mag peaks
    if( abs(vec(i)) > 60 )
       
-       start = i-1;
+       start = i;
        
        disp(vec(start));
        ang = angle(vec(start))
@@ -18,6 +18,6 @@ end
 
 ang = -1 * ang;
 
-vec2 = vec .* exp(ang*pi*1j);
+vec2 = vec .* exp(ang*1j);
 
 % no do a single xcorr to find the rotation
