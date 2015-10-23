@@ -116,7 +116,7 @@ while 1
         time_accumulator = [time_accumulator;thistime];
         numgoodsets_accumulator = [numgoodsets_accumulator; number_of_good_datasets];
         if size(BER_coherent_accumulator,1) > accumulator_length
-            BER_coherent_accumulator = BER_coherent_accumulator(1:accumulator_length,1);
+            BER_coherent_accumulator = BER_coherent_accumulator(end-accumulator_length+1:end,1);
         end
         
         if size(BER_single_accumulator,1) > accumulator_length
