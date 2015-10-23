@@ -58,20 +58,6 @@ switch(concat_mode)
         rawdata = rawdata202;
 end
 
-%overwrite rawdata test block
-%==============================
-clear rawdata;
-filename200='./300_el_cerrito_ave_hillsborough.raw';
-fid200 = fopen(filename200, 'r'); 
-[rrrawdata, rdcount] = fread(fid200, 9E99, pipe_type);
-fclose(fid200);
-rawdata200 = raw_to_complex(rrrawdata');
-clear rrrawdata;
-rawdata = double(rawdata200(end/2:end));
-detect_threshold = 1.6;
-%==============================
-
-
 
 
 
