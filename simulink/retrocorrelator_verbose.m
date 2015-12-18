@@ -136,7 +136,7 @@ comb_fft = fft(clock_comb,fftlength);
 figure
 for k = 1:1:min(numplots,numdatasets)
     subplot(min(numplots,numdatasets),1,k)
-    plot(real(data_fft(:,k)))
+    plot(real(fftshift(data_fft(:,k))))
 end
 subplot(min(numplots,numdatasets),1,1)
 title('First 6 FFTs of Data (Real)')
@@ -170,7 +170,7 @@ fxcorr = ifft(fft(abs(masked_data_fft),fftlength*2).*(conj(fft(abs(masked_comb_f
 figure
 for k = 1:1:min(numplots,numdatasets)
     subplot(min(numplots,numdatasets),1,k)
-    plot(abs(fxcorr(:,k)))
+    plot(abs(fftshift(fxcorr(:,k))))
 end
 subplot(min(numplots,numdatasets),1,1)
 title('First 6 Frequency-Domain Correlations (Abs)')

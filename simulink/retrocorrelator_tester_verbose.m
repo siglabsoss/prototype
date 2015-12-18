@@ -134,6 +134,9 @@ number_of_good_datasets = size(aligned_data,2)
         plot(fxcorrsnr,'o')
         xlabel('Data Chunk Index','FontSize',14)
         ylabel('Comb Correlation SNR','FontSize',14)
+        hold on
+        plot(goodsets,fxcorrsnr(goodsets),'mo')
+        hold off
         subplot(2,1,2)
         hist(fxcorrsnr,20)
         xlabel('xcorr SNR value','FontSize',14)
@@ -171,16 +174,16 @@ BER_coherent = 1-sum(my_cpm_demod_offline(aligned_data*ones([size(aligned_data,2
 
 displaydatasets = 5;
 
-%plot first 5 retro signals
-retro_time = 0:srate:(size(retro_data,1)-1)*srate;
-figure
-for k = 1:1:displaydatasets
-    subplot(displaydatasets,1,k)
-    plot(retro_time,real(retro_data(:,k))*1e-3,'m')
-    hold on
-    plot(timestamp,real(rnoisydata(:,k)))
-    ylim([-1e-3 1e-3])
-end
+% %plot first 5 retro signals
+% retro_time = 0:srate:(size(retro_data,1)-1)*srate;
+% figure
+% for k = 1:1:displaydatasets
+%     subplot(displaydatasets,1,k)
+%     plot(retro_time,real(retro_data(:,k))*1e-3,'m')
+%     hold on
+%     plot(timestamp,real(rnoisydata(:,k)))
+%     ylim([-1e-3 1e-3])
+% end
 
 
 %START RETRO RECONSTUCTION BLOCK
