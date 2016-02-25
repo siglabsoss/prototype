@@ -76,8 +76,8 @@ BER_coherent = 1-sum(o_cpm_demod(aligned_data*ones([size(aligned_data,2) 1]),sra
 
 %get BER of single antenna
 BER_single = 1-sum(o_cpm_demod(aligned_data(:,1),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
-
-
-
+BER_single = BER_single + 1-sum(o_cpm_demod(aligned_data(:,2),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
+BER_single = BER_single + 1-sum(o_cpm_demod(aligned_data(:,3),srate,samples_per_bit_at_fs,patternvec,1) == ideal_bits)/length(ideal_bits)
+BER_single = BER_single / 3;
 
 

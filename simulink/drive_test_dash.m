@@ -101,12 +101,16 @@ while 1
 
         
         %calc theoretical data rate
-        num_antennas = 100;
+        num_antennas = 60;
         delta_f = 26e6; %ISM band
         bandwidth_factor_db = 10*log10(10e3/delta_f);
         theoretical_data_rate_single = delta_f*log2(1+10^((median(single_antenna_strength)+bandwidth_factor_db)/10));
         theoretical_data_rate_coherent = delta_f*log2(1+10^((coherent_antenna_strength+bandwidth_factor_db)/10));
-        theoretical_data_rate_10k = delta_f*log2(1+(1e4/num_antennas)*(10^((coherent_antenna_strength+bandwidth_factor_db)/10)));
+		%calc capable bandwidth for equal SNR
+		antenna_ratio = 1e4/num_antennas;
+		delta_f_10k = delta_f*antenna_ratio;
+		bandwidth_factor_db_10k = 10*log10(10e3/delta_f_10k);
+        theoretical_data_rate_10k = delta_f_10k*log2(1+(antenna_ratio)*(10^((coherent_antenna_strength+bandwidth_factor_db_10k)/10)));
         
         %hoarder
         thistime = time-starttime;
