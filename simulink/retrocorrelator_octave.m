@@ -89,10 +89,10 @@ end
         
 %check for rawdata and comb to be in column form
 if size(rawdata,2) > size(rawdata,1)
-    rawdata = rawdata';
+    rawdata = rawdata.';
 end
 if size(clock_comb,2) > size(clock_comb,1)
-    clock_comb = clock_comb';
+    clock_comb = clock_comb.';
 end
 
 %internal knobs
