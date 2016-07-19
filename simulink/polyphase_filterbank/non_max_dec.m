@@ -39,7 +39,10 @@ bUpConv = zeros(m, length(b));
 sbUpConv = zeros(m, length(sb));
 
 for i = 1:m
-    bUpConv(i,:) = b.*exp((sqrt(-1)*2*pi*(i-1)*(1/m)).*(0:length(b)-1));
+    p1 = sqrt(-1)*2*pi*(i-1)*(1/m);
+    p2 = (0:length(b)-1);
+    p3 = p1 .* p2;
+    bUpConv(i,:) = b .* exp(p3);
     sbUpConv(i,:) = (sb/m).*exp((sqrt(-1)*2*pi*(i-1)*(1/m)).*(0:length(sb)-1));
 end;
 
@@ -263,7 +266,7 @@ else
             
         end;
         
-        pause(0.1);
+        pause(0.01);
         
     end;
 end;
