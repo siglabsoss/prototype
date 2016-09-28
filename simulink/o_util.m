@@ -49,6 +49,20 @@ function [raw] = complex_to_raw(floats)
     raw = list(1:end-8);
 end
 
+function [floats] = file_to_complex(filename)
+    fid = fopen(filename, 'r');
+    if (fid == -1 )
+        disp('File does not exist or something else wrong');
+        return
+    end
+
+    [rawdata, rdcount] = fread(fid, inf, 'uint8');
+    fclose(fid);
+    disp(sprintf('read %d bytes', rdcount));
+
+    floats = raw_to_complex(rawdata.');
+end
+
 
 function [ retro_out ] = replace_zero_ones(retro_single )
     [sz,~] = size(retro_single);
