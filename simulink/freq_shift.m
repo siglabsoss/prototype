@@ -13,7 +13,7 @@ function [ dout ] = freq_shift( din, fs, shift )
 if( iscolumn(din) )
    [sz,~] = size(din);
 elseif( isrow(din) )
-   din = din';
+   din = din.';
    disp 'changing your data into column vector'
    [sz,~] = size(din);
 else
@@ -31,7 +31,7 @@ end
 sampleInc = 1/fs * 2 * pi * shift;
 endSample = (sz/fs) * 2 * pi * shift - sampleInc;
 tvec = 0:sampleInc:endSample;
-shiftTone = complex(sin(tvec),cos(tvec))';
+shiftTone = complex(cos(tvec),sin(tvec)).';
 
 dout = shiftTone .* din;
 

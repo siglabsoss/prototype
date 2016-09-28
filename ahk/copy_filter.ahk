@@ -1,5 +1,6 @@
 
 ; Instructions
+; Run "close all" from matlab (important)
 ; Set the loop iteration to the number of filter coeficients, click on the top line (numerator)
 ; alt tab away and run this script
 ; paste into a text editor when done
@@ -15,7 +16,7 @@ WinWaitActive, Filter Visualization Tool - Figure 1: Filter Coefficients,
 ; clear clipboard
 clipboard =
 
-Loop, 501
+Loop, 85
 {
 ; copy the line
 Send, {DOWN}{CTRLDOWN}c{CTRLUP}
