@@ -49,7 +49,7 @@ function [raw] = complex_to_raw(floats)
     raw = list(1:end-8);
 end
 
-function [floats] = file_to_complex(filename)
+function [floats] = rawfile_to_complex(filename)
     fid = fopen(filename, 'r');
     if (fid == -1 )
         disp('File does not exist or something else wrong');
@@ -63,6 +63,14 @@ function [floats] = file_to_complex(filename)
     floats = raw_to_complex(rawdata.');
 end
 
+function [] = complex_to_rawfile(filename, data)
+    fid = fopen(filename, 'w');
+    bytes = complex_to_raw(data);
+    [sz,~] = size(bytes);
+    disp(sprintf("Writing %d bytes to file", sz));
+    fwrite(fid, bytes, 'uint8');
+    fclose(fid);
+end
 
 function [ retro_out ] = replace_zero_ones(retro_single )
     [sz,~] = size(retro_single);
