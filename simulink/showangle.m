@@ -12,10 +12,16 @@ for k = 1:res+1
 end
 
 
-vec = [0;1*exp(1j*rad)];
+
 
 figure;
 hold on;
 plot(bounds);
-plot(vec);
+
+
+
+for m = 1:size(rad,1)
+    vec = [0;1*exp(1j*rad(m))];
+    plot(vec);
+end
 hold off;
