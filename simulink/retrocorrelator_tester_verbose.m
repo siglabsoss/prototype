@@ -1,6 +1,7 @@
 clear all
 close all
 
+%{
 %START REAL DATA LOAD BLOCK
 %========================
 
@@ -9,8 +10,10 @@ close all
 % load('thursday.mat','clock_comb125k','idealdata','patternvec')
 % clock_comb = clock_comb125k;
 
-load('mar17pt2.mat', 'ruthandelcamino')
-rawdata = ruthandelcamino;
+%load('mar17pt2.mat', 'ruthandelcamino')
+%rawdata = ruthandelcamino;
+load('mar17.mat', 'parkinglot')
+rawdata = parkinglot;
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
 
@@ -25,6 +28,8 @@ rawtime = 0:srate:(length(rawdata)-1)*srate;
 for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
     rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
 end
+%}
+
 
 %{
 %test: full FFT of the input data
@@ -40,7 +45,7 @@ xlabel('Freq [Hz]')
 %=======================
 
 %START SIM DATA LOAD
-%{
+
 %=============================
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
@@ -51,9 +56,10 @@ detect_threshold = 2.5;
 %set parameters for generating raw data
 snr_awgn = -3;
 epoch_repeat = 0.8; %in seconds, the repetition rate of epochs
+windowsize = 0.8;
 maxdelay = 0.001; %in seconds, the max delay of any one epoch in its time slot of repetition. epoch time + maxdelay should not be greater that ideallength
 maxLOphase = 2*pi; %max LO phase offset, in radians
-maxFshift = 100; %max frequency shift, in Hz
+maxFshift = 400; %max frequency shift, in Hz
 numdatasets = 60; %number of epochs in the raw data
 rdatalength = round(epoch_repeat/srate);
 
@@ -70,7 +76,7 @@ for k = 1:1:numdatasets
     rnoisydata(:,k) = awgn(rnoisydata(:,k),snr_awgn); %add noise
 end
 
-%}
+
 %END SIM DATA LOAD
 %==========================
 
@@ -87,8 +93,8 @@ diag = 1;
 
 %matrix version
 reply_data = clock_comb;
-fsearchwindow_low = -100;
-fsearchwindow_hi = 200;
+fsearchwindow_low = -500;
+fsearchwindow_hi = 500;
 retro_go = 1;
 weighting_factor = 0;
 [aligned_data retro_data retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator_verbose(rnoisydata,srate,clock_comb,detect_threshold,clock_comb,fsearchwindow_low,fsearchwindow_hi,retro_go,weighting_factor);

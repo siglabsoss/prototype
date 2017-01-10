@@ -54,37 +54,37 @@ weighting_factor = 0;
 %serve optional arguments
 switch nargin
     case 4
-        detect_threshold = varargin{2};
+        detect_threshold = varargin{1};
     case 5
-        detect_threshold = varargin{2};
+        detect_threshold = varargin{1};
         clear reply_data;
-        reply_data = varargin{3};
+        reply_data = varargin{2};
     case 6
-        detect_threshold = varargin{2};
+        detect_threshold = varargin{1};
         clear reply_data;
-        reply_data = varargin{3};
-        fsearchwindow_low = varargin{4};
+        reply_data = varargin{2};
+        fsearchwindow_low = varargin{3};
     case 7
-        detect_threshold = varargin{2};
+        detect_threshold = varargin{1};
         clear reply_data;
-        reply_data = varargin{3};
-        fsearchwindow_low = varargin{4};
-        fsearchwindow_hi = varargin{5};
+        reply_data = varargin{2};
+        fsearchwindow_low = varargin{3};
+        fsearchwindow_hi = varargin{4};
     case 8
-        detect_threshold = varargin{2};
+        detect_threshold = varargin{1};
         clear reply_data;
-        reply_data = varargin{3};
-        fsearchwindow_low = varargin{4};
-        fsearchwindow_hi = varargin{5};
-        retro_go = varargin{6};
+        reply_data = varargin{2};
+        fsearchwindow_low = varargin{3};
+        fsearchwindow_hi = varargin{4};
+        retro_go = varargin{5};
     case 9
-        detect_threshold = varargin{2};
+        detect_threshold = varargin{1};
         clear reply_data;
-        reply_data = varargin{3};
-        fsearchwindow_low = varargin{4};
-        fsearchwindow_hi = varargin{5};
-        retro_go = varargin{6};
-        weighting_factor = varargin{7};       
+        reply_data = varargin{2};
+        fsearchwindow_low = varargin{3};
+        fsearchwindow_hi = varargin{4};
+        retro_go = varargin{5};
+        weighting_factor = varargin{6};       
 end
         
 %check for rawdata and comb to be in column form
