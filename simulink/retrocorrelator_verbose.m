@@ -1,6 +1,6 @@
 % Perform correlation search for a single epoch of data against a known
 % comb, and return the data aligned to the comb, if an epoch is detected.  
-% Retuns zeros if no epoch is detected.  fxcorrelator_single can be run on am
+% Returns zeros if no epoch is detected.  fxcorrelator_single can be run on an
 % array of RF chunks, one in each column.
 %
 % USAGE:
@@ -19,6 +19,22 @@
 % weighting_factor are optional.  Defaults will be used if not 
 % specified.
 %
+% detect_threshold is the cross-correlation threshold used to determine if
+% a signal epoch is present.
+%
+% fsearchwindow is the window of frequency offsets over which to look for
+% the pilot signal.  Note that an increased window increases processing time.
+% 
+% retro_go is is a debugging and troubleshooting feature. It is on (1) by
+% default, and applies the phase offset information to the retro data.  
+% Setting retro_go to 0 will just return the retro data at the time offset 
+% without applying the phase offsets (i.e. time-aligned but incoherent).
+% 
+% weighting_factor weights datasets with a higher correlation value higher in
+% the aligned_data output.
+%
+% INPUTS:
+%
 % rawdata is complex input data at srate.  rawdata must be longer than 
 % clock_comb.  If rawdata is an array, each chunk of rawdata should be in
 % column form.
@@ -26,11 +42,12 @@
 % srate is equal to the time value of each sample, i.e. 125kHz data has
 % srate = 1/125000
 %
-% clock_comb must have the same srate as rawdata
+% clock_comb is the prototype of the pilot signal must have the same srate as 
+% rawdata
 % 
-% detect_threshold is the cross-correlation threshold used to determine if
-% a signal epoch is present.
-% 
+%
+% OUTPUTS:
+%
 % aligned_data is the data output aligned with respect to the input
 % clock_comb.  If rawdata is an array and more than one epoch is detected,
 % each sequence of aligned data will occupy one column of the ouput.
@@ -38,6 +55,8 @@
 % retro is the return transmission signal.  It is padded with zeros and
 % delayed exactly 1s from the starting epoch of the input signal.  By
 % default it returns the clock comb with conjugated phase.
+%
+
 
 
 function [aligned_data retro retrostart retroend fxcorrsnr goodsets freqoffset phaseoffset samplesoffset] = retrocorrelator_verbose(rawdata,srate,clock_comb,varargin)
@@ -102,7 +121,7 @@ end
 
 %internal knobs
 power_padding = 1; %amount of extra padding to apply to the fft %power padding needs to be at least 1, to ensure at least 2x size of data for full time-domain xcorr
-combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz
+combwindow_low = -105; %clock comb freq-domain correlation window low, in Hz. Modify this if changing the width of the pilot signal.
 combwindow_hi = 105; %clock comb freq-domain correlation window high, in Hz
 silence_padding_factor = 0.4; % a factor of fs which is added to the window
 

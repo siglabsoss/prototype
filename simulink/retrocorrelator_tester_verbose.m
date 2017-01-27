@@ -1,7 +1,7 @@
 clear all
 close all
 
-%{
+
 %START REAL DATA LOAD BLOCK
 %========================
 
@@ -28,8 +28,6 @@ rawtime = 0:srate:(length(rawdata)-1)*srate;
 for k = 0:floor(rawtime(end)/timestep)-ceil(windowsize/timestep)
     rnoisydata(:,k+1) = rawdata(round(k*timestep/srate)+1:round(k*timestep/srate+windowsize/srate));
 end
-%}
-
 
 %{
 %test: full FFT of the input data
@@ -44,8 +42,8 @@ xlabel('Freq [Hz]')
 %END REAL DATA LOAD
 %=======================
 
+%{
 %START SIM DATA LOAD
-
 %=============================
 load('thursday.mat','clock_comb125k','idealdata','patternvec')
 clock_comb = clock_comb125k;
@@ -79,6 +77,7 @@ end
 
 %END SIM DATA LOAD
 %==========================
+%}
 
 %plot incoherent sum
 datalength = length(rnoisydata(:,1));
