@@ -7,8 +7,6 @@
 
 close all;
 len=100; % Number of points in calculation
-Fd=1; % Sampling rate of digital message
-Fs=1; % Sampling rate of Analog message
 M=16; % M-ary number 
 
 
@@ -25,12 +23,24 @@ ylabel('Value');
 msg_a=modmap(msg_d,1,1,'qask',M); % Mapping I and Q
 sigI1=msg_a(:,1);
 sigQ1=msg_a(:,2);
-a=zeros(length(sigI1),15);
-b=zeros(length(sigQ1),15);
+
+szsigi1 = size(sigI1);
+fprintf('message modulated into %d samples\n', szsigi1(1));
+
+
+over = 16; % oversampling factor
+
+a=zeros(length(sigI1),over-1);
+b=zeros(length(sigQ1),over-1);
 sigI=([sigI1 a])';
 sigI=sigI(:);
 sigQ=([sigQ1 b])';
 sigQ=sigQ(:);
+
+sizesigI = size(sigI);
+fprintf('zero padded to %d\n', sizesigI(1));
+
+
 figure;
 plot(sigI(1:800));
 title('Inphase component');
@@ -48,7 +58,6 @@ title('Quadrature component');
 % contribution to the response from all other symbols is zero. 
 
 
-over = 16; % oversampling factor
 rolloff=.5;
 pulse = rcosine(1,over,'sqrt',rolloff); %basic raised-cosine pulseshape
 [val,pos] = max(pulse);
@@ -58,6 +67,9 @@ sigI2 = filter(pulse,1,sigI); % signal after pulse shaping
 sigI2 = sigI2(pos:length(sigI2)); % discard transient
 sigQ2 = filter(pulse,1,sigQ); % signal after pulse shaping
 sigQ2 = sigQ2(pos:length(sigQ2)); % discard transient 
+
+sizesigI2 = size(sigI2);
+fprintf('size of sigI2 is %d\n', sizesigI2(1));
 
 
 n=1:length(sigI2);
@@ -90,15 +102,16 @@ recQ=recQ(pos:end);
 
 
 % Low Pass Filtering
-Num = remez(16,[0 0.2 0.3 1],[1 1 0 0]);
+Num = remez(over,[0 0.2 0.3 1],[1 1 0 0]);
+tailsize = (over/2)+1;
 recI_filt=filter(Num,1,recI); % Passing received signal I through low pass filter
-recI1=recI_filt(9:end); %Truncatig response tail
+recI1=recI_filt(tailsize:end); %Truncatig response tail
 recQ_filt=filter(Num,1,recQ); % Passing received I through LPF
-recQ1=recQ_filt(9:end); %Truncatig response tail
+recQ1=recQ_filt(tailsize:end); %Truncatig response tail
 
 % Sampling
-recI2=recI1(1:16:length(recI1));
-recQ2=recQ1(1:16:length(recQ1)); 
+recI2=recI1(1:over:length(recI1));
+recQ2=recQ1(1:over:length(recQ1)); 
 
 % Slicer
  for i=1:length(recI2)
@@ -114,13 +127,19 @@ recQ2=recQ1(1:16:length(recQ1));
    end
  end
  sig_rec = [recI2 recQ2]; % Received signal after detection
- sig_final=demodmap(sig_rec,1,1,'qask',16); % Final received signal
+ sig_final=demodmap(sig_rec,1,1,'qask',M); % Final received signal
 
+sizesigI2 = size(sigI2);
+fprintf('len of sigI2 is %d\n', sizesigI2(1));
+ 
 % Plotting figures
+sizesigI2 = size(sigI2);
+sizerecI1 = size(recI1);
+commonlength = min(sizesigI2(1), sizerecI1(1));
 figure;
-plot(1.8*sigI2(1:500),'r-'); % B4 modulation
+plot(1.8*sigI2(1:commonlength),'r-'); % B4 modulation
 hold;
-plot(recI1(1:500),'b-');grid on; % After Demodulation
+plot(recI1(1:commonlength),'b-');grid on; % After Demodulation
 title('Comparison b/w signals');
 xlabel('Index');ylabel('Amplitude');
 legend('Signal B4 Modulation' , 'Signal after Demodulation');
@@ -130,3 +149,13 @@ stem(sig_final(1:40),'.b-');grid on; % Recieved data
 title('comparison b/w Original and Recieved Data');
 xlabel('index'); ylabel('Integer value');
 legend('Original Data' , 'Recieved Data') ; 
+
+% Check Bits
+total_bits = size(sig_final); % this example truncates some of the original bits
+total_bits = total_bits(1);
+res_vector = msg_d(1:total_bits) == sig_final.';
+correct = sum(res_vector);
+fprintf('correct: %d, fail: %d\n\n', correct, total_bits-correct);
+
+
+
