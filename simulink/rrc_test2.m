@@ -7,10 +7,15 @@
 % Define the square-root raised cosine filter parameters. Define the signal
 % constellation parameters.
 rolloff = 0.25; % Filter rolloff
-span = 6;       % Filter span
-sps = 4;        % Samples per symbol
+span = 8;       % Filter span
+sps = 6;        % Samples per symbol
 M = 4;          % Size of the signal constellation
 k = log2(M);    % Number of bits per symbol
+
+
+rolloff = 0.25, span = 8, sps = 6
+
+
 %%
 % Generate the coefficients of the square-root raised cosine filter using
 % the rcosdesign function.
