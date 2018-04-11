@@ -82,7 +82,7 @@ title('abs result');
 
 sz = size(idx)
 
-backouttweak = 0;
+% backouttweak = 0;
 % backout = 512+1024 + backouttweak;
 backout = 512+1024;
 
@@ -101,7 +101,7 @@ for k = 1:sz
   a2res(k) = a2;
 
   cstart = cidx-backout;
-  cend = cidx-backout+1024;
+  cend   = cstart+1024;
 
   if(cstart < 1)
     continue;
@@ -116,6 +116,8 @@ for k = 1:sz
   % title(tstr);
 
   cfft = fftshift(ifft(chunk));
+
+  cfft = cfft * exp(-1j*2*pi*512*(0:1023)/1024);
 
   % rotwave = exp(1j*(2*pi)*(1:1024)/(1024/(-512-1024)));
   % cfft = cfft .* rotwave;
