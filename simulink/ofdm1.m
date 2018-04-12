@@ -82,18 +82,39 @@ title('abs result');
 
 sz = size(idx)
 
-% backouttweak = 0;
+tweak = 512;
 % backout = 512+1024 + backouttweak;
-backout = 512+1024;
+backout = tweak+1024;
 
-subcarrier = 624;
+pilot1 = 846;
+pilot2 = 180;
+data_idx = [624, 635, 646, 657, 355, 366, 377, 388]
+
+d1 = zeros(1,sz);
+d2 = zeros(1,sz);
+d3 = zeros(1,sz);
 
 res = zeros(1,sz);
 a2res = zeros(1,sz);
 
+use_every_peak = 0;
+
+respilot2 = zeros(1,sz);
+
+if(!use_every_peak)
+  sz = 8
+endif
+
+
 for k = 1:sz
-  cidx = idx(k);
-  % disp();
+
+  if(use_every_peak)
+    cidx = idx(k);
+  else
+    cidx = idx(1) + 2048*(k-1)
+  endif
+
+
 
   a1 = angle(movingsum1(cidx));
   a2 = a1 - (1/(2*pi))
@@ -117,7 +138,7 @@ for k = 1:sz
 
   cfft = fftshift(ifft(chunk));
 
-  cfft = cfft * exp(-1j*2*pi*512*(0:1023)/1024);
+  cfft = cfft * exp(-1j*2*pi*tweak*(0:1023)/1024);
 
   % rotwave = exp(1j*(2*pi)*(1:1024)/(1024/(-512-1024)));
   % cfft = cfft .* rotwave;
@@ -128,7 +149,13 @@ for k = 1:sz
   % f5 = figure(5);
   % 
   % title('chunk');
-  res(k) = cfft(subcarrier);
+  res(k) = cfft(pilot1);
+
+  respilot2(k) = cfft(pilot2);
+
+  d1(k) = cfft(data_idx(1));
+  d2(k) = cfft(data_idx(2));
+  d3(k) = cfft(data_idx(3));
 
 endfor
 
@@ -144,8 +171,36 @@ title('a2 result');
 % plot(abs(filtered));
 
 f6 = figure(6);
-plot(res, '.');
-title('result');
+plot(res);
+title('pilot 1 result');
+
+
+f8 = figure(8);
+plot(unwrap(angle(res)));
+title('angle of pilot 1');
+
+
+f9 = figure(9);
+plot(respilot2);
+title('pilot 2 result');
+
+f10 = figure(10);
+plot(unwrap(angle(respilot2)));
+title('angle of pilot 2');
+
+
+f11 = figure(11);
+plot(d1);
+title('d1');
+
+f12 = figure(12);
+plot(d2);
+title('d2');
+
+f13 = figure(13);
+plot(d3);
+title('d3');
+
 
 % maxfiltered = max(abs(filtered)) * 1000000
 
