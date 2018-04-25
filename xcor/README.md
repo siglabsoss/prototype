@@ -1,0 +1,1 @@
+Recovery of received trace.
