@@ -38,6 +38,50 @@ function [floats] = raw_to_complex(raw)
     
 end
 
+function [floats] = hex32_to_complex(raw)
+
+    [a b] = size(raw);
+
+    disp(sprintf('dimms %d %d\n\n', a,b));
+
+    floats = [];
+
+    for i = [1:9:b]
+        iimag = hex2dec(cellstr(raw(i:i+3)));
+        rreal = hex2dec(cellstr(raw(i+4:i+7)));
+
+        if( rreal > 0x7fff )
+            rreal = (0x10000 - rreal)*-1;
+        end
+
+        if( iimag > 0x7fff )
+            iimag = (0x10000 - iimag)*-1;
+        end
+
+        % disp(sprintf('imag %d', hex2dec(cellstr(raw(i:i+3)))  ));
+        % disp(sprintf('real %d', hex2dec(cellstr(raw(i+4:i+7)))  ));
+        % disp(sprintf('rdout %c', raw(i)  ));
+        % disp(sprintf('rdout %c', raw(i+1)  ));
+        % disp(sprintf('rdout %c', raw(i+2)  ));
+        % disp(sprintf('rdout %c', raw(i+3)  ));
+        % disp(sprintf('rdout %c', raw(i+4)  ));
+        % disp(sprintf('rdout %c', raw(i+5)  ));
+        % disp(sprintf('rdout %c', raw(i+6)  ));
+        % disp(sprintf('rdout %c', raw(i+7)  ));
+        % disp(sprintf('end'   ));
+
+        floats = [floats rreal+1j*iimag];
+    end
+
+ 
+    %list = typecast(uint8(raw),'single');
+
+    %[~,sz] = size(list);
+    
+    %floats = complex(list(1:2:sz),list(2:2:sz)).'; % zomg uze .'
+    % floats = [0]
+end
+
 function [raw] = complex_to_raw(floats)
 
     sing = single([floats;1+1i]);
@@ -60,8 +104,22 @@ function [floats] = rawfile_to_complex(filename)
     fclose(fid);
     disp(sprintf('read %d bytes', rdcount));
 
-    floats = raw_to_complex(rawdata.');
+    floats = hex_to_complex(rawdata.');
 end
+
+function [floats] = hex32file_to_complex(filename)
+    fid = fopen(filename, 'r');
+    if (fid == -1 )
+        disp('File does not exist or something else wrong');
+        return
+    end
+    [rawdata, rdcount] = fread(fid, inf, 'uint8');
+    fclose(fid);
+    disp(sprintf('read %d bytes', rdcount));
+
+    floats = hex32_to_complex(rawdata.');
+end
+
 
 function [] = complex_to_rawfile(filename, data)
     fid = fopen(filename, 'w');

@@ -10,9 +10,9 @@ fig1 = figure();
 % t0 = rawfile_to_complex('x310_dump2_33.(3).raw');
 % t0 = rawfile_to_complex('x310_dump_tone.raw');
 
-filename = 'x310_wide_fft_28.raw';
+filename = '/home/x/insidework/software_parent_repo/higgs_sdr_rev2/sim/verilator/test_tx_5/cs10_out.hex';
 
-t0 = rawfile_to_complex(filename);
+t0 = hex32file_to_complex(filename).';
 title(filename);
 
 % offset = 558000;
@@ -20,9 +20,9 @@ title(filename);
 % offset = 2.5e6;
 % wsize = 2**19;
 
-offset = 1000000;
-wsize = 2**19;
-delay = 1092;  % ~ 33.(3) / 31.25 * 1024
+offset = 100;
+wsize = 2**13;
+delay = 1024;
 
 % small part of raw data
 t1 = t0(offset:offset + wsize);
